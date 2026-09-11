@@ -1,5 +1,18 @@
 # eslint-plugin-zod
 
+## 4.12.1
+
+### Patch Changes
+
+- [#427](https://github.com/marcalexiei/eslint-zod/pull/427) [`39c6b15`](https://github.com/marcalexiei/eslint-zod/commit/39c6b154917d0ce71aa0dc969f0bc0cac162da64) - fix(array-style): only rewrite `z.array()` calls the fix can preserve
+
+  The `style: "method"` fix now skips calls with extra arguments, type arguments, optional chaining, an element needing parentheses, or a comment it would drop.
+  A `z` that is shadowed or imported as a type is ignored.
+
+- [#421](https://github.com/marcalexiei/eslint-zod/pull/421) [`940c4fd`](https://github.com/marcalexiei/eslint-zod/commit/940c4fdd5316daf654bdcd9d07bea0da86f398d8) - refactor: `buildNoTransformInRecordKeyCreate` now takes the transform names instead of a `findTransformNode` strategy, and the report points at the offending method or check rather than the whole key schema.
+- Updated dependencies [[`940c4fd`](https://github.com/marcalexiei/eslint-zod/commit/940c4fdd5316daf654bdcd9d07bea0da86f398d8)]:
+  - @eslint-zod/utils@4.0.0
+
 ## 4.12.0
 
 ### Minor Changes

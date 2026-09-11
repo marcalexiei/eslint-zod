@@ -1,5 +1,13 @@
 # eslint-plugin-zod-mini
 
+## 1.9.1
+
+### Patch Changes
+
+- [#421](https://github.com/marcalexiei/eslint-zod/pull/421) [`940c4fd`](https://github.com/marcalexiei/eslint-zod/commit/940c4fdd5316daf654bdcd9d07bea0da86f398d8) - refactor: `buildNoTransformInRecordKeyCreate` now takes the transform names instead of a `findTransformNode` strategy, and the report points at the offending method or check rather than the whole key schema.
+- Updated dependencies [[`940c4fd`](https://github.com/marcalexiei/eslint-zod/commit/940c4fdd5316daf654bdcd9d07bea0da86f398d8)]:
+  - @eslint-zod/utils@4.0.0
+
 ## 1.9.0
 
 ### Minor Changes
