@@ -71,6 +71,27 @@ z.array(z.string());
 z.array(z.string().trim());
 ```
 
+## Autofix Behavior
+
+With `style: "method"` the fix moves the element schema out of the call:
+
+```ts
+// Before
+z.array(z.string()).optional();
+// After
+z.string().array().optional();
+```
+
+The rule reports without fixing when the call:
+
+- takes extra arguments: `z.array(z.string(), { error: 'Expected a list' })`
+- has explicit type arguments: `z.array<z.ZodType<string>>(z.literal('x'))`
+- uses optional chaining: `z?.array(z.string())`, `z.array(schemas?.element)`
+- has an element that is not an identifier, member access or call: `z.array(flag ? z.string() : z.number())`
+- has a comment outside the element schema: `z./* keep this */array(z.string())`
+
+Calls whose `z` is shadowed by a local binding or imported only as a type are ignored.
+
 ## Further Reading
 
 - [Array Types in TypeScript](https://tkdodo.eu/blog/array-types-in-type-script)
