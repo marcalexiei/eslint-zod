@@ -67,3 +67,12 @@ body:
         Any other info
     validations:
       required: false
+
+  - type: checkboxes
+    id: pull-request
+    attributes:
+      label: 🙋 Contribution
+      options:
+        - label: I am willing to open a pull request to fix this
+    validations:
+      required: false
