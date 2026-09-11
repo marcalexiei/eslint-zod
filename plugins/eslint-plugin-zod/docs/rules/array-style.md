@@ -73,25 +73,24 @@ z.array(z.string().trim());
 
 ## Autofix Behavior
 
-With `style: "method"`, the rule fixes namespace calls such as `z.array(schema)` when the element schema is an identifier, a member expression, or a call expression.
-
-The rule reports without an autofix when the call has additional arguments, explicit type arguments, optional chaining, a spread argument, or an element expression that needs special precedence handling.
-It also leaves the call unchanged when replacing it would remove a comment outside the element schema.
-These cases need manual review to preserve array options, schema types, comments, and expression semantics.
+With `style: "method"` the fix moves the element schema out of the call:
 
 ```ts
-// Reported without an autofix: preserve the custom array error.
-z.array(z.string(), { error: 'Expected a list' });
-
-// Reported without an autofix: preserve the explicit element type.
-z.array<z.ZodType<string>>(z.literal('x'));
-
-// Reported without an autofix: review the conditional before rewriting it.
-z.array(flag ? z.string() : z.number());
+// Before
+z.array(z.string()).optional();
+// After
+z.string().array().optional();
 ```
 
-The rule ignores calls whose root name is shadowed by a local binding or imported only as a type.
-It does not track mutations to Zod exports or schema methods; autofixes assume standard Zod implementations.
+The rule reports without fixing when the call:
+
+- takes extra arguments: `z.array(z.string(), { error: 'Expected a list' })`
+- has explicit type arguments: `z.array<z.ZodType<string>>(z.literal('x'))`
+- uses optional chaining: `z?.array(z.string())`, `z.array(schemas?.element)`
+- has an element that is not an identifier, member access or call: `z.array(flag ? z.string() : z.number())`
+- has a comment outside the element schema: `z./* keep this */array(z.string())`
+
+Calls whose `z` is shadowed by a local binding or imported only as a type are ignored.
 
 ## Further Reading
 

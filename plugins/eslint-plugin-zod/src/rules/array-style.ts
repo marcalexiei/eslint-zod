@@ -48,6 +48,7 @@ export const arrayStyle = createZodPluginRule<[Options], MessageIds>({
 
     return createSchemaVisitor({
       onSchema(node, zodSchemaMeta): void {
+        // the import tracker matches by name, so a shadowed or type-only `z` still reaches here
         if (!hasZodRuntimeImportRoot(node, sourceCode)) {
           return;
         }
@@ -65,6 +66,7 @@ export const arrayStyle = createZodPluginRule<[Options], MessageIds>({
                   // extract inner schema from the call chain (handles chained calls like `.optional()`)
                   const chain = collectZodChainMethods(node);
                   const arrayCall = chain.find((c) => c.name === 'array');
+                  // a custom array error, explicit type arguments or optional chaining have no method spelling
                   if (
                     arrayCall?.node.arguments.length !== 1 ||
                     arrayCall.node.typeArguments ||
@@ -75,7 +77,7 @@ export const arrayStyle = createZodPluginRule<[Options], MessageIds>({
                     return null;
                   }
                   const [arg] = arrayCall.node.arguments;
-                  // Other expressions need parentheses or can change the inferred schema type.
+                  // anything else needs parentheses in method position, or is not a schema to begin with
                   if (
                     arg.type !== AST_NODE_TYPES.Identifier &&
                     arg.type !== AST_NODE_TYPES.MemberExpression &&
@@ -83,6 +85,7 @@ export const arrayStyle = createZodPluginRule<[Options], MessageIds>({
                   ) {
                     return null;
                   }
+                  // the fix keeps only the argument text, so a comment outside it would be dropped
                   if (
                     sourceCode
                       .getCommentsInside(arrayCall.node)
