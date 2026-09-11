@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-zod-core",
-  "version": "1.0.13",
+  "version": "1.0.14",
   "description": "ESLint plugin that adds custom linting rules to enforce best practices when using Zod core",
   "keywords": [
     "eslint",

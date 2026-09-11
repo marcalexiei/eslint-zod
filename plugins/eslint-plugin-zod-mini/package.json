@@ -1,6 +1,6 @@
 {
   "name": "eslint-plugin-zod-mini",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "ESLint plugin that adds custom linting rules to enforce best practices when using Zod Mini",
   "keywords": [
     "eslint",
