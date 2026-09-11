@@ -83,3 +83,12 @@ body:
         Add any other relevant context info.
     validations:
       required: false
+
+  - type: checkboxes
+    id: pull-request
+    attributes:
+      label: 🙋 Contribution
+      options:
+        - label: I am willing to open a pull request to implement this rule
+    validations:
+      required: false
