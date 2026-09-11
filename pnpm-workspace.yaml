@@ -5,18 +5,18 @@ packages:
 catalogs:
   deps:
     # typescript-eslint ecosystem (keep versions aligned)
-    '@typescript-eslint/utils': '^8.67.0'
+    '@typescript-eslint/utils': '^8.69.0'
 
   dev:
     # typescript-eslint ecosystem (keep versions aligned)
-    '@typescript-eslint/rule-tester': '8.67.0'
-    typescript-eslint: '8.67.0'
+    '@typescript-eslint/rule-tester': '8.69.0'
+    typescript-eslint: '8.69.0'
 
     # build & test toolchain
-    tsdown: '0.22.14'
+    tsdown: '0.23.0'
     # keep `@vitest/coverage-v8` aligned with `vitest`
-    '@vitest/coverage-v8': '4.1.11'
-    vitest: '4.1.11'
+    '@vitest/coverage-v8': '5.0.0'
+    vitest: '5.0.0'
 
     # published-artifact checks
     '@arethetypeswrong/cli': '0.18.5'
@@ -24,7 +24,7 @@ catalogs:
     # plugin dev utilities
     '@marcalexiei/prettier-config': '2.0.0'
     dedent: '1.7.2'
-    eslint-doc-generator: '3.7.0'
+    eslint-doc-generator: '3.7.1'
     prettier: '3.9.6'
 
 overrides:
