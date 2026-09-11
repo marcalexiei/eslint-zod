@@ -71,6 +71,28 @@ z.array(z.string());
 z.array(z.string().trim());
 ```
 
+## Autofix Behavior
+
+With `style: "method"`, the rule fixes namespace calls such as `z.array(schema)` when the element schema is an identifier, a member expression, or a call expression.
+
+The rule reports without an autofix when the call has additional arguments, explicit type arguments, optional chaining, a spread argument, or an element expression that needs special precedence handling.
+It also leaves the call unchanged when replacing it would remove a comment outside the element schema.
+These cases need manual review to preserve array options, schema types, comments, and expression semantics.
+
+```ts
+// Reported without an autofix: preserve the custom array error.
+z.array(z.string(), { error: 'Expected a list' });
+
+// Reported without an autofix: preserve the explicit element type.
+z.array<z.ZodType<string>>(z.literal('x'));
+
+// Reported without an autofix: review the conditional before rewriting it.
+z.array(flag ? z.string() : z.number());
+```
+
+The rule ignores calls whose root name is shadowed by a local binding or imported only as a type.
+It does not track mutations to Zod exports or schema methods; autofixes assume standard Zod implementations.
+
 ## Further Reading
 
 - [Array Types in TypeScript](https://tkdodo.eu/blog/array-types-in-type-script)

@@ -1,7 +1,9 @@
 import { zodImportScope } from '@eslint-zod/utils';
+import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 import type { TSESTree } from '@typescript-eslint/utils';
 
 import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { hasZodRuntimeImportRoot } from '../utils/has-zod-runtime-import-root.js';
 
 const ZOD_ARRAY_STYLES = ['function', 'method'];
 
@@ -46,6 +48,9 @@ export const arrayStyle = createZodPluginRule<[Options], MessageIds>({
 
     return createSchemaVisitor({
       onSchema(node, zodSchemaMeta): void {
+        if (!hasZodRuntimeImportRoot(node, sourceCode)) {
+          return;
+        }
         const { schemaDecl, schemaType } = zodSchemaMeta;
 
         if (style === 'method') {
@@ -60,11 +65,32 @@ export const arrayStyle = createZodPluginRule<[Options], MessageIds>({
                   // extract inner schema from the call chain (handles chained calls like `.optional()`)
                   const chain = collectZodChainMethods(node);
                   const arrayCall = chain.find((c) => c.name === 'array');
-                  if (!arrayCall) {
+                  if (
+                    arrayCall?.node.arguments.length !== 1 ||
+                    arrayCall.node.typeArguments ||
+                    arrayCall.node.optional ||
+                    (arrayCall.node.callee.type === AST_NODE_TYPES.MemberExpression &&
+                      arrayCall.node.callee.optional)
+                  ) {
                     return null;
                   }
-                  const arg = arrayCall.node.arguments.at(0);
-                  if (!arg) {
+                  const [arg] = arrayCall.node.arguments;
+                  // Other expressions need parentheses or can change the inferred schema type.
+                  if (
+                    arg.type !== AST_NODE_TYPES.Identifier &&
+                    arg.type !== AST_NODE_TYPES.MemberExpression &&
+                    arg.type !== AST_NODE_TYPES.CallExpression
+                  ) {
+                    return null;
+                  }
+                  if (
+                    sourceCode
+                      .getCommentsInside(arrayCall.node)
+                      .some(
+                        (comment) =>
+                          comment.range[0] < arg.range[0] || comment.range[1] > arg.range[1],
+                      )
+                  ) {
                     return null;
                   }
                   const argText = sourceCode.getText(arg);
