@@ -33,6 +33,7 @@ jobs:
     permissions:
       contents: write # required to push release commits and tags
       pull-requests: write # required to create and update release PRs
+      issues: write # required to comment on the issues a release closes
       id-token: write # required for npm OIDC trusted publishing
 
     steps:
@@ -47,6 +48,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0 # the release commenter reads history before the release commit
 
       - name: Install Dependencies
         uses: marcalexiei/github-actions/setup-node-and-pnpm@e3b04865510c657477cc722854b31a3b74c72c09 # v2.2.0
@@ -60,6 +62,14 @@ jobs:
           pr-title: 'chore: release'
           pr-base-branch: main
           publish-script: 'pnpm release'
+
+      - name: Comment on shipped PRs and issues
+        if: ${{ steps.changesets.outputs.published == 'true' }}
+        continue-on-error: true # the packages are already on npm; a failed comment must not fail the release
+        uses: marcalexiei/changesets-release-commenter@80366b79332f7311aa9be1679c6abfbe75d73f0e # v0.2.2
+        with:
+          github-token: ${{ steps.release-helper.outputs.token }}
+          published-packages: ${{ steps.changesets.outputs.published-packages }}
 
   on-ci-fail:
     name: 'Failure'
