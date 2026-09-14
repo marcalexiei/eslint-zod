@@ -35,6 +35,25 @@ ruleTester.run(noFunctionScopedSchema.name, noFunctionScopedSchema, {
         }
       `,
     },
+    {
+      name: 'module-scoped recursive schema using a getter',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const Category = z.object({
+          name: z.string(),
+          get subcategories() {
+            return z.array(Category);
+          },
+        });
+      `,
+    },
+    {
+      name: 'module-scoped schema wrapped in z.lazy',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const Category = z.lazy(() => z.object({ name: z.string() }));
+      `,
+    },
   ],
   invalid: [
     {
@@ -73,6 +92,32 @@ ruleTester.run(noFunctionScopedSchema.name, noFunctionScopedSchema, {
         import * as z from 'zod/mini';
         function buildSchema() {
           return z.object({ name: z.string() });
+        }
+      `,
+      errors: [{ messageId: 'functionScopedSchema' }],
+    },
+    {
+      name: 'recursive getter schema declared inside a function',
+      code: dedent`
+        import * as z from 'zod/mini';
+        function buildSchema() {
+          const Category = z.object({
+            name: z.string(),
+            get subcategories() {
+              return z.array(Category);
+            },
+          });
+          return Category;
+        }
+      `,
+      errors: [{ messageId: 'functionScopedSchema' }],
+    },
+    {
+      name: 'z.lazy schema declared inside a function',
+      code: dedent`
+        import * as z from 'zod/mini';
+        function buildSchema() {
+          return z.lazy(() => z.object({ name: z.string() }));
         }
       `,
       errors: [{ messageId: 'functionScopedSchema' }],

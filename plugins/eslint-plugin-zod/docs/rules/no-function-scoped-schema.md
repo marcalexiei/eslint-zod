@@ -11,6 +11,10 @@ declaration inside its block — instead of once at module scope. A schema neste
 function-scoped schema (e.g. the `z.string()` inside a `z.object({ ... })` that is itself flagged) is
 reported once, at the outermost schema.
 
+A schema that _must_ live in a function is not reported: the getter of a recursive object schema, and the
+thunk passed to `z.lazy()`. What counts is where the schema they belong to is declared — either idiom
+inside a function is still reported, once.
+
 ## Why?
 
 Under [`import 'zod/compile'`](https://zod.dev/compile), each schema instance is compiled lazily on its
@@ -34,6 +38,17 @@ function validate(value) {
 ### ✅ Valid
 
 ```ts
+// A recursive schema's getter and a `z.lazy()` thunk are exempt: the schema they
+// belong to is still declared once, at module scope.
+const Category = z.object({
+  name: z.string(),
+  get subcategories() {
+    return z.array(Category);
+  },
+});
+
+const Node = z.lazy(() => z.object({ value: z.string() }));
+
 const schema = z.string();
 
 function validate(value) {
