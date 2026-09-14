@@ -1,3 +1,4 @@
+import { ZOD_BIGINT_SUBTYPE_NAMES, ZOD_NUMBER_SUBTYPE_NAMES } from './zod-numeric-subtype-names.js';
 import { ZOD_STRING_FORMAT_NAMES } from './zod-string-format-names.js';
 
 /**
@@ -28,16 +29,11 @@ const BASE_TYPES = new Map<string, ZodSchemaBaseType>([
 
   // numbers
   ['number', 'number'],
-  ['int', 'number'],
-  ['int32', 'number'],
-  ['uint32', 'number'],
-  ['float32', 'number'],
-  ['float64', 'number'],
+  ...ZOD_NUMBER_SUBTYPE_NAMES.map((name): [string, ZodSchemaBaseType] => [name, 'number']),
 
   // bigints
   ['bigint', 'bigint'],
-  ['int64', 'bigint'],
-  ['uint64', 'bigint'],
+  ...ZOD_BIGINT_SUBTYPE_NAMES.map((name): [string, ZodSchemaBaseType] => [name, 'bigint']),
 
   // booleans — `stringbool` parses a string INPUT but outputs a boolean,
   // and checks run against the output
