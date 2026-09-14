@@ -1,5 +1,11 @@
 # @eslint-zod/utils
 
+## 5.0.1
+
+### Patch Changes
+
+- [#443](https://github.com/marcalexiei/eslint-zod/pull/443) [`703ed5e`](https://github.com/marcalexiei/eslint-zod/commit/703ed5e0442ef017080b3987b00253eafc7d8685) - refactor: share the numeric sub-type name lists between the base-type and immutability tables
+
 ## 5.0.0
 
 ### Major Changes
