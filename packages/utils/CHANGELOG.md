@@ -1,5 +1,35 @@
 # @eslint-zod/utils
 
+## 5.0.0
+
+### Major Changes
+
+- [#439](https://github.com/marcalexiei/eslint-zod/pull/439) [`62608ad`](https://github.com/marcalexiei/eslint-zod/commit/62608ad20e6ac8084702af171c4cab34ab1672f4) - feat!: `createTracker` takes a required `kind` and records only value, type, or both kinds of import
+
+### Minor Changes
+
+- [#433](https://github.com/marcalexiei/eslint-zod/pull/433) [`3124361`](https://github.com/marcalexiei/eslint-zod/commit/3124361d363d4f1ac95985c5b4f1840311a22d66) - feat: add `no-dynamic-schema-value` rule
+
+  Flags a non-static argument anywhere in schema expression:
+
+  - a function call result
+  - `new`
+  - `this`
+  - mutable variable
+
+  the criterion `zod-compiler` uses to decide what it can hoist.
+
+  Opt-in, not part of `recommended` config.
+
+- [#435](https://github.com/marcalexiei/eslint-zod/pull/435) [`12eca40`](https://github.com/marcalexiei/eslint-zod/commit/12eca408edbf6794aa6aca32886e7b7361b201be) - feat: add `prefer-validate` with suggestions for success-only synchronous and asynchronous parsing
+
+- [#433](https://github.com/marcalexiei/eslint-zod/pull/433) [`3124361`](https://github.com/marcalexiei/eslint-zod/commit/3124361d363d4f1ac95985c5b4f1840311a22d66) - feat: add `no-function-scoped-schema` rule
+
+  Flags a schema built inside a function body instead of once at module scope.
+  When using `import 'zod/compile'` a per-call schema is rebuilt and recompiled on every call.
+
+  Opt-in, not part of `recommended` config.
+
 ## 4.0.0
 
 ### Major Changes
