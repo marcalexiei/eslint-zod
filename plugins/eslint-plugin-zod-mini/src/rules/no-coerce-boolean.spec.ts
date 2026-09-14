@@ -1,7 +1,13 @@
+import { createSuggestionCases } from '@eslint-zod/tooling/vitest/rule-tester-cases';
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
 
 import { noCoerceBoolean } from './no-coerce-boolean.js';
+
+const { suggest, report } = createSuggestionCases(noCoerceBoolean, {
+  messageId: 'noCoerceBoolean',
+  suggestionMessageId: 'useStringbool',
+});
 
 const ruleTester = new RuleTester();
 
@@ -54,126 +60,74 @@ ruleTester.run(noCoerceBoolean.name, noCoerceBoolean, {
     },
   ],
   invalid: [
-    {
-      name: 'namespace import',
-      code: dedent`
+    suggest(
+      'namespace import',
+      dedent`
         import * as z from 'zod/mini';
         z.coerce.boolean();
       `,
-      errors: [
-        {
-          messageId: 'noCoerceBoolean',
-          suggestions: [
-            {
-              messageId: 'useStringbool',
-              output: dedent`
+      dedent`
                 import * as z from 'zod/mini';
                 z.stringbool();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'default import',
-      code: dedent`
+    ),
+    suggest(
+      'default import',
+      dedent`
         import z from 'zod/mini';
         z.coerce.boolean();
       `,
-      errors: [
-        {
-          messageId: 'noCoerceBoolean',
-          suggestions: [
-            {
-              messageId: 'useStringbool',
-              output: dedent`
+      dedent`
                 import z from 'zod/mini';
                 z.stringbool();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named z import',
-      code: dedent`
+    ),
+    suggest(
+      'named z import',
+      dedent`
         import { z } from 'zod/mini';
         z.coerce.boolean();
       `,
-      errors: [
-        {
-          messageId: 'noCoerceBoolean',
-          suggestions: [
-            {
-              messageId: 'useStringbool',
-              output: dedent`
+      dedent`
                 import { z } from 'zod/mini';
                 z.stringbool();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named coerce import (no suggestion)',
-      code: dedent`
+    ),
+    report(
+      'named coerce import (no suggestion)',
+      dedent`
         import { coerce } from 'zod/mini';
         coerce.boolean();
       `,
-      errors: [{ messageId: 'noCoerceBoolean', suggestions: [] }],
-    },
-    {
-      name: 'computed coerced factory — reported without a suggestion, and must not crash',
-      code: dedent`
+    ),
+    report(
+      'computed coerced factory — reported without a suggestion, and must not crash',
+      dedent`
         import * as z from 'zod/mini';
         z.coerce['boolean']();
       `,
-      errors: [{ messageId: 'noCoerceBoolean', suggestions: [] }],
-    },
-    {
-      name: 'with chained optional',
-      code: dedent`
+    ),
+    suggest(
+      'with chained optional',
+      dedent`
         import * as z from 'zod/mini';
         z.optional(z.coerce.boolean());
       `,
-      errors: [
-        {
-          messageId: 'noCoerceBoolean',
-          suggestions: [
-            {
-              messageId: 'useStringbool',
-              output: dedent`
+      dedent`
                 import * as z from 'zod/mini';
                 z.optional(z.stringbool());
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'inside object schema',
-      code: dedent`
+    ),
+    suggest(
+      'inside object schema',
+      dedent`
         import * as z from 'zod/mini';
         z.object({ isUrgent: z.optional(z.coerce.boolean()) });
       `,
-      errors: [
-        {
-          messageId: 'noCoerceBoolean',
-          suggestions: [
-            {
-              messageId: 'useStringbool',
-              output: dedent`
+      dedent`
                 import * as z from 'zod/mini';
                 z.object({ isUrgent: z.optional(z.stringbool()) });
               `,
-            },
-          ],
-        },
-      ],
-    },
+    ),
   ],
 });

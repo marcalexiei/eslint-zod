@@ -1,7 +1,23 @@
+import { createSuggestionCases } from '@eslint-zod/tooling/vitest/rule-tester-cases';
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
 
 import { preferValidate } from './prefer-validate.js';
+
+const { suggest, report } = createSuggestionCases(preferValidate, {
+  messageId: 'preferValidate',
+  suggestionMessageId: 'useValidate',
+  data: {
+    method: 'validate',
+  },
+});
+const { suggest: suggestAsync } = createSuggestionCases(preferValidate, {
+  messageId: 'preferValidate',
+  suggestionMessageId: 'useValidate',
+  data: {
+    method: 'validateAsync',
+  },
+});
 
 const ruleTester = new RuleTester();
 
@@ -85,190 +101,105 @@ ruleTester.run(preferValidate.name, preferValidate, {
     },
   ],
   invalid: [
-    {
-      name: 'direct success access',
-      code: dedent`
+    suggest(
+      'direct success access',
+      dedent`
         import * as core from 'zod/v4/core';
         const ok = core.safeParse(Schema, data).success;
       `,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: { method: 'validate' },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: { method: 'validate' },
-              output: dedent`
-                import * as core from 'zod/v4/core';
-                const ok = core.validate(Schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'success-only destructuring with an alias',
-      code: dedent`
+      dedent`
+        import * as core from 'zod/v4/core';
+        const ok = core.validate(Schema, data);
+      `,
+    ),
+    suggest(
+      'success-only destructuring with an alias',
+      dedent`
         import * as core from 'zod/v4/core';
         const { success: valid } = core.safeParse(Schema, data);
         use(valid);
       `,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: { method: 'validate' },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: { method: 'validate' },
-              output: dedent`
-                import * as core from 'zod/v4/core';
-                const valid = core.validate(Schema, data);
-                use(valid);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'result variable read only through success',
-      code: dedent`
+      dedent`
+        import * as core from 'zod/v4/core';
+        const valid = core.validate(Schema, data);
+        use(valid);
+      `,
+    ),
+    suggest(
+      'result variable read only through success',
+      dedent`
         import * as core from 'zod/v4/core';
         const result = core.safeParse(Schema, data);
         if (result.success) {
           accept(data);
         }
       `,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: { method: 'validate' },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: { method: 'validate' },
-              output: dedent`
-                import * as core from 'zod/v4/core';
-                const result = core.validate(Schema, data);
-                if (result) {
-                  accept(data);
-                }
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'awaited async parse',
-      code: dedent`
+      dedent`
+        import * as core from 'zod/v4/core';
+        const result = core.validate(Schema, data);
+        if (result) {
+          accept(data);
+        }
+      `,
+    ),
+    suggestAsync(
+      'awaited async parse',
+      dedent`
         import * as core from 'zod/v4/core';
         const result = await core.safeParseAsync(Schema, data);
         if (result.success) {
           accept(data);
         }
       `,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: { method: 'validateAsync' },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: { method: 'validateAsync' },
-              output: dedent`
-                import * as core from 'zod/v4/core';
-                const result = await core.validateAsync(Schema, data);
-                if (result) {
-                  accept(data);
-                }
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named import reuses the existing declaration',
-      code: dedent`
+      dedent`
+        import * as core from 'zod/v4/core';
+        const result = await core.validateAsync(Schema, data);
+        if (result) {
+          accept(data);
+        }
+      `,
+    ),
+    suggest(
+      'named import reuses the existing declaration',
+      dedent`
         import { safeParse } from 'zod/v4/core';
         safeParse(Schema, data).success;
       `,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: { method: 'validate' },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: { method: 'validate' },
-              output: dedent`
-                import { safeParse, validate } from 'zod/v4/core';
-                validate(Schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named import avoids an existing binding',
-      code: dedent`
+      dedent`
+        import { safeParse, validate } from 'zod/v4/core';
+        validate(Schema, data);
+      `,
+    ),
+    suggest(
+      'named import avoids an existing binding',
+      dedent`
         import { safeParse } from 'zod/v4/core';
         const validate = 1;
         safeParse(Schema, data).success;
       `,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: { method: 'validate' },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: { method: 'validate' },
-              output: dedent`
-                import { safeParse, validate as validate2 } from 'zod/v4/core';
-                const validate = 1;
-                validate2(Schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'aliased namespace import',
-      code: dedent`
+      dedent`
+        import { safeParse, validate as validate2 } from 'zod/v4/core';
+        const validate = 1;
+        validate2(Schema, data);
+      `,
+    ),
+    suggest(
+      'aliased namespace import',
+      dedent`
         import * as myCore from 'zod/v4/core';
         myCore.safeParse(Schema, data).success;
       `,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: { method: 'validate' },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: { method: 'validate' },
-              output: dedent`
-                import * as myCore from 'zod/v4/core';
-                myCore.validate(Schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'no suggestion when a comment would be discarded',
-      code: dedent`
+      dedent`
+        import * as myCore from 'zod/v4/core';
+        myCore.validate(Schema, data);
+      `,
+    ),
+    report(
+      'no suggestion when a comment would be discarded',
+      dedent`
         import * as core from 'zod/v4/core';
         core.safeParse(Schema, data)./* keep */ success;
       `,
-      errors: [{ messageId: 'preferValidate', data: { method: 'validate' }, suggestions: [] }],
-    },
+    ),
   ],
 });

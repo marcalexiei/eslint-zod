@@ -10,6 +10,7 @@
     "./eslint-doc-generator": "./src/eslint-doc-generator/index.ts",
     "./tsdown": "./src/tsdown/index.ts",
     "./vitest": "./src/vitest/index.js",
+    "./vitest/rule-tester-cases": "./src/vitest/rule-tester-cases.ts",
     "./vitest/spec-helpers": "./src/vitest/spec-helpers.ts"
   },
   "dependencies": {

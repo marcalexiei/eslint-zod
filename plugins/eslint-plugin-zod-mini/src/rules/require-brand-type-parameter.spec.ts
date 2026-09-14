@@ -1,7 +1,13 @@
+import { createSuggestionCases } from '@eslint-zod/tooling/vitest/rule-tester-cases';
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
 
 import { requireBrandTypeParameter } from './require-brand-type-parameter.js';
+
+const { suggest } = createSuggestionCases(requireBrandTypeParameter, {
+  messageId: 'missingTypeParameter',
+  suggestionMessageId: 'removeBrandFunction',
+});
 
 const ruleTester = new RuleTester();
 
@@ -52,110 +58,60 @@ ruleTester.run(requireBrandTypeParameter.name, requireBrandTypeParameter, {
   ],
 
   invalid: [
-    {
-      name: 'namespace import',
-      code: dedent`
+    suggest(
+      'namespace import',
+      dedent`
         import * as z from 'zod/mini';
         z.string().brand();
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import * as z from 'zod/mini';
                 z.string();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named import',
-      code: dedent`
+    ),
+    suggest(
+      'named import',
+      dedent`
         import { string } from 'zod/mini';
         string().brand();
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import { string } from 'zod/mini';
                 string();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named z import',
-      code: dedent`
+    ),
+    suggest(
+      'named z import',
+      dedent`
         import { z } from 'zod/mini';
         z.string().brand();
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import { z } from 'zod/mini';
                 z.string();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'zod/v4-mini import',
-      code: dedent`
+    ),
+    suggest(
+      'zod/v4-mini import',
+      dedent`
         import * as z from 'zod/v4-mini';
         z.string().brand();
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import * as z from 'zod/v4-mini';
                 z.string();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'complex chain without type parameter',
-      code: dedent`
+    ),
+    suggest(
+      'complex chain without type parameter',
+      dedent`
         import * as z from 'zod/mini';
         z.string().check(z.minLength(1)).brand()
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import * as z from 'zod/mini';
                 z.string().check(z.minLength(1))
               `,
-            },
-          ],
-        },
-      ],
-    },
+    ),
   ],
 });

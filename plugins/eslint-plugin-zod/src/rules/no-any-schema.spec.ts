@@ -1,7 +1,13 @@
+import { createSuggestionCases } from '@eslint-zod/tooling/vitest/rule-tester-cases';
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
 
 import { noAnySchema } from './no-any-schema.js';
+
+const { suggest, report } = createSuggestionCases(noAnySchema, {
+  messageId: 'noZAny',
+  suggestionMessageId: 'useUnknown',
+});
 
 const ruleTester = new RuleTester();
 
@@ -35,69 +41,39 @@ ruleTester.run(noAnySchema.name, noAnySchema, {
     },
   ],
   invalid: [
-    {
-      name: 'namespace import',
-      code: dedent`
+    suggest(
+      'namespace import',
+      dedent`
         import * as z from 'zod';
         const schema = z.any();
       `,
-      errors: [
-        {
-          messageId: 'noZAny',
-          suggestions: [
-            {
-              messageId: 'useUnknown',
-              output: dedent`
+      dedent`
                 import * as z from 'zod';
                 const schema = z.unknown();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named z import',
-      code: dedent`
+    ),
+    suggest(
+      'named z import',
+      dedent`
         import { z } from 'zod';
         const schema = z.any();
       `,
-      errors: [
-        {
-          messageId: 'noZAny',
-          suggestions: [
-            {
-              messageId: 'useUnknown',
-              output: dedent`
+      dedent`
                 import { z } from 'zod';
                 const schema = z.unknown();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named z import with rename',
-      code: dedent`
+    ),
+    suggest(
+      'named z import with rename',
+      dedent`
         import { z as pippo } from 'zod';
         const schema = pippo.any();
       `,
-      errors: [
-        {
-          messageId: 'noZAny',
-          suggestions: [
-            {
-              messageId: 'useUnknown',
-              output: dedent`
+      dedent`
                 import { z as pippo } from 'zod';
                 const schema = pippo.unknown();
               `,
-            },
-          ],
-        },
-      ],
-    },
+    ),
     {
       name: 'named import',
       code: dedent`
@@ -106,27 +82,17 @@ ruleTester.run(noAnySchema.name, noAnySchema, {
       `,
       errors: [{ messageId: 'noZAny' }],
     },
-    {
-      name: 'namespace import within an object',
-      code: dedent`
+    suggest(
+      'namespace import within an object',
+      dedent`
         import * as z from 'zod';
         const schema = z.object({ prop: z.any() });
       `,
-      errors: [
-        {
-          messageId: 'noZAny',
-          suggestions: [
-            {
-              messageId: 'useUnknown',
-              output: dedent`
+      dedent`
                 import * as z from 'zod';
                 const schema = z.object({ prop: z.unknown() });
               `,
-            },
-          ],
-        },
-      ],
-    },
+    ),
     {
       // https://github.com/marcalexiei/eslint-zod/issues/143
       name: 'should correctly fix any schema with chained method',
@@ -149,21 +115,19 @@ ruleTester.run(noAnySchema.name, noAnySchema, {
         },
       ],
     },
-    {
-      name: 'named import with a chained method — reported without a rename suggestion',
-      code: dedent`
+    report(
+      'named import with a chained method — reported without a rename suggestion',
+      dedent`
         import { any } from 'zod';
         const schema = any().optional();
       `,
-      errors: [{ messageId: 'noZAny', suggestions: [] }],
-    },
-    {
-      name: 'computed factory access — reported without a rename suggestion',
-      code: dedent`
+    ),
+    report(
+      'computed factory access — reported without a rename suggestion',
+      dedent`
         import * as z from 'zod';
         const schema = z['any']();
       `,
-      errors: [{ messageId: 'noZAny', suggestions: [] }],
-    },
+    ),
   ],
 });

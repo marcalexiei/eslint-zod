@@ -1,7 +1,13 @@
+import { createSuggestionCases } from '@eslint-zod/tooling/vitest/rule-tester-cases';
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
 
 import { noAnySchema } from './no-any-schema.js';
+
+const { suggest, report } = createSuggestionCases(noAnySchema, {
+  messageId: 'noZAny',
+  suggestionMessageId: 'useUnknown',
+});
 
 const ruleTester = new RuleTester();
 
@@ -41,48 +47,28 @@ ruleTester.run(noAnySchema.name, noAnySchema, {
     },
   ],
   invalid: [
-    {
-      name: 'namespace import',
-      code: dedent`
+    suggest(
+      'namespace import',
+      dedent`
         import * as z from 'zod/mini';
         const userSchema = z.any();
       `,
-      errors: [
-        {
-          messageId: 'noZAny',
-          suggestions: [
-            {
-              messageId: 'useUnknown',
-              output: dedent`
+      dedent`
                 import * as z from 'zod/mini';
                 const userSchema = z.unknown();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named z import',
-      code: dedent`
+    ),
+    suggest(
+      'named z import',
+      dedent`
         import { z } from 'zod/mini';
         const userSchema = z.any();
       `,
-      errors: [
-        {
-          messageId: 'noZAny',
-          suggestions: [
-            {
-              messageId: 'useUnknown',
-              output: dedent`
+      dedent`
                 import { z } from 'zod/mini';
                 const userSchema = z.unknown();
               `,
-            },
-          ],
-        },
-      ],
-    },
+    ),
     {
       name: 'named import',
       code: dedent`
@@ -91,84 +77,52 @@ ruleTester.run(noAnySchema.name, noAnySchema, {
       `,
       errors: [{ messageId: 'noZAny' }],
     },
-    {
-      name: 'namespace import within an object',
-      code: dedent`
+    suggest(
+      'namespace import within an object',
+      dedent`
         import * as z from 'zod/mini';
         const userSchema = z.object({ prop: z.any() });
       `,
-      errors: [
-        {
-          messageId: 'noZAny',
-          suggestions: [
-            {
-              messageId: 'useUnknown',
-              output: dedent`
+      dedent`
                 import * as z from 'zod/mini';
                 const userSchema = z.object({ prop: z.unknown() });
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'zod/v4-mini import',
-      code: dedent`
+    ),
+    suggest(
+      'zod/v4-mini import',
+      dedent`
         import * as z from 'zod/v4-mini';
         const userSchema = z.any();
       `,
-      errors: [
-        {
-          messageId: 'noZAny',
-          suggestions: [
-            {
-              messageId: 'useUnknown',
-              output: dedent`
+      dedent`
                 import * as z from 'zod/v4-mini';
                 const userSchema = z.unknown();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'chained method',
-      code: dedent`
+    ),
+    suggest(
+      'chained method',
+      dedent`
         import * as z from 'zod/mini';
         const userSchema = z.any().check((value) => value)
       `,
-      errors: [
-        {
-          messageId: 'noZAny',
-          suggestions: [
-            {
-              messageId: 'useUnknown',
-              output: dedent`
+      dedent`
                 import * as z from 'zod/mini';
                 const userSchema = z.unknown().check((value) => value)
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named import with a chained method — reported without a rename suggestion',
-      code: dedent`
+    ),
+    report(
+      'named import with a chained method — reported without a rename suggestion',
+      dedent`
         import { any, check } from 'zod/mini';
         const userSchema = any().check((value) => value);
       `,
-      errors: [{ messageId: 'noZAny', suggestions: [] }],
-    },
-    {
-      name: 'computed factory access — reported without a rename suggestion',
-      code: dedent`
+    ),
+    report(
+      'computed factory access — reported without a rename suggestion',
+      dedent`
         import * as z from 'zod/mini';
         const userSchema = z['any']();
       `,
-      errors: [{ messageId: 'noZAny', suggestions: [] }],
-    },
+    ),
   ],
 });
