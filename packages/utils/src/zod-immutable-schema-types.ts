@@ -1,3 +1,4 @@
+import { ZOD_BIGINT_SUBTYPE_NAMES, ZOD_NUMBER_SUBTYPE_NAMES } from './zod-numeric-subtype-names.js';
 import { ZOD_STRING_FORMAT_NAMES } from './zod-string-format-names.js';
 
 /**
@@ -28,14 +29,9 @@ export const ZOD_IMMUTABLE_SCHEMA_TYPES = Object.freeze([
   'undefined',
   'void',
 
-  // number sub-types
-  'float32',
-  'float64',
-  'int',
-  'int32',
-  'int64',
-  'uint32',
-  'uint64',
+  // number and bigint sub-types — spread for the same reason as the string formats below
+  ...ZOD_NUMBER_SUBTYPE_NAMES,
+  ...ZOD_BIGINT_SUBTYPE_NAMES,
 
   // top-level string formats (all parse to `string`) — spread rather than
   // hand-copied, so a new format cannot be added to one table and forgotten
