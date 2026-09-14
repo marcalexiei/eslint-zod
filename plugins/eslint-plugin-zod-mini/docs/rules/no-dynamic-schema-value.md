@@ -13,6 +13,9 @@ function parameter.
 The check applies to every argument of every call in a schema's chain (the factory, each chained method,
 and each `.check(...)` argument), not just the outermost call.
 
+A hoisted `function` declaration reads as a function literal — the same as the `const` arrow it could be
+rewritten as.
+
 ## Why?
 
 This is the criterion [`zod-compiler`](https://www.npmjs.com/package/zod-compiler) uses to decide what it
@@ -52,8 +55,8 @@ const schema3 = z.string().check(z.refine((value) => value.length > threshold));
 
 ## Limitations
 
-The rule resolves an identifier as static only through an import binding or a `const` initialized (directly
-or transitively) to another static value. A member access (`config.message`) is always treated as dynamic,
+The rule resolves an identifier as static only through an import binding, a `function` declaration, or a
+`const` initialized (directly or transitively) to another static value. A member access (`config.message`) is always treated as dynamic,
 even when the object it reads from is itself static. A `const` that refers to itself is reported rather
 than resolved.
 

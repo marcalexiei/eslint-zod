@@ -109,6 +109,14 @@ ruleTester.run(noDynamicSchemaValue.name, noDynamicSchemaValue, {
         const schema = z.enum(['a', , ...rest]);
       `,
     },
+    {
+      name: 'module-scope function declaration passed as an argument',
+      code: dedent`
+        import * as z from 'zod';
+        function isValid(value) { return value.length > 0; }
+        const schema = z.string().refine(isValid);
+      `,
+    },
   ],
   invalid: [
     {

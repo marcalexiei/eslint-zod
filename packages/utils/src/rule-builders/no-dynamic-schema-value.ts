@@ -41,9 +41,10 @@ function isStaticExpression(node: TSESTree.Node, state: StaticCheckState): boole
 
     case AST_NODE_TYPES.ObjectExpression:
       return node.properties.every((property) =>
-        property.type === AST_NODE_TYPES.SpreadElement
-          ? isStaticExpression(property.argument, state)
-          : isStaticExpression(property.value, state),
+        isStaticExpression(
+          property.type === AST_NODE_TYPES.SpreadElement ? property.argument : property.value,
+          state,
+        ),
       );
 
     case AST_NODE_TYPES.UnaryExpression:
@@ -76,7 +77,11 @@ function isStaticExpression(node: TSESTree.Node, state: StaticCheckState): boole
         return false;
       }
 
-      if (def.type === TSESLint.Scope.DefinitionType.ImportBinding) {
+      // A hoisted declaration is a function literal, exactly like `const f = () => {}`.
+      if (
+        def.type === TSESLint.Scope.DefinitionType.ImportBinding ||
+        def.type === TSESLint.Scope.DefinitionType.FunctionName
+      ) {
         return true;
       }
 
