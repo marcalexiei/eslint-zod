@@ -1,7 +1,13 @@
+import { createSuggestionCases } from '@eslint-zod/tooling/vitest/rule-tester-cases';
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
 
 import { requireBrandTypeParameter } from './require-brand-type-parameter.js';
+
+const { suggest } = createSuggestionCases(requireBrandTypeParameter, {
+  messageId: 'missingTypeParameter',
+  suggestionMessageId: 'removeBrandFunction',
+});
 
 const ruleTester = new RuleTester();
 
@@ -61,152 +67,82 @@ ruleTester.run(requireBrandTypeParameter.name, requireBrandTypeParameter, {
   ],
 
   invalid: [
-    {
-      name: 'namespace import',
-      code: dedent`
+    suggest(
+      'namespace import',
+      dedent`
         import * as z from 'zod';
         z.string().min(1).brand();
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import * as z from 'zod';
                 z.string().min(1);
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named import',
-      code: dedent`
+    ),
+    suggest(
+      'named import',
+      dedent`
         import { string } from 'zod';
         string().min(1).brand();
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import { string } from 'zod';
                 string().min(1);
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named z import',
-      code: dedent`
+    ),
+    suggest(
+      'named z import',
+      dedent`
         import { z } from 'zod';
         z.string().min(1).brand();
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import { z } from 'zod';
                 z.string().min(1);
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'brand without type parameter in complex chain',
-      code: dedent`
+    ),
+    suggest(
+      'brand without type parameter in complex chain',
+      dedent`
         import * as z from 'zod';
         z.string().min(1).max(10).email().brand()
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import * as z from 'zod';
                 z.string().min(1).max(10).email()
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'brand without type parameter not as last method (namespace import)',
-      code: dedent`
+    ),
+    suggest(
+      'brand without type parameter not as last method (namespace import)',
+      dedent`
         import * as z from 'zod';
         z.string().min(1).brand().max(2)
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import * as z from 'zod';
                 z.string().min(1).max(2)
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'brand without type parameter not as last method (named import)',
-      code: dedent`
+    ),
+    suggest(
+      'brand without type parameter not as last method (named import)',
+      dedent`
         import { string } from 'zod';
         string().min(1).brand().max(2)
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import { string } from 'zod';
                 string().min(1).max(2)
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'brand without type parameter not as last method (named z import)',
-      code: dedent`
+    ),
+    suggest(
+      'brand without type parameter not as last method (named z import)',
+      dedent`
         import { z } from 'zod';
         z.string().min(1).brand().max(2)
       `,
-      errors: [
-        {
-          messageId: 'missingTypeParameter',
-          suggestions: [
-            {
-              messageId: 'removeBrandFunction',
-              output: dedent`
+      dedent`
                 import { z } from 'zod';
                 z.string().min(1).max(2)
               `,
-            },
-          ],
-        },
-      ],
-    },
+    ),
   ],
 });

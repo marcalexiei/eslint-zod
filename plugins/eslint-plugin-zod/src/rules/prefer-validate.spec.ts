@@ -1,7 +1,23 @@
+import { createSuggestionCases } from '@eslint-zod/tooling/vitest/rule-tester-cases';
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
 
 import { preferValidate } from './prefer-validate.js';
+
+const { suggest, report } = createSuggestionCases(preferValidate, {
+  messageId: 'preferValidate',
+  suggestionMessageId: 'useValidate',
+  data: {
+    method: 'validate',
+  },
+});
+const { suggest: suggestAsync } = createSuggestionCases(preferValidate, {
+  messageId: 'preferValidate',
+  suggestionMessageId: 'useValidate',
+  data: {
+    method: 'validateAsync',
+  },
+});
 
 const ruleTester = new RuleTester();
 
@@ -583,1229 +599,523 @@ ruleTester.run(preferValidate.name, preferValidate, {
     },
   ],
   invalid: [
-    {
-      name: 'parenthesized computed success',
-      code: "import * as z from 'zod'; const schema = z.string(); ((schema).safeParse(data))[(('success'))];",
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              output:
-                "import * as z from 'zod'; const schema = z.string(); ((schema).validate(data));",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'parenthesized computed stored success',
-      code: "import * as z from 'zod'; const schema = z.string(); const r = schema.safeParse(data); ((r))[(('success'))];",
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              output:
-                "import * as z from 'zod'; const schema = z.string(); const r = schema.validate(data); ((r));",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'parenthesized computed method',
-      code: "import * as z from 'zod'; const schema = z.string(); (schema)[(('safeParse'))](data).success;",
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              output:
-                "import * as z from 'zod'; const schema = z.string(); (schema)[(('validate'))](data);",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'asserted success read',
-      code: "import * as z from 'zod'; const schema = z.string(); schema.safeParse(data).success!;",
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              output:
-                "import * as z from 'zod'; const schema = z.string(); schema.validate(data)!;",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'direct access',
-      code: dedent`
+    suggest(
+      'parenthesized computed success',
+      "import * as z from 'zod'; const schema = z.string(); ((schema).safeParse(data))[(('success'))];",
+      "import * as z from 'zod'; const schema = z.string(); ((schema).validate(data));",
+    ),
+    suggest(
+      'parenthesized computed stored success',
+      "import * as z from 'zod'; const schema = z.string(); const r = schema.safeParse(data); ((r))[(('success'))];",
+      "import * as z from 'zod'; const schema = z.string(); const r = schema.validate(data); ((r));",
+    ),
+    suggest(
+      'parenthesized computed method',
+      "import * as z from 'zod'; const schema = z.string(); (schema)[(('safeParse'))](data).success;",
+      "import * as z from 'zod'; const schema = z.string(); (schema)[(('validate'))](data);",
+    ),
+    suggest(
+      'asserted success read',
+      "import * as z from 'zod'; const schema = z.string(); schema.safeParse(data).success!;",
+      "import * as z from 'zod'; const schema = z.string(); schema.validate(data)!;",
+    ),
+    suggest(
+      'direct access',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         schema.safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                schema.validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'inline schema',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        schema.validate(data);
+      `,
+    ),
+    suggest(
+      'inline schema',
+      dedent`
         import * as z from 'zod';
         z.string().safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                z.string().validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'destructured success',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        z.string().validate(data);
+      `,
+    ),
+    suggest(
+      'destructured success',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         const { success } = schema.safeParse(data);
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                const success = schema.validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'destructured alias',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        const success = schema.validate(data);
+      `,
+    ),
+    suggest(
+      'destructured alias',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         const { success: ok } = schema.safeParse(data);
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                const ok = schema.validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'stored result with multiple reads',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        const ok = schema.validate(data);
+      `,
+    ),
+    suggest(
+      'stored result with multiple reads',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         const result = schema.safeParse(data);
         if (result.success) log(result.success);
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                const result = schema.validate(data);
-                if (result) log(result);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'immutable schema alias',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        const result = schema.validate(data);
+        if (result) log(result);
+      `,
+    ),
+    suggest(
+      'immutable schema alias',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         const alias = schema;
         alias.safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                const alias = schema;
-                alias.validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'awaited direct access',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        const alias = schema;
+        alias.validate(data);
+      `,
+    ),
+    suggestAsync(
+      'awaited direct access',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         (await schema.safeParseAsync(data)).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validateAsync',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validateAsync',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                (await schema.validateAsync(data));
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'awaited stored result',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        (await schema.validateAsync(data));
+      `,
+    ),
+    suggestAsync(
+      'awaited stored result',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         const result = await schema.safeParseAsync(data);
         log(result.success);
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validateAsync',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validateAsync',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                const result = await schema.validateAsync(data);
-                log(result);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'awaited destructuring',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        const result = await schema.validateAsync(data);
+        log(result);
+      `,
+    ),
+    suggestAsync(
+      'awaited destructuring',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         const { success: ok } = await schema.safeParseAsync(data);
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validateAsync',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validateAsync',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                const ok = await schema.validateAsync(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'standalone namespace',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        const ok = await schema.validateAsync(data);
+      `,
+    ),
+    suggest(
+      'standalone namespace',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         z.safeParse(schema, data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                z.validate(schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'standalone async namespace',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        z.validate(schema, data);
+      `,
+    ),
+    suggestAsync(
+      'standalone async namespace',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         (await z.safeParseAsync(schema, data)).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validateAsync',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validateAsync',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                (await z.validateAsync(schema, data));
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'computed static properties',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        (await z.validateAsync(schema, data));
+      `,
+    ),
+    suggest(
+      'computed static properties',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         schema['safeParse'](data)['success'];
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                schema['validate'](data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'parenthesized schema and parse result',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        schema['validate'](data);
+      `,
+    ),
+    suggest(
+      'parenthesized schema and parse result',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         ((schema).safeParse(data)).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                ((schema).validate(data));
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'comments in arguments',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        ((schema).validate(data));
+      `,
+    ),
+    suggest(
+      'comments in arguments',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         schema.safeParse(/* input */ data, options).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                schema.validate(/* input */ data, options);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named parsing import',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        schema.validate(/* input */ data, options);
+      `,
+    ),
+    suggest(
+      'named parsing import',
+      dedent`
         import { safeParse as parse } from 'zod';
         parse(schema, data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import { safeParse as parse, validate } from 'zod';
-                validate(schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'reuse validation alias',
-      code: dedent`
+      dedent`
+        import { safeParse as parse, validate } from 'zod';
+        validate(schema, data);
+      `,
+    ),
+    suggest(
+      'reuse validation alias',
+      dedent`
         import { safeParse, validate as check } from 'zod';
         safeParse(schema, data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import { safeParse, validate as check } from 'zod';
-                check(schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'collision-free import',
-      code: dedent`
+      dedent`
+        import { safeParse, validate as check } from 'zod';
+        check(schema, data);
+      `,
+    ),
+    suggest(
+      'collision-free import',
+      dedent`
         import { safeParse } from 'zod';
         function f(validate, validate2) { return safeParse(schema, data).success;
         }
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import { safeParse, validate as validate3 } from 'zod';
-                function f(validate, validate2) { return validate3(schema, data);
-                }
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'async spa alias',
-      code: dedent`
+      dedent`
+        import { safeParse, validate as validate3 } from 'zod';
+        function f(validate, validate2) { return validate3(schema, data);
+        }
+      `,
+    ),
+    suggestAsync(
+      'async spa alias',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         (await schema.spa(data)).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validateAsync',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validateAsync',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                (await schema.validateAsync(data));
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'comment in removed access',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        (await schema.validateAsync(data));
+      `,
+    ),
+    report(
+      'comment in removed access',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         schema.safeParse(data). /* keep */ success;
       `,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          suggestions: [],
-        },
-      ],
-    },
-    {
-      name: 'default import',
-      code: dedent`
+    ),
+    suggest(
+      'default import',
+      dedent`
         import z from 'zod';
         z.string().safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import z from 'zod';
-                z.string().validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named namespace alias',
-      code: dedent`
+      dedent`
+        import z from 'zod';
+        z.string().validate(data);
+      `,
+    ),
+    suggest(
+      'named namespace alias',
+      dedent`
         import { z as z } from 'zod';
         z.string().safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import { z as z } from 'zod';
-                z.string().validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'factory z.coerce.number()',
-      code: dedent`
+      dedent`
+        import { z as z } from 'zod';
+        z.string().validate(data);
+      `,
+    ),
+    suggest(
+      'factory z.coerce.number()',
+      dedent`
         import * as z from 'zod';
         z.coerce.number().safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                z.coerce.number().validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'factory z.iso.date()',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        z.coerce.number().validate(data);
+      `,
+    ),
+    suggest(
+      'factory z.iso.date()',
+      dedent`
         import * as z from 'zod';
         z.iso.date().safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                z.iso.date().validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'factory z.union([z.string(), z.number()])',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        z.iso.date().validate(data);
+      `,
+    ),
+    suggest(
+      'factory z.union([z.string(), z.number()])',
+      dedent`
         import * as z from 'zod';
         z.union([z.string(), z.number()]).safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                z.union([z.string(), z.number()]).validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'chained schema',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        z.union([z.string(), z.number()]).validate(data);
+      `,
+    ),
+    suggest(
+      'chained schema',
+      dedent`
         import * as z from 'zod';
         z.string().min(1).safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                z.string().min(1).validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'computed standalone',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        z.string().min(1).validate(data);
+      `,
+    ),
+    suggest(
+      'computed standalone',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         z['safeParse'](schema, data)['success'];
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                z['validate'](schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'computed async standalone',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        z['validate'](schema, data);
+      `,
+    ),
+    suggestAsync(
+      'computed async standalone',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         (await z['safeParseAsync'](schema, data))['success'];
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validateAsync',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validateAsync',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                (await z['validateAsync'](schema, data));
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named async parser',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        (await z['validateAsync'](schema, data));
+      `,
+    ),
+    suggestAsync(
+      'named async parser',
+      dedent`
         import { safeParseAsync } from 'zod';
         const { success } = await safeParseAsync(schema, data);
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validateAsync',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validateAsync',
-              },
-              output: dedent`
-                import { safeParseAsync, validateAsync } from 'zod';
-                const success = await validateAsync(schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'parser using existing namespace',
-      code: dedent`
+      dedent`
+        import { safeParseAsync, validateAsync } from 'zod';
+        const success = await validateAsync(schema, data);
+      `,
+    ),
+    suggest(
+      'parser using existing namespace',
+      dedent`
         import * as z from 'zod';
         import { safeParse } from 'zod';
         safeParse(schema, data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                import { safeParse } from 'zod';
-                z.validate(schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'shadowed validation import',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        import { safeParse } from 'zod';
+        z.validate(schema, data);
+      `,
+    ),
+    suggest(
+      'shadowed validation import',
+      dedent`
         import { safeParse, validate } from 'zod';
         function f(validate) { return safeParse(schema, data).success;
         }
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import { safeParse, validate, validate as validate2 } from 'zod';
-                function f(validate) { return validate2(schema, data);
-                }
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'parenthesized stored read',
-      code: dedent`
+      dedent`
+        import { safeParse, validate, validate as validate2 } from 'zod';
+        function f(validate) { return validate2(schema, data);
+        }
+      `,
+    ),
+    suggest(
+      'parenthesized stored read',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         const result = schema.safeParse(data);
         ((result)).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                const result = schema.validate(data);
-                ((result));
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'static destructuring key',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        const result = schema.validate(data);
+        ((result));
+      `,
+    ),
+    suggest(
+      'static destructuring key',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         const { ['success']: ok } = schema.safeParse(data);
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                const ok = schema.validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'repeated boolean declarations',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        const ok = schema.validate(data);
+      `,
+    ),
+    suggest(
+      'repeated boolean declarations',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         let { success: ok } = schema.safeParse(data);
         ok = false;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.string();
-                let ok = schema.validate(data);
-                ok = false;
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'alternative source',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.string();
+        let ok = schema.validate(data);
+        ok = false;
+      `,
+    ),
+    suggest(
+      'alternative source',
+      dedent`
         import * as z from 'zod/v4';
         z.string().safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod/v4';
-                z.string().validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'factories beyond the base types: z.symbol()',
-      code: dedent`
+      dedent`
+        import * as z from 'zod/v4';
+        z.string().validate(data);
+      `,
+    ),
+    suggest(
+      'factories beyond the base types: z.symbol()',
+      dedent`
         import * as z from 'zod';
         z.symbol().safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                z.symbol().validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'factories beyond the base types: z.keyof()',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        z.symbol().validate(data);
+      `,
+    ),
+    suggest(
+      'factories beyond the base types: z.keyof()',
+      dedent`
         import * as z from 'zod';
         z.keyof(shape).safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                z.keyof(shape).validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'factories beyond the base types: z.preprocess()',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        z.keyof(shape).validate(data);
+      `,
+    ),
+    suggest(
+      'factories beyond the base types: z.preprocess()',
+      dedent`
         import * as z from 'zod';
         const schema = z.preprocess(coerce, z.string());
         schema.safeParse(data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import * as z from 'zod';
-                const schema = z.preprocess(coerce, z.string());
-                schema.validate(data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'property names do not rename the inserted import',
-      code: dedent`
+      dedent`
+        import * as z from 'zod';
+        const schema = z.preprocess(coerce, z.string());
+        schema.validate(data);
+      `,
+    ),
+    suggest(
+      'property names do not rename the inserted import',
+      dedent`
         import { safeParse } from 'zod';
         config.validate = true;
         const options = { validate: true, forward: config.validate };
         safeParse(schema, data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import { safeParse, validate } from 'zod';
-                config.validate = true;
-                const options = { validate: true, forward: config.validate };
-                validate(schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'computed property names are references and do rename the import',
-      code: dedent`
+      dedent`
+        import { safeParse, validate } from 'zod';
+        config.validate = true;
+        const options = { validate: true, forward: config.validate };
+        validate(schema, data);
+      `,
+    ),
+    suggest(
+      'computed property names are references and do rename the import',
+      dedent`
         import { safeParse } from 'zod';
         const validate = 'key';
         const options = { [validate]: config[validate] };
         safeParse(schema, data).success;
       `,
-      output: null,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          data: {
-            method: 'validate',
-          },
-          suggestions: [
-            {
-              messageId: 'useValidate',
-              data: {
-                method: 'validate',
-              },
-              output: dedent`
-                import { safeParse, validate as validate2 } from 'zod';
-                const validate = 'key';
-                const options = { [validate]: config[validate] };
-                validate2(schema, data);
-              `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'comment in destructuring',
-      code: dedent`
+      dedent`
+        import { safeParse, validate as validate2 } from 'zod';
+        const validate = 'key';
+        const options = { [validate]: config[validate] };
+        validate2(schema, data);
+      `,
+    ),
+    report(
+      'comment in destructuring',
+      dedent`
         import * as z from 'zod';
         const schema = z.string();
         const { /* keep */ success } = schema.safeParse(data);
       `,
-      errors: [
-        {
-          messageId: 'preferValidate',
-          suggestions: [],
-        },
-      ],
-    },
+    ),
   ],
 });

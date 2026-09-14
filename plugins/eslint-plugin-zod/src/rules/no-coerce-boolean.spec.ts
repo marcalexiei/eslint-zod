@@ -1,7 +1,13 @@
+import { createSuggestionCases } from '@eslint-zod/tooling/vitest/rule-tester-cases';
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
 
 import { noCoerceBoolean } from './no-coerce-boolean.js';
+
+const { suggest, report } = createSuggestionCases(noCoerceBoolean, {
+  messageId: 'noCoerceBoolean',
+  suggestionMessageId: 'useStringbool',
+});
 
 const ruleTester = new RuleTester();
 
@@ -54,147 +60,85 @@ ruleTester.run(noCoerceBoolean.name, noCoerceBoolean, {
     },
   ],
   invalid: [
-    {
-      name: 'namespace import',
-      code: dedent`
+    suggest(
+      'namespace import',
+      dedent`
         import * as z from 'zod';
         z.coerce.boolean();
       `,
-      errors: [
-        {
-          messageId: 'noCoerceBoolean',
-          suggestions: [
-            {
-              messageId: 'useStringbool',
-              output: dedent`
+      dedent`
                 import * as z from 'zod';
                 z.stringbool();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'default import',
-      code: dedent`
+    ),
+    suggest(
+      'default import',
+      dedent`
         import z from 'zod';
         z.coerce.boolean();
       `,
-      errors: [
-        {
-          messageId: 'noCoerceBoolean',
-          suggestions: [
-            {
-              messageId: 'useStringbool',
-              output: dedent`
+      dedent`
                 import z from 'zod';
                 z.stringbool();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named z import',
-      code: dedent`
+    ),
+    suggest(
+      'named z import',
+      dedent`
         import { z } from 'zod';
         z.coerce.boolean();
       `,
-      errors: [
-        {
-          messageId: 'noCoerceBoolean',
-          suggestions: [
-            {
-              messageId: 'useStringbool',
-              output: dedent`
+      dedent`
                 import { z } from 'zod';
                 z.stringbool();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'aliased namespace import',
-      code: dedent`
+    ),
+    suggest(
+      'aliased namespace import',
+      dedent`
         import * as zod from 'zod';
         zod.coerce.boolean();
       `,
-      errors: [
-        {
-          messageId: 'noCoerceBoolean',
-          suggestions: [
-            {
-              messageId: 'useStringbool',
-              output: dedent`
+      dedent`
                 import * as zod from 'zod';
                 zod.stringbool();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'named coerce import (no suggestion)',
-      code: dedent`
+    ),
+    report(
+      'named coerce import (no suggestion)',
+      dedent`
         import { coerce } from 'zod';
         coerce.boolean();
       `,
-      errors: [{ messageId: 'noCoerceBoolean', suggestions: [] }],
-    },
-    {
-      name: 'with chained method',
-      code: dedent`
+    ),
+    suggest(
+      'with chained method',
+      dedent`
         import * as z from 'zod';
         z.coerce.boolean().optional();
       `,
-      errors: [
-        {
-          messageId: 'noCoerceBoolean',
-          suggestions: [
-            {
-              messageId: 'useStringbool',
-              output: dedent`
+      dedent`
                 import * as z from 'zod';
                 z.stringbool().optional();
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'inside object schema',
-      code: dedent`
+    ),
+    suggest(
+      'inside object schema',
+      dedent`
         import * as z from 'zod';
         z.object({ isUrgent: z.coerce.boolean().optional() });
       `,
-      errors: [
-        {
-          messageId: 'noCoerceBoolean',
-          suggestions: [
-            {
-              messageId: 'useStringbool',
-              output: dedent`
+      dedent`
                 import * as z from 'zod';
                 z.object({ isUrgent: z.stringbool().optional() });
               `,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      name: 'computed coerced factory — reported without a suggestion, and must not crash',
-      code: dedent`
+    ),
+    report(
+      'computed coerced factory — reported without a suggestion, and must not crash',
+      dedent`
         import * as z from 'zod';
         z.coerce['boolean']();
       `,
-      errors: [{ messageId: 'noCoerceBoolean', suggestions: [] }],
-    },
+    ),
   ],
 });
