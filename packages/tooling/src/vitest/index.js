@@ -35,5 +35,7 @@ export const definePluginTestProject = (name) =>
     test: {
       name,
       setupFiles: [RULE_TESTER_SETUP_FILE],
+      // Specs touch no global state, so one worker can serve every file.
+      isolate: false,
     },
   });
