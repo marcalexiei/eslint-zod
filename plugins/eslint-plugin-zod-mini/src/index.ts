@@ -23,6 +23,7 @@ import { preferMeta } from './rules/prefer-meta.js';
 import { preferNullish } from './rules/prefer-nullish.js';
 import { preferStringLengthOverMinMax } from './rules/prefer-string-length-over-min-max.js';
 import { preferTupleOverArrayLength } from './rules/prefer-tuple-over-array-length.js';
+import { preferValidate } from './rules/prefer-validate.js';
 import { requireBrandTypeParameter } from './rules/require-brand-type-parameter.js';
 import { requireErrorMessage } from './rules/require-error-message.js';
 import { schemaErrorPropertyStyle } from './rules/schema-error-property-style.js';
@@ -68,6 +69,7 @@ const eslintPluginZodMini = {
     'prefer-nullish': preferNullish,
     'prefer-string-length-over-min-max': preferStringLengthOverMinMax,
     'prefer-tuple-over-array-length': preferTupleOverArrayLength,
+    'prefer-validate': preferValidate,
     'require-brand-type-parameter': requireBrandTypeParameter,
     'require-error-message': requireErrorMessage,
     'schema-error-property-style': schemaErrorPropertyStyle,

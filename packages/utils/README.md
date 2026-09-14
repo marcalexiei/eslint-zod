@@ -96,6 +96,7 @@ Each rule shared between `eslint-plugin-zod` and `eslint-plugin-zod-mini` (some 
 - `buildPreferEnumOverLiteralUnionCreate(scope)`
 - `buildPreferNullishCreate(scope)`
 - `buildPreferTupleOverArrayLengthCreate(scope)`
+- `buildPreferValidateCreate(scope, api)` — success-only parsing suggestions; `api` is `classic` or `mini`
 - `buildRequireBrandTypeParameterCreate(scope)`
 - `buildRequireErrorMessageCreate(scope)`
 - `buildSchemaErrorPropertyStyleCreate(scope)`

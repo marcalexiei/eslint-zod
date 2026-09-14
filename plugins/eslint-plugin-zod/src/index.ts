@@ -40,6 +40,7 @@ import { preferStringSchemaWithTrim } from './rules/prefer-string-schema-with-tr
 import { preferTopLevelStringFormats } from './rules/prefer-top-level-string-formats.js';
 import { preferTrimBeforeStringLengthChecks } from './rules/prefer-trim-before-string-length-checks.js';
 import { preferTupleOverArrayLength } from './rules/prefer-tuple-over-array-length.js';
+import { preferValidate } from './rules/prefer-validate.js';
 import { requireBrandTypeParameter } from './rules/require-brand-type-parameter.js';
 import { requireErrorMessage } from './rules/require-error-message.js';
 import { schemaErrorPropertyStyle } from './rules/schema-error-property-style.js';
@@ -102,6 +103,7 @@ const eslintPluginZod = {
     'prefer-string-schema-with-trim': preferStringSchemaWithTrim,
     'prefer-trim-before-string-length-checks': preferTrimBeforeStringLengthChecks,
     'prefer-tuple-over-array-length': preferTupleOverArrayLength,
+    'prefer-validate': preferValidate,
     'require-brand-type-parameter': requireBrandTypeParameter,
     'require-error-message': requireErrorMessage,
     'schema-error-property-style': schemaErrorPropertyStyle,
