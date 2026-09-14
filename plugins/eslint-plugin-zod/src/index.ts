@@ -11,7 +11,9 @@ import { noAnySchema } from './rules/no-any-schema.js';
 import { noCoerceBoolean } from './rules/no-coerce-boolean.js';
 import { noConflictingChecks } from './rules/no-conflicting-checks.js';
 import { noDuplicateSchemaMethods } from './rules/no-duplicate-schema-methods.js';
+import { noDynamicSchemaValue } from './rules/no-dynamic-schema-value.js';
 import { noEmptyCustomSchema } from './rules/no-empty-custom-schema.js';
+import { noFunctionScopedSchema } from './rules/no-function-scoped-schema.js';
 import { noNativeEnum } from './rules/no-native-enum.js';
 import { noNumberSchemaWithFinite } from './rules/no-number-schema-with-finite.js';
 import { noNumberSchemaWithInt } from './rules/no-number-schema-with-int.js';
@@ -73,7 +75,9 @@ const eslintPluginZod = {
     'no-coerce-boolean': noCoerceBoolean,
     'no-conflicting-checks': noConflictingChecks,
     'no-duplicate-schema-methods': noDuplicateSchemaMethods,
+    'no-dynamic-schema-value': noDynamicSchemaValue,
     'no-empty-custom-schema': noEmptyCustomSchema,
+    'no-function-scoped-schema': noFunctionScopedSchema,
     'no-native-enum': noNativeEnum,
     'no-number-schema-with-finite': noNumberSchemaWithFinite,
     'no-number-schema-with-int': noNumberSchemaWithInt,

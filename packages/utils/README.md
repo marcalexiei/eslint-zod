@@ -86,7 +86,9 @@ Each rule shared between `eslint-plugin-zod` and `eslint-plugin-zod-mini` (some 
 - `buildNoCoerceBooleanCreate(scope)`
 - `buildNoConflictingChecksCreate(scope)` — also exports the `NoConflictingChecksOptions` and `NoConflictingChecksMessageIds` contracts
 - `buildNoDuplicateSchemaMethodsCreate(scope, excludedMethods)`
+- `buildNoDynamicSchemaValueCreate(scope)`
 - `buildNoEmptyCustomSchemaCreate(scope)`
+- `buildNoFunctionScopedSchemaCreate(scope)`
 - `buildNoNativeEnumCreate(scope)`
 - `buildNoPromiseSchemaCreate(scope)`
 - `buildNoThrowInRefineCreate(scope)`

@@ -10,7 +10,9 @@ import { noAnySchema } from './rules/no-any-schema.js';
 import { noCoerceBoolean } from './rules/no-coerce-boolean.js';
 import { noConflictingChecks } from './rules/no-conflicting-checks.js';
 import { noDuplicateSchemaMethods } from './rules/no-duplicate-schema-methods.js';
+import { noDynamicSchemaValue } from './rules/no-dynamic-schema-value.js';
 import { noEmptyCustomSchema } from './rules/no-empty-custom-schema.js';
+import { noFunctionScopedSchema } from './rules/no-function-scoped-schema.js';
 import { noNativeEnum } from './rules/no-native-enum.js';
 import { noPromiseSchema } from './rules/no-promise-schema.js';
 import { noThrowInRefine } from './rules/no-throw-in-refine.js';
@@ -55,7 +57,9 @@ const eslintPluginZodMini = {
     'no-coerce-boolean': noCoerceBoolean,
     'no-conflicting-checks': noConflictingChecks,
     'no-duplicate-schema-methods': noDuplicateSchemaMethods,
+    'no-dynamic-schema-value': noDynamicSchemaValue,
     'no-empty-custom-schema': noEmptyCustomSchema,
+    'no-function-scoped-schema': noFunctionScopedSchema,
     'no-native-enum': noNativeEnum,
     'no-promise-schema': noPromiseSchema,
     'no-throw-in-refine': noThrowInRefine,
