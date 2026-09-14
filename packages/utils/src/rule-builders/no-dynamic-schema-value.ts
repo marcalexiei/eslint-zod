@@ -5,7 +5,13 @@ import type { ZodImportScope } from '../zod-import-scope.js';
 
 type MessageIds = 'dynamicValue';
 type Context = Readonly<TSESLint.RuleContext<MessageIds, []>>;
-type IsZodCall = (node: TSESTree.Node) => boolean;
+
+interface StaticCheckState {
+  context: Context;
+  isZodCall: (node: TSESTree.Node) => boolean;
+  /** Identifier definitions being resolved, so `const a = a` cannot recurse forever. */
+  resolving: Set<TSESTree.Node>;
+}
 
 /**
  * True when every leaf of `node` is a literal or an import binding —
@@ -13,15 +19,15 @@ type IsZodCall = (node: TSESTree.Node) => boolean;
  * `z.string()` inside `z.object({ a: z.string() })`) counts as static here:
  * it is checked independently through its own `onSchema` visit.
  */
-function isStaticExpression(node: TSESTree.Node, context: Context, isZodCall: IsZodCall): boolean {
+function isStaticExpression(node: TSESTree.Node, state: StaticCheckState): boolean {
   switch (node.type) {
     case AST_NODE_TYPES.Literal:
+    case AST_NODE_TYPES.ArrowFunctionExpression:
+    case AST_NODE_TYPES.FunctionExpression:
       return true;
 
     case AST_NODE_TYPES.TemplateLiteral:
-      return node.expressions.every((expression) =>
-        isStaticExpression(expression, context, isZodCall),
-      );
+      return node.expressions.every((expression) => isStaticExpression(expression, state));
 
     case AST_NODE_TYPES.ArrayExpression:
       return node.elements.every(
@@ -29,49 +35,43 @@ function isStaticExpression(node: TSESTree.Node, context: Context, isZodCall: Is
           element === null ||
           isStaticExpression(
             element.type === AST_NODE_TYPES.SpreadElement ? element.argument : element,
-            context,
-            isZodCall,
+            state,
           ),
       );
 
     case AST_NODE_TYPES.ObjectExpression:
       return node.properties.every((property) =>
         property.type === AST_NODE_TYPES.SpreadElement
-          ? isStaticExpression(property.argument, context, isZodCall)
-          : isStaticExpression(property.value, context, isZodCall),
+          ? isStaticExpression(property.argument, state)
+          : isStaticExpression(property.value, state),
       );
 
-    case AST_NODE_TYPES.ArrowFunctionExpression:
-    case AST_NODE_TYPES.FunctionExpression:
-      return true;
-
     case AST_NODE_TYPES.UnaryExpression:
-      return isStaticExpression(node.argument, context, isZodCall);
+      return isStaticExpression(node.argument, state);
 
     case AST_NODE_TYPES.ChainExpression:
     case AST_NODE_TYPES.TSAsExpression:
     case AST_NODE_TYPES.TSSatisfiesExpression:
     case AST_NODE_TYPES.TSNonNullExpression:
-      return isStaticExpression(node.expression, context, isZodCall);
+      return isStaticExpression(node.expression, state);
 
     case AST_NODE_TYPES.ConditionalExpression:
       return (
-        isStaticExpression(node.test, context, isZodCall) &&
-        isStaticExpression(node.consequent, context, isZodCall) &&
-        isStaticExpression(node.alternate, context, isZodCall)
+        isStaticExpression(node.test, state) &&
+        isStaticExpression(node.consequent, state) &&
+        isStaticExpression(node.alternate, state)
       );
 
     case AST_NODE_TYPES.LogicalExpression:
     case AST_NODE_TYPES.BinaryExpression:
       return (
         node.left.type !== AST_NODE_TYPES.PrivateIdentifier &&
-        isStaticExpression(node.left, context, isZodCall) &&
-        isStaticExpression(node.right, context, isZodCall)
+        isStaticExpression(node.left, state) &&
+        isStaticExpression(node.right, state)
       );
 
     case AST_NODE_TYPES.Identifier: {
-      const variable = ASTUtils.findVariable(context.sourceCode.getScope(node), node);
-      const def = variable?.defs[0];
+      const def = ASTUtils.findVariable(state.context.sourceCode.getScope(node), node)?.defs[0];
       if (!def) {
         return false;
       }
@@ -80,19 +80,26 @@ function isStaticExpression(node: TSESTree.Node, context: Context, isZodCall: Is
         return true;
       }
 
-      return (
-        def.type === TSESLint.Scope.DefinitionType.Variable &&
-        def.parent.kind === 'const' &&
-        def.node.init !== null &&
-        isStaticExpression(def.node.init, context, isZodCall)
-      );
+      if (
+        def.type !== TSESLint.Scope.DefinitionType.Variable ||
+        def.parent.kind !== 'const' ||
+        def.node.init === null ||
+        state.resolving.has(def.node)
+      ) {
+        return false;
+      }
+
+      state.resolving.add(def.node);
+      const isStatic = isStaticExpression(def.node.init, state);
+      state.resolving.delete(def.node);
+      return isStatic;
     }
 
     // A recognized zod call is a nested schema, not a value — see the
     // docstring above. Anything else (a plain function call, `new`, `this`, …)
     // is dynamic.
     case AST_NODE_TYPES.CallExpression:
-      return isZodCall(node);
+      return state.isZodCall(node);
 
     default:
       return false;
@@ -110,7 +117,11 @@ export function buildNoDynamicSchemaValueCreate(
   return function create(context) {
     const { createSchemaVisitor, detectZodSchemaRootNode, collectZodChainMethods } =
       scope.createTracker();
-    const isZodCall: IsZodCall = (node) => detectZodSchemaRootNode(node) !== null;
+    const state: StaticCheckState = {
+      context,
+      isZodCall: (node) => detectZodSchemaRootNode(node) !== null,
+      resolving: new Set(),
+    };
 
     return createSchemaVisitor({
       onSchema(node): void {
@@ -124,7 +135,7 @@ export function buildNoDynamicSchemaValueCreate(
             const expression =
               argument.type === AST_NODE_TYPES.SpreadElement ? argument.argument : argument;
 
-            if (!isStaticExpression(expression, context, isZodCall)) {
+            if (!isStaticExpression(expression, state)) {
               context.report({ node: expression, messageId: 'dynamicValue' });
             }
           }

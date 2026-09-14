@@ -54,7 +54,8 @@ const schema3 = z.string().check(z.refine((value) => value.length > threshold));
 
 The rule resolves an identifier as static only through an import binding or a `const` initialized (directly
 or transitively) to another static value. A member access (`config.message`) is always treated as dynamic,
-even when the object it reads from is itself static.
+even when the object it reads from is itself static. A `const` that refers to itself is reported rather
+than resolved.
 
 A function literal is always static, regardless of what it captures — the rule does not look inside its
 body. This matches `zod-compiler`, which compiles a `refine`/`transform`/`superRefine`/`preprocess`

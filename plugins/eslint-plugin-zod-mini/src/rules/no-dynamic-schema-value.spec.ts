@@ -202,5 +202,14 @@ ruleTester.run(noDynamicSchemaValue.name, noDynamicSchemaValue, {
       `,
       errors: [{ messageId: 'dynamicValue' }],
     },
+    {
+      name: 'self-referential const does not recurse forever',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const message = message;
+        const schema = z.string().check(z.minLength(1, message));
+      `,
+      errors: [{ messageId: 'dynamicValue' }],
+    },
   ],
 });
