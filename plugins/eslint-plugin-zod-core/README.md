@@ -28,12 +28,14 @@ Find out more about [Oxlint's `jsPLugins`](https://oxc.rs/docs/guide/usage/linte
 
 💼 Configurations enabled in.\
 ✅ Set in the `recommended` configuration.\
-🔧 Automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/user-guide/command-line-interface#--fix).
+🔧 Automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/user-guide/command-line-interface#--fix).\
+💡 Manually fixable by [editor suggestions](https://eslint.org/docs/latest/use/core-concepts#rule-suggestions).
 
-| Name                                                                                     | Description                                                                   | 💼  | 🔧  |
-| :--------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- | :-- | :-- |
-| [consistent-import](docs/rules/consistent-import.md)                                     | Enforce a consistent import style for Zod core                                | ✅  | 🔧  |
-| [consistent-schema-output-type-style](docs/rules/consistent-schema-output-type-style.md) | Enforce consistent use of core.infer or core.output for schema type inference |     | 🔧  |
+| Name                                                                                     | Description                                                                   | 💼  | 🔧  | 💡  |
+| :--------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- | :-- | :-- | :-- |
+| [consistent-import](docs/rules/consistent-import.md)                                     | Enforce a consistent import style for Zod core                                | ✅  | 🔧  |     |
+| [consistent-schema-output-type-style](docs/rules/consistent-schema-output-type-style.md) | Enforce consistent use of core.infer or core.output for schema type inference |     | 🔧  |     |
+| [prefer-validate](docs/rules/prefer-validate.md)                                         | Prefer boolean validation when only the success of parsing is used            |     |     | 💡  |
 
 <!-- end auto-generated rules list -->
 

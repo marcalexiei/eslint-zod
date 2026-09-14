@@ -1,10 +1,9 @@
 import { trackZodSchemaImports } from './track-zod-schema-imports.js';
-import type { ZodSchemaImportTracker } from './track-zod-schema-imports.js';
+import type { ZodSchemaImportTracker, ZodTrackerOptions } from './track-zod-schema-imports.js';
 
 /**
- * Defines the set of import source strings (e.g. `'zod'`, `'zod/mini'`) that a
- * plugin considers in-scope. Used by each plugin's rules to ignore files that
- * import from a different Zod surface.
+ * Defines the set of import source strings (e.g. `'zod'`, `'zod/mini'`) that a plugin considers in-scope.
+ * Used by each plugin's rules to ignore files that import from a different Zod surface.
  *
  * @example
  * ```ts
@@ -18,8 +17,8 @@ export class ZodImportScope<TSources extends ReadonlyArray<string> = ReadonlyArr
   readonly sources: TSources;
 
   constructor(sources: TSources) {
-    // Copy before freezing: freezing the caller's array in place would be a
-    // side effect on their value.
+    // Copy before freezing:
+    // freezing the caller's array in place would be a side effect on their value.
     this.sources = Object.freeze([...sources]) as unknown as TSources;
   }
 
@@ -29,17 +28,21 @@ export class ZodImportScope<TSources extends ReadonlyArray<string> = ReadonlyArr
   }
 
   /**
-   * Creates an import tracker bound to this scope. Call it once per
-   * `create(...)` — a tracker accumulates one file's imports.
+   * Creates an import tracker bound to this scope.
+   * Call it once per `create(...)` — a tracker accumulates one file's imports.
+   *
+   * `kind` is required — `'value'` for a rule resolving calls, `'all'` for a type position.
+   * Both wrong answers fail silently.
+   * Pass `sourceCode` to enable `resolveZodImport` / `resolveZodExport`.
    *
    * @example
    * ```ts
    * const { importDeclarationListener, detectZodSchemaRootNode } =
-   *   zodImportScope.createTracker();
+   * zodImportScope.createTracker({ kind: 'value' });
    * ```
    */
-  createTracker(): ZodSchemaImportTracker {
-    return trackZodSchemaImports(this);
+  createTracker(options: ZodTrackerOptions): ZodSchemaImportTracker {
+    return trackZodSchemaImports(this, options);
   }
 }
 

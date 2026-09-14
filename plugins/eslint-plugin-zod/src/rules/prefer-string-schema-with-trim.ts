@@ -17,13 +17,14 @@ export const preferStringSchemaWithTrim = createZodPluginRule({
   },
   defaultOptions: [],
   create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker({
+      kind: 'value',
+    });
 
     return createSchemaVisitor({
       schemaType: 'string',
       onSchema(node, zodSchemaMeta): void {
-        // Skip if this string schema is the key schema of z.record()
-        // because transforms on record keys cause data loss
+        // Skip if this string schema is the key schema of z.record() because transforms on record keys cause data loss
         // https://github.com/marcalexiei/eslint-zod/issues/242
         if (
           findParentSchemaMatchingCondition(node, {
@@ -45,8 +46,8 @@ export const preferStringSchemaWithTrim = createZodPluginRule({
           node,
           messageId: 'addTrim',
           fix(fixer) {
-            // Empty for a computed factory (`z['string']()`), which detection
-            // still resolves — report it, just without a fix.
+            // Empty for a computed factory (`z['string']()`), which detection still resolves —
+            // report it, just without a fix.
             const factoryCall = methods.at(0);
             if (zodSchemaMeta.schemaDecl === 'named' || !factoryCall) {
               return null;

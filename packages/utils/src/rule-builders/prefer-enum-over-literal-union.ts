@@ -8,7 +8,7 @@ export function buildPreferEnumOverLiteralUnionCreate(
 ): (context: Readonly<TSESLint.RuleContext<'useEnum', []>>) => TSESLint.RuleListener {
   return function create(context) {
     const { createSchemaVisitor, detectZodSchemaRootNode, collectZodChainMethods } =
-      scope.createTracker();
+      scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: 'union',

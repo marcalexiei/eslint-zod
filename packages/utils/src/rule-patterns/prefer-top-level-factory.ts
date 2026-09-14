@@ -31,11 +31,10 @@ export interface PreferTopLevelFactoryOptions<TMessageIds extends string> {
 }
 
 /**
- * Prefers a top-level factory over a deprecated method chained on a general one
- * (`z.uuid()` over `z.string().uuid()`, `z.int()` over `z.number().safe()`).
+ * Prefers a top-level factory over a deprecated method chained on a general one (`z.uuid()` over `z.string().uuid()`, `z.int()` over `z.number().safe()`).
  * The fix rewrites `z.<factory>().<method>(args)` into `z.<replacement>(args)`,
- * keeping the methods in between; it bails on named imports, which would need a
- * new import, and on a chain the walker cannot name.
+ * keeping the methods in between; it bails on named imports, which would need a new import,
+ * and on a chain the walker cannot name.
  */
 export function buildPreferTopLevelFactoryCreate<
   TMessageIds extends string,
@@ -58,16 +57,16 @@ export function buildPreferTopLevelFactoryCreate<
   return function create(context) {
     const { sourceCode } = context;
 
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: factoryName,
       onSchema(node, zodSchemaMeta): void {
         const methods = collectZodChainMethods(node);
 
-        // A walkable chain always starts at the factory. A different name there
-        // means it was imported under an alias (`import { string as str }`), so
-        // no method in this chain is chained on `<factoryName>()`.
+        // A walkable chain always starts at the factory.
+        // A different name there means it was imported under an alias (`import { string as str }`),
+        // so no method in this chain is chained on `<factoryName>()`.
         if (methods.length > 0 && methods[0].name !== factoryName) {
           return;
         }
@@ -76,8 +75,8 @@ export function buildPreferTopLevelFactoryCreate<
           (it, index) => index > 0 && replacementBySource.has(it.name),
         );
 
-        // The fallback covers a chain the walker cannot name
-        // (`z['string']().uuid()`), where detection still names the methods.
+        // The fallback covers a chain the walker cannot name (`z['string']().uuid()`),
+        // where detection still names the methods.
         const sourceMethodName =
           chainedMethod?.name ??
           getZodChainedMethodNames(zodSchemaMeta).find((name) => replacementBySource.has(name));

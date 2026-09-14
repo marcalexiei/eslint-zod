@@ -47,7 +47,9 @@ export const noOptionalAndDefaultTogether = createZodPluginRule<[Options], Messa
   create(context, [{ preferredMethod }]) {
     const { sourceCode } = context;
 
-    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker({
+      kind: 'value',
+    });
 
     return createSchemaVisitor({
       onSchema(node): void {

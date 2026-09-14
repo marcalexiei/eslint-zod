@@ -8,7 +8,7 @@ export function buildRequireBrandTypeParameterCreate(
   scope: ZodImportScope,
 ): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       onSchema(node): void {

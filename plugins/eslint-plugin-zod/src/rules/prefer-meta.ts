@@ -19,7 +19,9 @@ export const preferMeta = createZodPluginRule({
   },
   defaultOptions: [],
   create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker({
+      kind: 'value',
+    });
 
     return createSchemaVisitor({
       onSchema(node): void {

@@ -9,7 +9,7 @@ export function buildNoDuplicateSchemaMethodsCreate(
   context: Readonly<TSESLint.RuleContext<'noDuplicateSchemaMethod', []>>,
 ) => TSESLint.RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       onSchema(node): void {

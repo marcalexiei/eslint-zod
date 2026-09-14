@@ -6,7 +6,7 @@ export function buildNoEmptyCustomSchemaCreate(
   scope: ZodImportScope,
 ): (context: Readonly<TSESLint.RuleContext<'noEmptyCustomSchema', []>>) => TSESLint.RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: 'custom',

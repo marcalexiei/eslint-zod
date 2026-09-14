@@ -27,8 +27,8 @@ export type NoConflictingChecksMessageIds =
   | 'inapplicableCheck';
 
 /**
- * Chained methods that change the schema's output type; reasoning about the
- * factory's checks past them is unsound, so the whole chain is skipped.
+ * Chained methods that change the schema's output type;
+ * reasoning about the factory's checks past them is unsound, so the whole chain is skipped.
  */
 const TYPE_CHANGING_METHODS = ['and', 'array', 'or', 'pipe', 'preprocess', 'transform'];
 
@@ -47,23 +47,23 @@ const FORMAT_LENGTH_RANGES = new Map<string, [number, number]>([
   ['ipv4', [7, 15]],
   ['ipv6', [2, 45]],
   ['e164', [8, 16]],
-  // 12-19 digits, single spaces or dashes tolerated between them:
-  // /^\d(?:[ -]?\d){11,18}$/ — 12 bare, 19 digits + 18 separators
+  // 12-19 digits, single spaces or dashes tolerated between them: /^\d(?:[ -]?\d){11,18}$/ —
+  // 12 bare, 19 digits + 18 separators
   ['creditCard', [12, 37]],
   ['jwt', [8, Number.POSITIVE_INFINITY]],
   ['iso.date', [10, 10]],
 ]);
 
 /**
- * String formats that are narrowings of another format: every value matching
- * the key also matches each listed name. Combining two of them is a valid
- * refinement (`z.string().uuid().uuidv4()`), not a contradiction, so
- * {@link areFormatsCompatible} exempts these pairs.
+ * String formats that are narrowings of another format:
+ * every value matching the key also matches each listed name.
+ * Combining two of them is a valid refinement (`z.string().uuid().uuidv4()`), not a contradiction,
+ * so {@link areFormatsCompatible} exempts these pairs.
  *
- * Only the GUID/UUID family overlaps — `guid` accepts any `8-4-4-4-12` hex
- * shape, `uuid` additionally requires a valid variant/version nibble, and
- * `uuidv4`/`uuidv6`/`uuidv7` pin that version. Every other format pair is
- * mutually exclusive.
+ * Only the GUID/UUID family overlaps — `guid` accepts any `8-4-4-4-12` hex shape,
+ * `uuid` additionally requires a valid variant/version nibble,
+ * and `uuidv4`/`uuidv6`/`uuidv7` pin that version.
+ * Every other format pair is mutually exclusive.
  */
 const FORMAT_SUPERSETS = new Map<string, ReadonlyArray<string>>([
   ['uuid', ['guid']],
@@ -108,11 +108,11 @@ function asNumeric(value: LiteralValue | undefined): number | bigint | undefined
 }
 
 /**
- * Equality across `number` and `bigint`, e.g. `5` and `5n`. Strict `===` is
- * always `false` between the two types, but `<`/`>` compare them
- * mathematically, so `!(a < b) && !(a > b)` means "equal in value". Needed
- * because the plugin lints plain JS, where a schema's bounds can mix literal
- * types (`z.bigint().gt(5n).lte(5)`).
+ * Equality across `number` and `bigint`, e.g. `5` and `5n`.
+ * Strict `===` is always `false` between the two types, but `<`/`>` compare them mathematically,
+ * so `!(a < b) && !(a > b)` means "equal in value".
+ * Needed because the plugin lints plain JS,
+ * where a schema's bounds can mix literal types (`z.bigint().gt(5n).lte(5)`).
  */
 function numericEqual(a: number | bigint, b: number | bigint): boolean {
   return !(a < b) && !(a > b);
@@ -157,11 +157,12 @@ function strongestUpper(bounds: Array<Bound>): Bound | undefined {
 /**
  * Builds the `create` function for the `no-conflicting-checks` rule.
  *
- * All detection is written against `collectZodSchemaConstraints`, so chained
- * methods (`zod`) and `.check(...)` arguments (`zod/mini`) — including
- * multi-argument and repeated `.check()` calls — are analyzed by the same
- * engine in both plugins. Only literal arguments are analyzed; constraints
- * with non-literal arguments are excluded from value reasoning.
+ * All detection is written against `collectZodSchemaConstraints`,
+ * so chained methods (`zod`) and `.check(...)` arguments (`zod/mini`) —
+ * including multi-argument and repeated `.check()` calls —
+ * are analyzed by the same engine in both plugins.
+ * Only literal arguments are analyzed;
+ * constraints with non-literal arguments are excluded from value reasoning.
  */
 export function buildNoConflictingChecksCreate(
   scope: ZodImportScope,
@@ -179,7 +180,7 @@ export function buildNoConflictingChecksCreate(
     };
 
     const { createSchemaVisitor, collectZodChainMethods, collectZodSchemaConstraints } =
-      scope.createTracker();
+      scope.createTracker({ kind: 'value' });
 
     function describe(check: AnalyzedCheck): string {
       const args = check.node.arguments
@@ -410,8 +411,8 @@ export function buildNoConflictingChecksCreate(
       const intMarker = checks.find((check) => check.descriptor.intMarker);
 
       for (const [index, a] of multiples.entries()) {
-        // `multiples` is filtered on `asNumeric(...) !== undefined`, so both
-        // sides are numeric here; only their types may differ.
+        // `multiples` is filtered on `asNumeric(...) !== undefined`,
+        // so both sides are numeric here; only their types may differ.
         const left = asNumeric(a.literalValue)!;
         for (const b of multiples.slice(index + 1)) {
           const right = asNumeric(b.literalValue)!;
@@ -533,9 +534,9 @@ export function buildNoConflictingChecksCreate(
     return createSchemaVisitor({
       onSchema(node, zodSchemaMeta): void {
         const chain = collectZodChainMethods(node);
-        // `detectZodSchemaRootNode` resolves computed-member factories
-        // (`z['uuid']()`) that `collectZodChainMethods` cannot navigate,
-        // leaving `chain` empty. Bail rather than deref `chain[0]`.
+        // `detectZodSchemaRootNode` resolves computed-member factories (`z['uuid']()`) that `collectZodChainMethods` cannot navigate,
+        // leaving `chain` empty.
+        // Bail rather than deref `chain[0]`.
         if (chain.length === 0) {
           return;
         }
@@ -550,8 +551,7 @@ export function buildNoConflictingChecksCreate(
 
         const checks: Array<AnalyzedCheck> = [];
 
-        // A string-format factory (`z.uuid()`, `z.email()`, …) behaves like a
-        // format check applied to a string schema.
+        // A string-format factory (`z.uuid()`, `z.email()`, …) behaves like a format check applied to a string schema.
         const baseDescriptor = getZodCheckDescriptor(zodSchemaMeta.schemaType);
         if (baseDescriptor?.format) {
           checks.push({
@@ -611,8 +611,8 @@ export function buildNoConflictingChecksCreate(
             applicable.push(check);
             continue;
           }
-          // Chained spellings are type-safe; only `.check(...)` can carry an
-          // inapplicable check (which silently no-ops or rejects everything).
+          // Chained spellings are type-safe;
+          // only `.check(...)` can carry an inapplicable check (which silently no-ops or rejects everything).
           if (check.origin === 'check-argument') {
             reportInapplicable(check, baseType);
           }

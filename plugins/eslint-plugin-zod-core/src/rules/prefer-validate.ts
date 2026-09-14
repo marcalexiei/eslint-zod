@@ -1,9 +1,9 @@
-import { zodMiniImportScope } from '@eslint-zod/utils';
+import { zodCoreImportScope } from '@eslint-zod/utils';
 import { buildPreferValidateCreate } from '@eslint-zod/utils/rule-builders/prefer-validate';
 
-import { createZodMiniPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../utils/create-plugin-rule.js';
 
-export const preferValidate = createZodMiniPluginRule({
+export const preferValidate = createZodPluginRule({
   name: 'prefer-validate',
   meta: {
     type: 'suggestion',
@@ -16,5 +16,5 @@ export const preferValidate = createZodMiniPluginRule({
     schema: [],
   },
   defaultOptions: [],
-  create: buildPreferValidateCreate(zodMiniImportScope, 'standalone'),
+  create: buildPreferValidateCreate(zodCoreImportScope, 'standalone'),
 });

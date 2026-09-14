@@ -24,15 +24,16 @@ export const noNumberSchemaWithFinite = createZodPluginRule({
   defaultOptions: [],
 
   create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker({
+      kind: 'value',
+    });
 
     return createSchemaVisitor({
       schemaType: 'number',
       onSchema(node, zodSchemaMeta): void {
-        // Detect on the names alone: they exclude the factory, so an aliased
-        // named import (`import { number as finite }`) is not mistaken for a
-        // `.finite()` call, and a computed factory (`z['number']().finite()`)
-        // is still caught even though the chain walker cannot name it.
+        // Detect on the names alone: they exclude the factory,
+        // so an aliased named import (`import { number as finite }`) is not mistaken for a `.finite()` call,
+        // and a computed factory (`z['number']().finite()`) is still caught even though the chain walker cannot name it.
         if (!getZodChainedMethodNames(zodSchemaMeta).includes('finite')) {
           return;
         }

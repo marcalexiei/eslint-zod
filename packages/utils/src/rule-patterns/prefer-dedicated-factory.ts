@@ -20,10 +20,9 @@ export interface PreferDedicatedFactoryOptions<TMessageIds extends string> {
 }
 
 /**
- * Prefers a dedicated factory over a general one plus a chained modifier
- * (`z.looseObject()` over `z.object().passthrough()`). The fix renames the
- * factory and drops the modifier; it bails on named imports (would need a new
- * import) and on a modifier with arguments (nowhere to put them).
+ * Prefers a dedicated factory over a general one plus a chained modifier (`z.looseObject()` over `z.object().passthrough()`).
+ * The fix renames the factory and drops the modifier;
+ * it bails on named imports (would need a new import) and on a modifier with arguments (nowhere to put them).
  */
 export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
   options: PreferDedicatedFactoryOptions<TMessageIds>,
@@ -31,7 +30,7 @@ export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
   const { scope, factoryName, modifierMethods, replacementFactoryName, messageId } = options;
 
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: factoryName,
@@ -41,9 +40,9 @@ export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
         }
 
         const methods = collectZodChainMethods(node);
-        // Empty when the chain runs through a computed member
-        // (`z['object']({}).passthrough()`): detection named the modifier but
-        // the walker cannot, so report on the schema and offer no fix.
+        // Empty when the chain runs through a computed member (`z['object']({}).passthrough()`):
+        // detection named the modifier but the walker cannot,
+        // so report on the schema and offer no fix.
         const modifierMethod = methods.find((it) => modifierMethods.includes(it.name));
 
         context.report({
@@ -60,11 +59,11 @@ export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
 
             const { sourceCode } = context;
 
-            // The chain is walkable (`modifierMethod` came from it) and starts
-            // at the factory, which the visitor already filtered to
-            // `factoryName`. Named declarations returned above, so both calls
-            // are `<ns>.<name>(…)` member expressions — a bare identifier
-            // callee is unreachable here.
+            // The chain is walkable (`modifierMethod` came from it) and starts at the factory,
+            // which the visitor already filtered to `factoryName`.
+            // Named declarations returned above,
+            // so both calls are `<ns>.<name>(…)` member expressions —
+            // a bare identifier callee is unreachable here.
             const [factoryMethod] = methods;
             const factoryCallee = factoryMethod.node.callee as TSESTree.MemberExpression;
             const modifierCallee = modifierMethod.node.callee as TSESTree.MemberExpression;

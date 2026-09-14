@@ -1,68 +1,37 @@
 import type { TSESTree } from '@typescript-eslint/utils';
 import { ASTUtils, AST_NODE_TYPES, TSESLint } from '@typescript-eslint/utils';
 
-import { getZodSchemaBaseType } from '../get-zod-schema-base-type.js';
+import { getStaticPropertyName } from '../get-static-property-name.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_NON_SCHEMA_PRODUCING_METHODS } from '../zod-non-schema-producing-methods.js';
+import { isZodSchemaFactoryName } from '../zod-schema-factory-names.js';
 
 type MessageIds = 'preferValidate' | 'useValidate';
 
-interface ZodBinding {
-  name: string;
-  declaration: TSESTree.ImportDeclaration;
-  local: TSESTree.Identifier;
-}
+/**
+ * How a plugin's Zod entry point exposes validation.
+ * `schema-method` (`zod`) has `.validate()` and the `.spa()` alias.
+ * `standalone` (`zod/mini`, `zod/v4/core`) has only `validate(schema, data)`.
+ */
+export type ZodValidateApiStyle = 'schema-method' | 'standalone';
 
 interface Edit {
   range: TSESTree.Range;
   text: string;
 }
 
-function propertyName(node: TSESTree.MemberExpression | TSESTree.Property): string | null {
-  const property = node.type === AST_NODE_TYPES.MemberExpression ? node.property : node.key;
-  if (!node.computed && property.type === AST_NODE_TYPES.Identifier) {
-    return property.name;
+/**
+ * Computed forms (`obj[validate]`) are references, so only static names count.
+ * Shorthand needs no guard: its binding is collected where it is declared.
+ */
+function isPropertyName(node: TSESTree.Identifier): boolean {
+  const { parent } = node;
+  const isMember = parent.type === AST_NODE_TYPES.MemberExpression;
+  if (!isMember && parent.type !== AST_NODE_TYPES.Property) {
+    return false;
   }
-  return property.type === AST_NODE_TYPES.Literal && typeof property.value === 'string'
-    ? property.value
-    : null;
+  return !parent.computed && node === (isMember ? parent.property : parent.key);
 }
-
-const OTHER_FACTORIES = new Set([
-  'union',
-  'discriminatedUnion',
-  'intersection',
-  'tuple',
-  'enum',
-  'nativeEnum',
-  'record',
-  'partialRecord',
-  'custom',
-  'instanceof',
-  'lazy',
-  'optional',
-  'nullable',
-  'nullish',
-  'nonoptional',
-  'readonly',
-  'default',
-  'prefault',
-  'catch',
-  'pipe',
-  'transform',
-  'codec',
-  'promise',
-  'function',
-  'null',
-  'undefined',
-  'void',
-  'nan',
-  'success',
-  'file',
-  'json',
-  'fromJSONSchema',
-  'templateLiteral',
-]);
 
 /**
  * Finds success-only parse results using lexical bindings, without type services.
@@ -70,44 +39,16 @@ const OTHER_FACTORIES = new Set([
  */
 export function buildPreferValidateCreate(
   scope: ZodImportScope,
-  api: 'classic' | 'mini',
+  api: ZodValidateApiStyle,
 ): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
   return function create(context) {
     const { sourceCode } = context;
+    const tracker = scope.createTracker({ kind: 'value', sourceCode });
     const calls: Array<TSESTree.CallExpression> = [];
-    const bindings: Array<ZodBinding> = [];
     const identifiers = new Set<string>();
 
     function variable(node: TSESTree.Identifier): TSESLint.Scope.Variable | null {
       return ASTUtils.findVariable(sourceCode.getScope(node), node.name);
-    }
-
-    function binding(node: TSESTree.Node): ZodBinding | undefined {
-      if (node.type !== AST_NODE_TYPES.Identifier) {
-        return undefined;
-      }
-      const definition = variable(node)?.defs[0];
-      if (
-        definition?.type !== TSESLint.Scope.DefinitionType.ImportBinding ||
-        definition.node.type === AST_NODE_TYPES.TSImportEqualsDeclaration
-      ) {
-        return undefined;
-      }
-      const { local } = definition.node;
-      return bindings.find((item) => item.local === local);
-    }
-
-    function importedCall(node: TSESTree.Node): ZodBinding | undefined {
-      if (node.type === AST_NODE_TYPES.Identifier) {
-        const found = binding(node);
-        return found?.name === '*' ? undefined : found;
-      }
-      if (node.type !== AST_NODE_TYPES.MemberExpression || node.optional) {
-        return undefined;
-      }
-      const found = binding(node.object);
-      const name = propertyName(node);
-      return found?.name === '*' && name ? { ...found, name } : undefined;
     }
 
     function schemaSource(
@@ -135,14 +76,14 @@ export function buildPreferValidateCreate(
       if (node.type !== AST_NODE_TYPES.CallExpression || node.optional) {
         return undefined;
       }
-      const imported = importedCall(node.callee);
-      if (imported && (getZodSchemaBaseType(imported.name) || OTHER_FACTORIES.has(imported.name))) {
+      const imported = tracker.resolveZodExport(node.callee);
+      if (imported && isZodSchemaFactoryName(imported.name)) {
         return imported.declaration;
       }
       if (node.callee.type !== AST_NODE_TYPES.MemberExpression || node.callee.optional) {
         return undefined;
       }
-      const name = propertyName(node.callee);
+      const name = getStaticPropertyName(node.callee);
       if (
         !name ||
         // apply() returns the callback's result, which need not be a schema.
@@ -150,12 +91,14 @@ export function buildPreferValidateCreate(
         name === 'isOptional' ||
         name === 'isNullable' ||
         (name === 'meta' && node.arguments.length === 0) ||
-        ZOD_NON_SCHEMA_PRODUCING_METHODS.some((method) => method === name)
+        ZOD_NON_SCHEMA_PRODUCING_METHODS.includes(name)
       ) {
         return undefined;
       }
-      // Nested factory namespaces: z.iso.date(), z.coerce.number(), or named imports.
-      const namespace = importedCall(node.callee.object) ?? binding(node.callee.object);
+      // Nested factory namespaces: z.iso.date(), z.coerce.number().
+      const namespace =
+        tracker.resolveZodExport(node.callee.object) ??
+        tracker.resolveZodImport(node.callee.object);
       if (namespace && (namespace.name === 'iso' || namespace.name === 'coerce')) {
         return namespace.declaration;
       }
@@ -177,7 +120,7 @@ export function buildPreferValidateCreate(
         parent.type !== AST_NODE_TYPES.MemberExpression ||
         parent.object !== node ||
         parent.optional ||
-        propertyName(parent) !== 'success'
+        getStaticPropertyName(parent) !== 'success'
       ) {
         return undefined;
       }
@@ -220,12 +163,14 @@ export function buildPreferValidateCreate(
       name: string,
       at: TSESTree.Node,
     ): { text: string; edit?: Edit } {
-      const accessible = bindings.filter(
-        (item) =>
-          item.declaration.source.value === declaration.source.value &&
-          ASTUtils.findVariable(sourceCode.getScope(at), item.local.name)?.defs[0]?.node ===
-            item.local.parent,
-      );
+      const accessible = tracker
+        .getZodImportBindings()
+        .filter(
+          (item) =>
+            item.declaration.source.value === declaration.source.value &&
+            ASTUtils.findVariable(sourceCode.getScope(at), item.local.name)?.defs[0]?.node ===
+              item.local.parent,
+        );
       const named = accessible.find((item) => item.name === name);
       if (named) {
         return { text: named.local.name };
@@ -241,12 +186,18 @@ export function buildPreferValidateCreate(
         suffix += 1;
       }
       const specifier = local === name ? name : `${name} as ${local}`;
+      // A second import from the same module would trip `import/no-duplicates`.
+      const last = declaration.specifiers.findLast(
+        (item) => item.type === AST_NODE_TYPES.ImportSpecifier,
+      );
       return {
         text: local,
-        edit: {
-          range: [declaration.range[0], declaration.range[0]],
-          text: `import { ${specifier} } from ${sourceCode.getText(declaration.source)};\n`,
-        },
+        edit: last
+          ? { range: [last.range[1], last.range[1]], text: `, ${specifier}` }
+          : {
+              range: [declaration.range[0], declaration.range[0]],
+              text: `import { ${specifier} } from ${sourceCode.getText(declaration.source)};\n`,
+            },
       };
     }
 
@@ -254,23 +205,22 @@ export function buildPreferValidateCreate(
       if (call.optional) {
         return;
       }
-      const imported = importedCall(call.callee);
+      const imported = tracker.resolveZodExport(call.callee);
       const member = call.callee.type === AST_NODE_TYPES.MemberExpression ? call.callee : undefined;
       if (member?.optional) {
         return;
       }
-      const name = imported?.name ?? (member ? propertyName(member) : null);
+      const name = imported?.name ?? (member ? getStaticPropertyName(member) : null);
       if (
         name !== 'safeParse' &&
         name !== 'safeParseAsync' &&
-        !(api === 'classic' && !imported && name === 'spa')
+        !(api === 'schema-method' && !imported && name === 'spa')
       ) {
         return;
       }
-      const standalone = imported !== undefined;
-      const schema = standalone ? call.arguments[0] : member?.object;
-      const declaration = standalone ? imported.declaration : schema && schemaSource(schema);
-      if (!declaration || !schema || call.arguments.length < (standalone ? 2 : 1)) {
+      const schema = imported ? call.arguments[0] : member?.object;
+      const declaration = imported ? imported.declaration : schema && schemaSource(schema);
+      if (!declaration || !schema || call.arguments.length < (imported ? 2 : 1)) {
         return;
       }
       const async = name !== 'safeParse';
@@ -306,7 +256,7 @@ export function buildPreferValidateCreate(
           const [property] = id.properties;
           if (
             property.type !== AST_NODE_TYPES.Property ||
-            propertyName(property) !== 'success' ||
+            getStaticPropertyName(property) !== 'success' ||
             property.value.type !== AST_NODE_TYPES.Identifier
           ) {
             return;
@@ -343,12 +293,8 @@ export function buildPreferValidateCreate(
       }
       const replacement = async ? 'validateAsync' : 'validate';
       let unsupported = false;
-      if (!standalone && api === 'classic' && member) {
-        edits.push({
-          range: member.property.range,
-          text: member.computed ? `'${replacement}'` : replacement,
-        });
-      } else if (standalone && member) {
+      // A namespace call and a classic schema method both keep their shape.
+      if (member && (imported || api === 'schema-method')) {
         edits.push({
           range: member.property.range,
           text: member.computed ? `'${replacement}'` : replacement,
@@ -358,7 +304,7 @@ export function buildPreferValidateCreate(
         if (target.edit) {
           edits.push(target.edit);
         }
-        if (standalone) {
+        if (imported) {
           edits.push({ range: call.callee.range, text: target.text });
         } else {
           // Keep the original schema expression, including its enclosing parentheses.
@@ -375,12 +321,11 @@ export function buildPreferValidateCreate(
         }
       }
       // Do not discard comments from accessors, destructuring, or the method call.
+      const comments = sourceCode.getAllComments();
       const unsafe = edits.some((edit) =>
-        sourceCode
-          .getAllComments()
-          .some(
-            (comment) => comment.range[0] >= edit.range[0] && comment.range[1] <= edit.range[1],
-          ),
+        comments.some(
+          (comment) => comment.range[0] >= edit.range[0] && comment.range[1] <= edit.range[1],
+        ),
       );
       context.report({
         node: call,
@@ -402,36 +347,16 @@ export function buildPreferValidateCreate(
 
     return {
       ImportDeclaration(node): void {
-        if (
-          !scope.isAllowed(node.source.value) ||
-          node.source.value === 'zod/v3' ||
-          node.importKind === 'type'
-        ) {
-          return;
-        }
-        for (const specifier of node.specifiers) {
-          if (
-            specifier.type === AST_NODE_TYPES.ImportSpecifier &&
-            specifier.importKind === 'type'
-          ) {
-            continue;
-          }
-          let original = '*';
-          if (specifier.type === AST_NODE_TYPES.ImportSpecifier) {
-            original =
-              specifier.imported.type === AST_NODE_TYPES.Identifier
-                ? specifier.imported.name
-                : specifier.imported.value;
-          }
-          bindings.push({
-            name: original === 'z' ? '*' : original,
-            declaration: node,
-            local: specifier.local,
-          });
+        // v3 has no `validate`, so its imports are left alone.
+        if (node.source.value !== 'zod/v3') {
+          tracker.importDeclarationListener(node);
         }
       },
       Identifier(node): void {
-        identifiers.add(node.name);
+        // `obj.validate` is not a binding and must not push the import to `validate2`.
+        if (!isPropertyName(node)) {
+          identifiers.add(node.name);
+        }
       },
       CallExpression(node): void {
         calls.push(node);

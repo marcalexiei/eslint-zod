@@ -9,7 +9,7 @@ export function buildNoAnySchemaCreate(
   scope: ZodImportScope,
 ): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: 'any',
@@ -25,10 +25,9 @@ export function buildNoAnySchemaCreate(
         }
 
         if (callee.type === AST_NODE_TYPES.MemberExpression) {
-          // The chain is empty when the factory is not a plain member access
-          // (e.g. `z['any']()`), and its callee is a bare identifier for a
-          // named import (`any().optional()`). Neither can be renamed, so both
-          // fall through to the plain report below.
+          // The chain is empty when the factory is not a plain member access (e.g. `z['any']()`),
+          // and its callee is a bare identifier for a named import (`any().optional()`).
+          // Neither can be renamed, so both fall through to the plain report below.
           const schemaMethodCallee = collectZodChainMethods(node).at(0)?.node.callee;
 
           if (

@@ -8,10 +8,9 @@ type MessageIds = 'noTransformInRecordKey';
 /**
  * Builds the `create` function for the `no-transform-in-record-key` rule.
  *
- * Takes the names that count as a transform for the plugin's API style and
- * matches them against a `z.record()` key schema — both its factory
- * (`z.record(z.transform(fn), …)`) and its constraints, which cover chained
- * methods in `zod` and `.check(...)` arguments in `zod/mini`.
+ * Takes the names that count as a transform for the plugin's API style and matches them against a `z.record()` key schema —
+ * both its factory (`z.record(z.transform(fn), …)`) and its constraints,
+ * which cover chained methods in `zod` and `.check(...)` arguments in `zod/mini`.
  */
 export function buildNoTransformInRecordKeyCreate(
   scope: ZodImportScope,
@@ -19,7 +18,7 @@ export function buildNoTransformInRecordKeyCreate(
 ): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
   return function create(context) {
     const { createSchemaVisitor, detectZodSchemaRootNode, collectZodSchemaConstraints } =
-      scope.createTracker();
+      scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: 'record',

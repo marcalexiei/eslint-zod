@@ -18,9 +18,8 @@ export interface DeprecatedSchemaPropertyOptions<TMessageIds extends string> {
 }
 
 /**
- * Flags a deprecated property access on a schema of `schemaType`
- * (`z.number().isInt`). Report-only: the replacement depends on surrounding
- * code, so no fix is safe.
+ * Flags a deprecated property access on a schema of `schemaType` (`z.number().isInt`).
+ * Report-only: the replacement depends on surrounding code, so no fix is safe.
  */
 export function buildDeprecatedSchemaPropertyCreate<TMessageIds extends string>(
   options: DeprecatedSchemaPropertyOptions<TMessageIds>,
@@ -28,7 +27,7 @@ export function buildDeprecatedSchemaPropertyCreate<TMessageIds extends string>(
   const { scope, schemaType, propertyName, messageId } = options;
 
   return function create(context) {
-    const { importDeclarationListener, isZodSchemaOfType } = scope.createTracker();
+    const { importDeclarationListener, isZodSchemaOfType } = scope.createTracker({ kind: 'value' });
 
     return {
       ImportDeclaration: importDeclarationListener,

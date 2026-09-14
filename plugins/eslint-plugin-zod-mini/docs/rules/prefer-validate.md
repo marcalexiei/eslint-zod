@@ -65,7 +65,7 @@ Review this behavior before accepting a suggestion.
 A suggestion rewrites the parse call and all success reads together, preserving argument evaluation and `await`.
 Success-only destructuring becomes a boolean variable with the same local name.
 Mini uses standalone `z.validate(schema, data)` and `z.validateAsync(schema, data)` calls.
-Standalone calls retain their style; suggestions reuse an accessible validation import or namespace, or insert a collision-free named import from the same module.
+Standalone calls retain their style; suggestions reuse an accessible validation import or namespace, or add a collision-free named import to the existing Zod import.
 Suggestions are withheld when the edit would discard comments.
 
 ## Limitations
@@ -77,6 +77,9 @@ Imported schemas, parameter schemas, reassigned bindings, dynamic property names
 Stored parse results are ignored when they escape, are exported, are reassigned, have an explicit type annotation, or are used beyond reading `success`.
 Destructuring with defaults, rest properties, or additional properties is ignored.
 Explicit `zod/v3` imports are ignored; the installed Zod version is not detected automatically.
+
+`z.validate(schema, data)` is a type predicate (`data is z.input<typeof schema>`) while `safeParse().success` is a plain boolean.
+In a condition the suggestion therefore narrows the validated value, which `safeParse()` did not.
 
 ## When Not To Use It
 

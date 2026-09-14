@@ -53,8 +53,8 @@ function readBoundValue(constraint: ZodSchemaConstraint): number | null {
 
 /**
  * Renames a bound call to the exact check: `.min(3)` → `.length(3)`,
- * `z.minLength(3)` → `z.length(3)`, `minLength(3)` → `length(3)`. `null` for a
- * computed callee, or a named import the file lacks.
+ * `z.minLength(3)` → `z.length(3)`, `minLength(3)` → `length(3)`.
+ * `null` for a computed callee, or a named import the file lacks.
  */
 function buildBoundRenameFix(opts: {
   fixer: TSESLint.RuleFixer;
@@ -72,8 +72,8 @@ function buildBoundRenameFix(opts: {
     return localName === undefined ? null : fixer.replaceText(callee, localName);
   }
 
-  // Chained method or namespaced check — only the property name changes, and a
-  // computed one (`z['minLength'](3)`) has no name to change.
+  // Chained method or namespaced check — only the property name changes,
+  // and a computed one (`z['minLength'](3)`) has no name to change.
   if (
     callee.type !== AST_NODE_TYPES.MemberExpression ||
     callee.computed ||
@@ -86,8 +86,9 @@ function buildBoundRenameFix(opts: {
 }
 
 /**
- * Removes the redundant bound: a chained method, the whole `.check(...)` when
- * the bound was its only argument, or that argument plus one separator.
+ * Removes the redundant bound: a chained method,
+ * the whole `.check(...)` when the bound was its only argument,
+ * or that argument plus one separator.
  */
 function buildBoundRemoveFix(opts: {
   fixer: TSESLint.RuleFixer;
@@ -111,15 +112,16 @@ function buildBoundRemoveFix(opts: {
 }
 
 /**
- * Collapses an equal lower/upper bound pair into the exact check of the same
- * domain: `z.string().min(3).max(3)` → `z.string().length(3)`.
+ * Collapses an equal lower/upper bound pair into the exact check of the same domain:
+ * `z.string().min(3).max(3)` → `z.string().length(3)`.
  *
- * Bounds are matched by meaning (`bound.kind`, `bound.domain`) through the
- * shared check vocabulary, so both API styles work from one implementation.
- * Stays silent — rather than reporting unfixably — whenever the pair is not
- * provably the exact check: a non-literal or error-message argument, a bound
- * with its value baked in (`nonempty`), a mutating check between the two, or
- * more bounds than a single pair. Those belong to `no-conflicting-checks`.
+ * Bounds are matched by meaning (`bound.kind`, `bound.domain`) through the shared check vocabulary,
+ * so both API styles work from one implementation.
+ * Stays silent — rather than reporting unfixably —
+ * whenever the pair is not provably the exact check: a non-literal or error-message argument,
+ * a bound with its value baked in (`nonempty`), a mutating check between the two,
+ * or more bounds than a single pair.
+ * Those belong to `no-conflicting-checks`.
  */
 export function buildCollapseEqualBoundsCreate<TMessageIds extends string>(
   options: CollapseEqualBoundsOptions<TMessageIds>,
@@ -133,7 +135,7 @@ export function buildCollapseEqualBoundsCreate<TMessageIds extends string>(
       collectZodChainMethods,
       collectZodSchemaConstraints,
       getNamedImportLocal,
-    } = scope.createTracker();
+    } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       onSchema(node, zodSchemaMeta): void {
@@ -142,8 +144,8 @@ export function buildCollapseEqualBoundsCreate<TMessageIds extends string>(
           return;
         }
 
-        // Empty when the chain runs through a computed member
-        // (`z['string']().min(3).max(3)`): nothing to pair up.
+        // Empty when the chain runs through a computed member (`z['string']().min(3).max(3)`):
+        // nothing to pair up.
         const constraints = collectZodSchemaConstraints(node);
 
         const bounds: Array<DomainBound> = [];

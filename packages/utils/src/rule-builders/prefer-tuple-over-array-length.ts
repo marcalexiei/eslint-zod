@@ -13,10 +13,11 @@ type MessageIds = 'preferTuple';
 type LengthConstraintKind = 'length' | 'min' | 'max';
 
 /**
- * Length constraints by canonical name. Both API styles reduce to these via
- * `canonicalizeZodConstraintName`, so chained methods (`.length()` / `.min()` /
- * `.max()`, `zod`) and standalone checks (`z.length()` / `z.minLength()` /
- * `z.maxLength()`, `zod/mini`) are matched by the same three entries.
+ * Length constraints by canonical name.
+ * Both API styles reduce to these via `canonicalizeZodConstraintName`,
+ * so chained methods `.length()` / `.min()` / `.max()`, `zod`)
+ * and standalone checks (`z.length()` / `z.minLength()` / `z.maxLength()`, `zod/mini`)
+ * are matched by the same three entries.
  */
 const LENGTH_CONSTRAINT_KINDS = new Map<string, LengthConstraintKind>([
   ['length', 'length'],
@@ -34,18 +35,18 @@ interface LengthCandidate {
 /**
  * Builds the `create` function for the `prefer-tuple-over-array-length` rule.
  *
- * Detection is API-style agnostic: length constraints are collected via
- * `collectZodSchemaConstraints`, so chained methods (`.length()` / `.min()` /
- * `.max()`, `zod`) and standalone checks passed to `.check(...)`
- * (`z.length()` / `z.minLength()` / `z.maxLength()`, `zod/mini`) are
- * recognized by the same logic, whichever style the plugin's API uses.
+ * Detection is API-style agnostic:
+ * length constraints are collected via `collectZodSchemaConstraints`,
+ * so chained methods (`.length()` / `.min()` / `.max()`, `zod`)
+ * and standalone checks passed to `.check(...)` (`z.length()` / `z.minLength()` / `z.maxLength()`, `zod/mini`)
+ * are recognized by the same logic, whichever style the plugin's API uses.
  */
 export function buildPreferTupleOverArrayLengthCreate(
   scope: ZodImportScope,
 ): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
   return function create(context) {
     const { createSchemaVisitor, collectZodChainMethods, collectZodSchemaConstraints } =
-      scope.createTracker();
+      scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: 'array',
@@ -72,16 +73,16 @@ export function buildPreferTupleOverArrayLengthCreate(
           return;
         }
 
-        // `.nonempty()` is itself a typed length constraint: a fix that keeps
-        // it would produce a tuple carrying a method tuples don't have.
+        // `.nonempty()` is itself a typed length constraint:
+        // a fix that keeps it would produce a tuple carrying a method tuples don't have.
         const hasNonempty = constraints.some((it) => it.name === 'nonempty');
 
         const lengthCandidates = candidates.filter((it) => it.kind === 'length');
         const minCandidates = candidates.filter((it) => it.kind === 'min');
         const maxCandidates = candidates.filter((it) => it.kind === 'max');
 
-        // Decide the reported kind, where the element count comes from, and
-        // which constraints the autofix removes (`null` → report-only).
+        // Decide the reported kind, where the element count comes from,
+        // and which constraints the autofix removes (`null` → report-only).
         let kind: LengthConstraintKind;
         let countArgument: TSESTree.Node | null;
         let removable: Array<ZodSchemaConstraint> | null;
@@ -115,8 +116,7 @@ export function buildPreferTupleOverArrayLengthCreate(
           countArgument = only.countArgument;
           removable = [only.constraint];
         } else {
-          // `max()` alone, several constraints, or a `nonempty()` companion →
-          // report-only.
+          // `max()` alone, several constraints, or a `nonempty()` companion → report-only.
           const chosen = lengthCandidates.at(0) ?? candidates[0];
           kind = chosen.kind;
           countArgument = chosen.countArgument;
@@ -127,8 +127,8 @@ export function buildPreferTupleOverArrayLengthCreate(
           node,
           messageId: 'preferTuple',
           fix(fixer) {
-            // `max` has no behavior-preserving tuple form, and `removable`
-            // is null when the constraints don't reduce to a single length.
+            // `max` has no behavior-preserving tuple form,
+            // and `removable` is null when the constraints don't reduce to a single length.
             if (kind === 'max' || removable === null) {
               return null;
             }
@@ -138,8 +138,8 @@ export function buildPreferTupleOverArrayLengthCreate(
               return null;
             }
 
-            // Bail on named imports (e.g. `array(...)`): rewriting to `tuple(...)`
-            // would require a `tuple` import we cannot safely add.
+            // Bail on named imports (e.g. `array(...)`):
+            // rewriting to `tuple(...)` would require a `tuple` import we cannot safely add.
             if (zodSchemaMeta.schemaDecl === 'named') {
               return null;
             }
@@ -156,8 +156,8 @@ export function buildPreferTupleOverArrayLengthCreate(
               return null;
             }
 
-            // Named declarations returned above and a computed factory produces
-            // no walkable `array` chain item, so the callee is `<ns>.array`.
+            // Named declarations returned above and a computed factory produces no walkable `array` chain item,
+            // so the callee is `<ns>.array`.
             const arrayCallee = arrayNode.callee as TSESTree.MemberExpression;
 
             const removeFixes = buildZodConstraintsRemoveFix({

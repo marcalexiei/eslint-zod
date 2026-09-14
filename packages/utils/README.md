@@ -36,11 +36,11 @@ AST parsing, import tracking, traversal, and fixer helpers.
 
 **Import tracking & scopes**
 
-- `ZodImportScope` — the class defining which import sources a plugin considers in-scope; `scope.createTracker()` is how rules get a per-file import tracker
+- `ZodImportScope` — the class defining which import sources a plugin considers in-scope; `scope.createTracker({ kind })` is how rules get a per-file import tracker; `kind` is required, and `sourceCode` enables the scope-aware resolvers below
 - `zodImportScope`, `zodMiniImportScope`, `zodCoreImportScope` — pre-built `ZodImportScope` instances
-- `trackZodSchemaImports(scope)` — the standalone form of `scope.createTracker()`; the returned tracker exposes `createSchemaVisitor`, `detectZodSchemaRootNode`, `isZodSchemaOfType`, `collectZodChainMethods`, `collectZodSchemaConstraints`, and the import-lookup helpers. Schema detection is reachable **only** through a tracker — the raw forms need the tracker's private import maps
+- `scope.createTracker({ kind, sourceCode? })` — the returned tracker exposes `createSchemaVisitor`, `detectZodSchemaRootNode`, `isZodSchemaOfType`, `collectZodChainMethods`, `collectZodSchemaConstraints`, and the import-lookup helpers. `getZodImportBindings()` returns every binding with the declaration it came from, and `resolveZodImport(node)` / `resolveZodExport(node)` resolve a node to its zod import honouring lexical scope, so a shadowed `z` resolves to `null` — use them over `isZodNamespace` in a rule whose fixer writes an import. `createTracker({ kind })` picks which specifiers are recorded, and is required — `'value'` skips `import type { … }` and `{ type … }`, `'type'` keeps only those, `'all'` keeps both and is what a rule reading a type position needs, since either form reaches one. Schema detection is reachable **only** through a tracker — the raw forms need the tracker's private import maps
 - `tracker.createSchemaVisitor({ schemaType?, onSchema })` — builds the `{ ImportDeclaration, CallExpression }` visitor a rule returns, with detection and the `schemaType` filter already applied. **The standard shape for a schema rule**; spread it to add more visitor keys
-- types `ZodSchemaImportTracker`, `ZodChainItem`, `ZodSchemaVisitorOptions`
+- types `ZodSchemaImportTracker`, `ZodChainItem`, `ZodImportBinding`, `ZodImportKind`, `ZodSchemaVisitorOptions`, `ZodTrackerOptions`
 
 **Schema detection & navigation**
 
@@ -62,6 +62,7 @@ AST parsing, import tracking, traversal, and fixer helpers.
 - `ZOD_IMMUTABLE_SCHEMA_TYPES` — schema factory names whose parsed output is already immutable
 - `ZOD_MUTATING_CHECK_NAMES` — Zod check names that mutate the validated value
 - `ZOD_NON_SCHEMA_PRODUCING_METHODS` — Zod method names that do not return a schema
+- `ZOD_SCHEMA_FACTORY_NAMES` / `isZodSchemaFactoryName(name)` — every top-level Zod export whose call evaluates to a schema; use the predicate instead of a per-rule factory list
 - `ZOD_STRING_FORMAT_METHODS` — deprecated `z.string().<format>()` methods and the top-level factory replacing each; type `ZodStringFormatMethodName`
 - `ZOD_STRING_FORMAT_NAMES` — top-level string-format factory names that all parse to `string`
 
@@ -98,7 +99,7 @@ Each rule shared between `eslint-plugin-zod` and `eslint-plugin-zod-mini` (some 
 - `buildPreferEnumOverLiteralUnionCreate(scope)`
 - `buildPreferNullishCreate(scope)`
 - `buildPreferTupleOverArrayLengthCreate(scope)`
-- `buildPreferValidateCreate(scope, api)` — success-only parsing suggestions; `api` is `classic` or `mini`
+- `buildPreferValidateCreate(scope, api)` — success-only parsing suggestions; `api` is a `ZodValidateApiStyle` (`schema-method` or `standalone`)
 - `buildRequireBrandTypeParameterCreate(scope)`
 - `buildRequireErrorMessageCreate(scope)`
 - `buildSchemaErrorPropertyStyleCreate(scope)`
