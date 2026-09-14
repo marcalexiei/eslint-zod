@@ -88,6 +88,7 @@ Each rule shared between `eslint-plugin-zod` and `eslint-plugin-zod-mini` (some 
 - `buildNoDuplicateSchemaMethodsCreate(scope, excludedMethods)`
 - `buildNoDynamicSchemaValueCreate(scope)`
 - `buildNoEmptyCustomSchemaCreate(scope)`
+- `buildNoFunctionScopedSchemaCreate(scope)`
 - `buildNoNativeEnumCreate(scope)`
 - `buildNoPromiseSchemaCreate(scope)`
 - `buildNoThrowInRefineCreate(scope)`
