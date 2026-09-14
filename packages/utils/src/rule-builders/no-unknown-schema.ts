@@ -6,7 +6,7 @@ export function buildNoUnknownSchemaCreate(
   scope: ZodImportScope,
 ): (context: Readonly<TSESLint.RuleContext<'noZUnknown', []>>) => TSESLint.RuleListener {
   return function create(context) {
-    const { createSchemaVisitor } = scope.createTracker();
+    const { createSchemaVisitor } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: 'unknown',

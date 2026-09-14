@@ -18,7 +18,7 @@ export function buildSchemaErrorPropertyStyleCreate(
   options: readonly [Options],
 ) => TSESLint.RuleListener {
   return function create(context, [{ selector, example }]) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
     let parsedSelector: ReturnType<typeof esquery.parse>;
 
@@ -46,8 +46,7 @@ export function buildSchemaErrorPropertyStyleCreate(
           return;
         }
 
-        // Error should be the second parameter,
-        // if not present stop processing
+        // Error should be the second parameter, if not present stop processing
         if (node.arguments.length < 2) {
           return;
         }

@@ -3,6 +3,7 @@ import type { ESLint, Linter, Rule } from 'eslint';
 import { PLUGIN_NAME, PLUGIN_VERSION } from './meta.js';
 import { consistentImport } from './rules/consistent-import.js';
 import { consistentSchemaOutputTypeStyle } from './rules/consistent-schema-output-type-style.js';
+import { preferValidate } from './rules/prefer-validate.js';
 
 interface CompatibleConfig {
   name?: string;
@@ -25,6 +26,7 @@ const eslintPluginZodCore = {
   rules: {
     'consistent-import': consistentImport,
     'consistent-schema-output-type-style': consistentSchemaOutputTypeStyle,
+    'prefer-validate': preferValidate,
   } as unknown as Record<string, Rule.RuleModule>,
 } satisfies ESLint.Plugin as CompatiblePlugin;
 

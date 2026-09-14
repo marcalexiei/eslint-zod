@@ -20,7 +20,7 @@ export function buildConsistentObjectSchemaTypeCreate(
   options: readonly [Options],
 ) => TSESLint.RuleListener {
   return function create(context, [{ allow: allowedList }]) {
-    const { createSchemaVisitor } = scope.createTracker();
+    const { createSchemaVisitor } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: ZOD_OBJECT_METHODS,

@@ -16,5 +16,5 @@ export const preferValidate = createZodPluginRule({
     schema: [],
   },
   defaultOptions: [],
-  create: buildPreferValidateCreate(zodImportScope, 'classic'),
+  create: buildPreferValidateCreate(zodImportScope, 'schema-method'),
 });

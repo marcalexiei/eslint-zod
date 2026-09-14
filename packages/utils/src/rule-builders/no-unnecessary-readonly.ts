@@ -9,15 +9,13 @@ import type { ZodImportScope } from '../zod-import-scope.js';
 type MessageIds = 'unnecessaryReadonly';
 
 /**
- * Chained methods that change the schema's output type, making the
- * immutability of the factory's output irrelevant for what `readonly`
- * ultimately wraps (e.g. `z.string().transform(s => [s]).readonly()`).
+ * Chained methods that change the schema's output type,
+ * making the immutability of the factory's output irrelevant for what `readonly` ultimately wraps (e.g. `z.string().transform(s => [s]).readonly()`).
  */
 const TYPE_CHANGING_METHODS = ['and', 'array', 'or', 'pipe', 'preprocess', 'transform'];
 
 /**
- * Wrapper factories whose output immutability equals their first argument's
- * (e.g. `z.optional(z.string())` is as immutable as `z.string()`).
+ * Wrapper factories whose output immutability equals their first argument's (e.g. `z.optional(z.string())` is as immutable as `z.string()`).
  */
 const PASSTHROUGH_WRAPPERS = [
   '_default',
@@ -36,13 +34,11 @@ type ChainItems = Array<{ name: string; node: TSESTree.CallExpression }>;
 /**
  * Builds the `create` function for the `no-unnecessary-readonly` rule.
  *
- * Handles both API spellings with the same logic: the chained `.readonly()`
- * method (`zod`) is found via `collectZodSchemaConstraints`, and the
- * `z.readonly(inner)` wrapper (`zod/mini`) via the schema root's factory.
+ * Handles both API spellings with the same logic:
+ * the chained `.readonly()` method (`zod`) is found via `collectZodSchemaConstraints`,
+ * and the `z.readonly(inner)` wrapper (`zod/mini`) via the schema root's factory.
  * A `readonly` is reported when the schema it wraps is already immutable —
- * its base type is a primitive/scalar (`ZOD_IMMUTABLE_SCHEMA_TYPES`, looked
- * up through passthrough wrappers such as `optional`) or it is itself
- * already `readonly`.
+ * its base type is a primitive/scalar (`ZOD_IMMUTABLE_SCHEMA_TYPES`, looked up through passthrough wrappers such as `optional`) or it is itself already `readonly`.
  */
 export function buildNoUnnecessaryReadonlyCreate(
   scope: ZodImportScope,
@@ -53,7 +49,7 @@ export function buildNoUnnecessaryReadonlyCreate(
       detectZodSchemaRootNode,
       collectZodChainMethods,
       collectZodSchemaConstraints,
-    } = scope.createTracker();
+    } = scope.createTracker({ kind: 'value' });
 
     /** Immutability of the schema produced by `chain[0..endIndex)`. */
     function classifyChain(schemaType: string, chain: ChainItems, endIndex: number): Immutability {

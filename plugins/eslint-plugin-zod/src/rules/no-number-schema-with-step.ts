@@ -19,15 +19,16 @@ export const noNumberSchemaWithStep = createZodPluginRule({
   defaultOptions: [],
 
   create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker({
+      kind: 'value',
+    });
 
     return createSchemaVisitor({
       schemaType: 'number',
       onSchema(node, zodSchemaMeta): void {
-        // Detect on the names alone: they exclude the factory, so an aliased
-        // named import (`import { number as step }`) is not mistaken for a
-        // `.step()` call, and a computed factory (`z['number']().step(5)`) is
-        // still caught even though the chain walker cannot name it.
+        // Detect on the names alone: they exclude the factory,
+        // so an aliased named import (`import { number as step }`) is not mistaken for a `.step()` call,
+        // and a computed factory (`z['number']().step(5)`) is still caught even though the chain walker cannot name it.
         if (!getZodChainedMethodNames(zodSchemaMeta).includes('step')) {
           return;
         }
@@ -38,8 +39,8 @@ export const noNumberSchemaWithStep = createZodPluginRule({
 
         // Rename the `step` call's own property, not the chain's outermost one:
         // in `z.number().step(5).min(0)` the outermost callee is `.min`.
-        // Past index 0 the callee is always a plain-identifier member
-        // expression — that is the only shape `collectZodChainMethods` names.
+        // Past index 0 the callee is always a plain-identifier member expression —
+        // that is the only shape `collectZodChainMethods` names.
         const property =
           stepIndex === -1
             ? null

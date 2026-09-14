@@ -23,7 +23,8 @@ export function buildConsistentSchemaOutputTypeStyleCreate(
       isZodNamespace,
       getNamedImportOriginal,
       getNamedImportLocal,
-    } = scope.createTracker();
+      // A name in a type position reaches it through either import form.
+    } = scope.createTracker({ kind: 'all' });
 
     return {
       ImportDeclaration: importDeclarationListener,

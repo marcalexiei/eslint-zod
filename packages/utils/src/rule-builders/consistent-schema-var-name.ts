@@ -17,7 +17,7 @@ export function buildConsistentSchemaVarNameCreate(
 ) => TSESLint.RuleListener {
   return function create(context, [{ before = '', after = '' }]) {
     const { importDeclarationListener, detectZodSchemaRootNode, collectZodChainMethods } =
-      scope.createTracker();
+      scope.createTracker({ kind: 'value' });
 
     return {
       ImportDeclaration: importDeclarationListener,

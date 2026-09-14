@@ -44,7 +44,9 @@ export const arrayStyle = createZodPluginRule<[Options], MessageIds>({
   create(context, [{ style }]) {
     const { sourceCode } = context;
 
-    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker({
+      kind: 'value',
+    });
 
     return createSchemaVisitor({
       onSchema(node, zodSchemaMeta): void {
@@ -55,8 +57,7 @@ export const arrayStyle = createZodPluginRule<[Options], MessageIds>({
         const { schemaDecl, schemaType } = zodSchemaMeta;
 
         if (style === 'method') {
-          // match all z.array(z.string()) and convert them into
-          // z.string().array()
+          // match all z.array(z.string()) and convert them into z.string().array()
           if (schemaType === 'array') {
             if (schemaDecl === 'namespace') {
               context.report({

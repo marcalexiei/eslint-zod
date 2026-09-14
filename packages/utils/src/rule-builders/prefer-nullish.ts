@@ -12,11 +12,11 @@ type MessageIds = 'preferNullish';
  *
  * Handles both API spellings with the same logic:
  * - chained methods (`zod`): `schema.optional().nullable()` /
- *   `schema.nullable().optional()`, found via `collectZodChainMethods` — the
- *   two methods must be directly adjacent in the chain.
+ * `schema.nullable().optional()`, found via `collectZodChainMethods` —
+ * the two methods must be directly adjacent in the chain.
  * - wrapper factories (`zod/mini`): `z.optional(z.nullable(inner))` /
- *   `z.nullable(z.optional(inner))`, where the outer wrapper's single argument
- *   is the other bare wrapper (no intervening chain, no extra arguments).
+ * `z.nullable(z.optional(inner))`,
+ * where the outer wrapper's single argument is the other bare wrapper (no intervening chain, no extra arguments).
  *
  * Both cases are equivalent to `nullish` and are autofixed to it.
  */
@@ -30,13 +30,12 @@ export function buildPreferNullishCreate(
       detectZodSchemaRootNode,
       collectZodChainMethods,
       getNamedImportLocal,
-    } = scope.createTracker();
+    } = scope.createTracker({ kind: 'value' });
 
     /**
      * Fixer that renames the factory of a wrapper call to `nullish`.
      * Namespace style renames the member property (`z.optional` → `z.nullish`);
-     * named style renames the callee identifier to `nullish`'s local name and
-     * returns `null` when `nullish` was not imported (an unsafe fix).
+     * named style renames the callee identifier to `nullish`'s local name and returns `null` when `nullish` was not imported (an unsafe fix).
      */
     function renameWrapperFactory(
       fixer: TSESLint.RuleFixer,
@@ -46,16 +45,16 @@ export function buildPreferNullishCreate(
       const { callee } = wrapperCall;
 
       if (schemaDecl === 'namespace') {
-        // A namespace schema is detected only when its factory is a member of
-        // the namespace, so this call is always `<ns>.<factory>(…)`.
+        // A namespace schema is detected only when its factory is a member of the namespace,
+        // so this call is always `<ns>.<factory>(…)`.
         const { property } = callee as TSESTree.MemberExpression;
         return fixer.replaceText(property, 'nullish');
       }
 
-      // A named-import schema is normally called bare (`optional(…)`), but the
-      // import can also be used as an object (`optional.foo(…)`), and that
-      // still parses as a `named` schema. Replacing the whole callee there
-      // would delete the member call, so decline the fix instead.
+      // A named-import schema is normally called bare (`optional(…)`),
+      // but the import can also be used as an object (`optional.foo(…)`),
+      // and that still parses as a `named` schema.
+      // Replacing the whole callee there would delete the member call, so decline the fix instead.
       if (callee.type !== AST_NODE_TYPES.Identifier) {
         return null;
       }
@@ -82,8 +81,8 @@ export function buildPreferNullishCreate(
 
       const other = meta.schemaType === 'optional' ? 'nullable' : 'optional';
       const innerMeta = detectZodSchemaRootNode(inner);
-      // The inner must be the *other* bare wrapper: same factory, single
-      // argument, and no trailing chain (which would carry checks we'd drop).
+      // The inner must be the *other* bare wrapper: same factory, single argument,
+      // and no trailing chain (which would carry checks we'd drop).
       if (
         innerMeta?.schemaType !== other ||
         collectZodChainMethods(inner).length !== 1 ||
@@ -119,8 +118,8 @@ export function buildPreferNullishCreate(
       if (optionalIndex === -1 || nullableIndex === -1) {
         return;
       }
-      // Only fire when the two methods are directly adjacent — an intervening
-      // method (e.g. `.describe()`) makes merging into `.nullish()` unsafe.
+      // Only fire when the two methods are directly adjacent —
+      // an intervening method (e.g. `.describe()`) makes merging into `.nullish()` unsafe.
       if (Math.abs(optionalIndex - nullableIndex) !== 1) {
         return;
       }
@@ -141,8 +140,8 @@ export function buildPreferNullishCreate(
           ) {
             return null;
           }
-          // Drop the earlier method, keep its object, and rename the later
-          // one to `nullish`: both orderings collapse to `…nullish()`.
+          // Drop the earlier method, keep its object, and rename the later one to `nullish`:
+          // both orderings collapse to `…nullish()`.
           return [
             fixer.replaceText(earlier.node, sourceCode.getText(earlierCallee.object)),
             fixer.replaceText(laterCallee.property, 'nullish'),

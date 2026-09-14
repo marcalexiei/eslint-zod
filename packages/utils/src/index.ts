@@ -1,9 +1,11 @@
 // import tracking & scopes
-export { trackZodSchemaImports } from './track-zod-schema-imports.js';
 export type {
   ZodChainItem,
+  ZodImportBinding,
+  ZodImportKind,
   ZodSchemaImportTracker,
   ZodSchemaVisitorOptions,
+  ZodTrackerOptions,
 } from './track-zod-schema-imports.js';
 export {
   ZodImportScope,
@@ -34,6 +36,7 @@ export { buildZodWrapperUnwrapFix } from './build-zod-wrapper-unwrap-fix.js';
 export { ZOD_IMMUTABLE_SCHEMA_TYPES } from './zod-immutable-schema-types.js';
 export { ZOD_MUTATING_CHECK_NAMES } from './zod-mutating-check-names.js';
 export { ZOD_NON_SCHEMA_PRODUCING_METHODS } from './zod-non-schema-producing-methods.js';
+export { ZOD_SCHEMA_FACTORY_NAMES, isZodSchemaFactoryName } from './zod-schema-factory-names.js';
 export { ZOD_STRING_FORMAT_METHODS } from './zod-string-format-methods.js';
 export type { ZodStringFormatMethodName } from './zod-string-format-methods.js';
 export { ZOD_STRING_FORMAT_NAMES } from './zod-string-format-names.js';

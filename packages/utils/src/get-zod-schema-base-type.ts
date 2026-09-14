@@ -1,8 +1,8 @@
 import { ZOD_STRING_FORMAT_NAMES } from './zod-string-format-names.js';
 
 /**
- * Category of values a schema factory parses to. Used by rules that reason
- * about which checks apply to a schema (e.g. `no-conflicting-checks`).
+ * Category of values a schema factory parses to.
+ * Used by rules that reason about which checks apply to a schema (e.g. `no-conflicting-checks`).
  */
 export type ZodSchemaBaseType =
   | 'string'
@@ -20,9 +20,8 @@ export type ZodSchemaBaseType =
   | 'never';
 
 const BASE_TYPES = new Map<string, ZodSchemaBaseType>([
-  // strings — `string` itself, the `iso` namespace (member factories such as
-  // `z.iso.date()`), and every top-level format factory, which all parse to
-  // `string`.
+  // strings — `string` itself, the `iso` namespace (member factories such as `z.iso.date()`),
+  // and every top-level format factory, which all parse to `string`.
   ['string', 'string'],
   ['iso', 'string'],
   ...ZOD_STRING_FORMAT_NAMES.map((name): [string, ZodSchemaBaseType] => [name, 'string']),
@@ -58,10 +57,12 @@ const BASE_TYPES = new Map<string, ZodSchemaBaseType>([
   ['never', 'never'],
 ]);
 
+/** Every name {@link getZodSchemaBaseType} maps, including the `iso` namespace. */
+export const ZOD_BASE_TYPE_NAMES = Object.freeze([...BASE_TYPES.keys()]);
+
 /**
- * Maps a schema factory name (the `schemaType` of `detectZodSchemaRootNode`)
- * to its base type category, or `null` for factories the caller should not
- * reason about (`union`, `tuple`, `enum`, `custom`, wrappers, …).
+ * Maps a schema factory name (the `schemaType` of `detectZodSchemaRootNode`) to its base type category,
+ * or `null` for factories the caller should not reason about (`union`, `tuple`, `enum`, `custom`, wrappers, …).
  */
 export function getZodSchemaBaseType(schemaType: string): ZodSchemaBaseType | null {
   return BASE_TYPES.get(schemaType) ?? null;

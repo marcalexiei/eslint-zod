@@ -18,7 +18,9 @@ export const preferMetaLast = createZodPluginRule({
   },
   defaultOptions: [],
   create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker({
+      kind: 'value',
+    });
 
     return createSchemaVisitor({
       // If not inside a schema root AND doesn't look like a zod chain, bail out.

@@ -19,7 +19,7 @@ export const preferMeta = createZodMiniPluginRule({
   },
   defaultOptions: [],
   create(context) {
-    const { createSchemaVisitor } = zodMiniImportScope.createTracker();
+    const { createSchemaVisitor } = zodMiniImportScope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: 'describe',
@@ -32,13 +32,12 @@ export const preferMeta = createZodMiniPluginRule({
               return null;
             }
 
-            // A namespace schema is detected only when its factory is a member
-            // of the namespace, so this call is always `<ns>.<factory>(…)`.
+            // A namespace schema is detected only when its factory is a member of the namespace,
+            // so this call is always `<ns>.<factory>(…)`.
             const callee = node.callee as TSESTree.MemberExpression;
 
-            // …but the key may be computed (`z['describe'](…)`), which
-            // detection still resolves. The property is then the string
-            // literal, so renaming it would emit `z[meta](…)`.
+            // …but the key may be computed (`z['describe'](…)`), which detection still resolves.
+            // The property is then the string literal, so renaming it would emit `z[meta](…)`.
             if (callee.computed) {
               return null;
             }

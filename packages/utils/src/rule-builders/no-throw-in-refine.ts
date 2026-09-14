@@ -9,7 +9,7 @@ export function buildNoThrowInRefineCreate(
   scope: ZodImportScope,
 ): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker();
+    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
     function checkNode(node: TSESTree.Node): void {
       switch (node.type) {
@@ -60,8 +60,8 @@ export function buildNoThrowInRefineCreate(
           return;
         }
 
-        // `.refine()` with no argument is invalid zod but valid JS, so the
-        // argument list can legitimately be empty here.
+        // `.refine()` with no argument is invalid zod but valid JS,
+        // so the argument list can legitimately be empty here.
         const callback = refineMethod.node.arguments.at(0);
         if (
           callback?.type === AST_NODE_TYPES.ArrowFunctionExpression ||

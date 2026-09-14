@@ -1,4 +1,4 @@
-# zod/prefer-validate
+# zod-core/prefer-validate
 
 📝 Prefer boolean validation when only the success of parsing is used.
 
@@ -8,12 +8,13 @@
 
 ## Rule Details
 
-Prefer `validate()` when a `safeParse()` result is used only to read `success`.
+Prefer `core.validate()` when a `core.safeParse()` result is used only to read `success`.
 This opt-in rule requires **Zod 4.6 or later** and is not enabled in the recommended configuration.
 
 The rule recognizes direct success access, destructuring of only `success` (including aliases), and local result variables whose reads all access `success`.
-It also handles awaited `safeParseAsync()` calls with `validateAsync()`, including the Classic `spa()` alias.
-Both schema methods and standalone namespace or named-import parsing functions are supported.
+It also handles awaited `core.safeParseAsync()` calls with `core.validateAsync()`.
+
+`zod/v4/core` schemas carry no parsing methods, so only the standalone `core.safeParse(schema, data)` form is analyzed.
 
 ## Why?
 
@@ -25,12 +26,11 @@ Use parsing when you need the parsed data or error details.
 ### ❌ Invalid
 
 ```ts
-import * as z from 'zod';
+import * as core from 'zod/v4/core';
 
-const schema = z.string();
-const ok = schema.safeParse(data).success;
-const { success: valid } = schema.safeParse(data);
-const result = await schema.safeParseAsync(data);
+const ok = core.safeParse(Schema, data).success;
+const { success: valid } = core.safeParse(Schema, data);
+const result = await core.safeParseAsync(Schema, data);
 if (result.success) {
   accept(data);
 }
@@ -39,18 +39,17 @@ if (result.success) {
 ### ✅ Valid
 
 ```ts
-import * as z from 'zod';
+import * as core from 'zod/v4/core';
 
-const schema = z.string();
-const ok = schema.validate(data);
-const valid = schema.validate(data);
-const result = await schema.validateAsync(data);
+const ok = core.validate(Schema, data);
+const valid = core.validate(Schema, data);
+const result = await core.validateAsync(Schema, data);
 if (result) {
   accept(data);
 }
 
 // Keep safeParse when the result's data or error is needed.
-const parsed = schema.safeParse(data);
+const parsed = core.safeParse(Schema, data);
 if (parsed.success) {
   accept(parsed.data);
 }
@@ -64,22 +63,19 @@ Review this behavior before accepting a suggestion.
 
 A suggestion rewrites the parse call and all success reads together, preserving argument evaluation and `await`.
 Success-only destructuring becomes a boolean variable with the same local name.
-Classic schema methods become `.validate()` or `.validateAsync()`.
-Standalone calls retain their style; suggestions reuse an accessible validation import or namespace, or add a collision-free named import to the existing Zod import.
+Suggestions reuse an accessible validation import or namespace, or add a collision-free named import to the existing `zod/v4/core` import.
 Suggestions are withheld when the edit would discard comments.
 
 ## Limitations
 
 Analysis is local and does not require TypeScript type information.
-Schema methods are recognized on inline Zod schemas and immutable local schema bindings or aliases.
-Imported schemas, parameter schemas, reassigned bindings, dynamic property names, optional chains, and unawaited promise chains are not analyzed.
+Dynamic property names, optional chains, and unawaited promise chains are not analyzed.
 
 Stored parse results are ignored when they escape, are exported, are reassigned, have an explicit type annotation, or are used beyond reading `success`.
 Destructuring with defaults, rest properties, or additional properties is ignored.
-Explicit `zod/v3` imports are ignored; the installed Zod version is not detected automatically.
 
-`schema.validate(data)` is a type predicate (`data is z.input<typeof schema>`) while `safeParse().success` is a plain boolean.
-In a condition the suggestion therefore narrows the validated value, which `safeParse()` did not.
+`core.validate()` is a type predicate (`data is core.input<Schema>`) while `core.safeParse().success` is a plain boolean.
+In a condition the suggestion therefore narrows the validated value, which `core.safeParse()` did not.
 
 ## When Not To Use It
 
