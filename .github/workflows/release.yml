@@ -33,8 +33,11 @@ jobs:
     permissions:
       contents: write # required to push release commits and tags
       pull-requests: write # required to create and update release PRs
-      issues: write # required to comment on the issues a release closes
       id-token: write # required for npm OIDC trusted publishing
+
+    outputs:
+      published: ${{ steps.changesets.outputs.published }}
+      publishedPackages: ${{ steps.changesets.outputs['published-packages'] }}
 
     steps:
       - name: Setup release helper
@@ -48,7 +51,6 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          fetch-depth: 0 # the release commenter reads history before the release commit
 
       - name: Install Dependencies
         uses: marcalexiei/github-actions/setup-node-and-pnpm@e3b04865510c657477cc722854b31a3b74c72c09 # v2.2.0
@@ -63,13 +65,41 @@ jobs:
           pr-base-branch: main
           publish-script: 'pnpm release'
 
+  # Its own job, so a comment that fails is a red job to re-run rather than an error swallowed
+  # inside a green release: the packages are already on npm by the time it runs.
+  comment:
+    name: Comment
+    needs: release
+    if: ${{ needs.release.outputs.published == 'true' }}
+    runs-on: ubuntu-latest
+
+    environment: release-npm # where the release helper's credentials live
+
+    permissions:
+      contents: read # required to check out the repository
+
+    steps:
+      # The app's token, not the default one: it carries issues:write, and the comments
+      # then come from the same bot that opened the release PR.
+      - name: Setup release helper
+        id: release-helper
+        uses: marcalexiei/github-actions/setup-github-app-user-bot@e3b04865510c657477cc722854b31a3b74c72c09 # v2.2.0
+        with:
+          app-id: ${{ vars.RELEASE_HELPER_APP_ID }}
+          private-key: ${{ secrets.RELEASE_HELPER_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+          fetch-depth: 0 # the commenter reads the history before the release commit
+
       - name: Comment on shipped PRs and issues
-        if: ${{ steps.changesets.outputs.published == 'true' }}
-        continue-on-error: true # the packages are already on npm; a failed comment must not fail the release
         uses: marcalexiei/changesets-release-commenter@80366b79332f7311aa9be1679c6abfbe75d73f0e # v0.2.2
         with:
           github-token: ${{ steps.release-helper.outputs.token }}
-          published-packages: ${{ steps.changesets.outputs.published-packages }}
+          published-packages: ${{ needs.release.outputs.publishedPackages }}
 
   on-ci-fail:
     name: 'Failure'
