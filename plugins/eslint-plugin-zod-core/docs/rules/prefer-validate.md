@@ -74,8 +74,11 @@ Dynamic property names, optional chains, and unawaited promise chains are not an
 Stored parse results are ignored when they escape, are exported, are reassigned, have an explicit type annotation, or are used beyond reading `success`.
 Destructuring with defaults, rest properties, or additional properties is ignored.
 
-`core.validate()` is a type predicate (`data is core.input<Schema>`) while `core.safeParse().success` is a plain boolean.
-In a condition the suggestion therefore narrows the validated value, which `core.safeParse()` did not.
+## Conflict with `@typescript-eslint/no-unnecessary-condition`
+
+`core.validate(schema, data)` is a type predicate (`data is core.input<Schema>`) while `core.safeParse().success` is a plain boolean.
+With `checkTypePredicates` enabled, `@typescript-eslint/no-unnecessary-condition` reports the call whenever the value already has that type.
+The schema still checks what TypeScript cannot express, so disable that line or leave `checkTypePredicates` off.
 
 ## When Not To Use It
 
@@ -85,3 +88,4 @@ Leave this rule disabled with Zod versions older than 4.6, or when all refinemen
 
 - [Zod 4.6: validate](https://zod.dev/blog/zod-4-6#validate)
 - [Rule request #426](https://github.com/marcalexiei/eslint-zod/issues/426)
+- [`@typescript-eslint/no-unnecessary-condition`](https://typescript-eslint.io/rules/no-unnecessary-condition/)

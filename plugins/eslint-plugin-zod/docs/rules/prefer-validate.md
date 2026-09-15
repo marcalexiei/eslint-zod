@@ -78,8 +78,11 @@ Stored parse results are ignored when they escape, are exported, are reassigned,
 Destructuring with defaults, rest properties, or additional properties is ignored.
 Explicit `zod/v3` imports are ignored; the installed Zod version is not detected automatically.
 
+## Conflict with `@typescript-eslint/no-unnecessary-condition`
+
 `schema.validate(data)` is a type predicate (`data is z.input<typeof schema>`) while `safeParse().success` is a plain boolean.
-In a condition the suggestion therefore narrows the validated value, which `safeParse()` did not.
+With `checkTypePredicates` enabled, `@typescript-eslint/no-unnecessary-condition` reports the call whenever the value already has that type.
+The schema still checks what TypeScript cannot express, so disable that line or leave `checkTypePredicates` off.
 
 ## When Not To Use It
 
@@ -89,3 +92,4 @@ Leave this rule disabled with Zod versions older than 4.6, or when all refinemen
 
 - [Zod 4.6: validate](https://zod.dev/blog/zod-4-6#validate)
 - [Rule request #426](https://github.com/marcalexiei/eslint-zod/issues/426)
+- [`@typescript-eslint/no-unnecessary-condition`](https://typescript-eslint.io/rules/no-unnecessary-condition/)
