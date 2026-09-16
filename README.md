@@ -17,7 +17,7 @@
 Monorepo containing [ESLint](https://eslint.org) plugins that enforce best practices when using [Zod](https://github.com/colinhacks/zod).
 
 Both plugins can also work with [Oxlint](https://oxc.rs/docs/guide/usage/linter.html)!\
-Find out more about [Oxlint's `jsPLugins`](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
+Find out more about [Oxlint's `jsPlugins`](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
 
 ## Plugins
 
