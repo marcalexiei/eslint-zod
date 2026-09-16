@@ -20,7 +20,7 @@
 [ESLint](https://eslint.org) plugin that adds custom linting rules to enforce best practices when using [Zod Mini](https://zod.dev/packages/mini) (`zod/mini`).
 
 It can also work with [Oxlint](https://oxc.rs/docs/guide/usage/linter.html)!\
-Find out more about [Oxlint's `jsPLugins`](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
+Find out more about [Oxlint's `JS Plugins`](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).
 
 ## Rules
 
