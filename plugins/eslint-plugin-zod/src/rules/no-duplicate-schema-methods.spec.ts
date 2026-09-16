@@ -94,6 +94,43 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
     },
     {
+      name: 'namespace - regex called multiple times (excluded)',
+      code: dedent`
+        import * as z from 'zod';
+        const ASCII_RANGE = /^[ -~]*$/;
+        const NON_LATIN = /^W/;
+        z.string().regex(ASCII_RANGE).regex(NON_LATIN);
+      `,
+    },
+    {
+      name: 'namespace - includes called multiple times (excluded)',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().includes('foo').includes('bar');
+      `,
+    },
+    {
+      name: 'namespace - startsWith called multiple times (excluded)',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().startsWith('foo').startsWith('bar');
+      `,
+    },
+    {
+      name: 'namespace - endsWith called multiple times (excluded)',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().endsWith('foo').endsWith('bar');
+      `,
+    },
+    {
+      name: 'namespace - overwrite called multiple times (excluded)',
+      code: dedent`
+        import * as z from 'zod';
+        z.number().overwrite((n) => n + 1).overwrite((n) => n * 2);
+      `,
+    },
+    {
       name: 'non-zod code is not flagged',
       code: dedent`
         const obj = { trim: () => obj, min: () => obj };
