@@ -364,26 +364,72 @@ export function buildNoConflictingChecksCreate(
       }
     }
 
-    /** Two different prefixes (or suffixes) where neither contains the other. */
-    function analyzeContent(checks: Array<AnalyzedCheck>): void {
-      for (const kind of ['startsWith', 'endsWith'] as const) {
-        const entries = checks.filter(
-          (check) => check.descriptor.content === kind && typeof check.literalValue === 'string',
-        );
-        for (const [index, a] of entries.entries()) {
-          for (const b of entries.slice(index + 1)) {
-            const left = a.literalValue as string;
-            const right = b.literalValue as string;
-            const compatible =
-              kind === 'startsWith'
-                ? left.startsWith(right) || right.startsWith(left)
-                : left.endsWith(right) || right.endsWith(left);
-            if (!compatible) {
-              reportImpossiblePair(a, b);
-            }
+    /** Reports each check another one already guarantees; of two identical ones, only the later. */
+    function reportImplied(
+      entries: ReadonlyArray<AnalyzedCheck>,
+      implies: (stronger: AnalyzedCheck, weaker: AnalyzedCheck) => boolean,
+    ): void {
+      for (const weaker of entries) {
+        let strongest: AnalyzedCheck | undefined;
+        for (const candidate of entries) {
+          if (candidate === weaker || !implies(candidate, weaker)) {
+            continue;
+          }
+          if (implies(weaker, candidate) && candidate.index > weaker.index) {
+            continue;
+          }
+          if (!strongest || implies(candidate, strongest)) {
+            strongest = candidate;
+          }
+        }
+        if (strongest) {
+          reportRedundant(weaker, strongest);
+        }
+      }
+    }
+
+    /** Anchored content checks are compatible only when one extends the other. */
+    function reportAnchorConflicts(
+      entries: ReadonlyArray<AnalyzedCheck>,
+      holds: (stronger: AnalyzedCheck, weaker: AnalyzedCheck) => boolean,
+    ): void {
+      for (const [index, a] of entries.entries()) {
+        for (const b of entries.slice(index + 1)) {
+          if (!holds(a, b) && !holds(b, a)) {
+            reportImpossiblePair(a, b);
           }
         }
       }
+    }
+
+    /** Prefixes/suffixes that cannot coexist, and content checks another one already covers. */
+    function analyzeContent(checks: Array<AnalyzedCheck>): void {
+      for (const kind of ['startsWith', 'endsWith', 'includes'] as const) {
+        const entries = checks.filter(
+          (check) => check.descriptor.content === kind && typeof check.literalValue === 'string',
+        );
+        const holds = (stronger: AnalyzedCheck, weaker: AnalyzedCheck): boolean =>
+          (stronger.literalValue as string)[kind](weaker.literalValue as string);
+
+        // `includes` anchors nothing, so two unrelated substrings can both match
+        if (kind !== 'includes') {
+          reportAnchorConflicts(entries, holds);
+        }
+        reportImplied(entries, holds);
+      }
+    }
+
+    /** Repeated `regex(...)`, compared by source text: two spellings of one pattern stay distinct. */
+    function analyzeRegex(checks: Array<AnalyzedCheck>): void {
+      const entries = checks.filter(
+        (check) =>
+          check.canonical === 'regex' &&
+          check.node.arguments.length > 0 &&
+          check.node.arguments[0].type !== AST_NODE_TYPES.SpreadElement,
+      );
+      const pattern = (check: AnalyzedCheck): string =>
+        context.sourceCode.getText(check.node.arguments[0]);
+      reportImplied(entries, (stronger, weaker) => pattern(stronger) === pattern(weaker));
     }
 
     /** `lowercase` + `uppercase` only matches strings without case distinctions. */
@@ -623,6 +669,7 @@ export function buildNoConflictingChecksCreate(
         analyzeBounds(applicable, 'value');
         analyzeFormats(applicable);
         analyzeContent(applicable);
+        analyzeRegex(applicable);
         analyzeCasing(applicable);
         analyzeMultiples(applicable);
       },

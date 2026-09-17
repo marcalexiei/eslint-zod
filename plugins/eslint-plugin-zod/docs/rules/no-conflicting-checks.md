@@ -27,7 +27,7 @@ Complements [`no-duplicate-schema-methods`](./no-duplicate-schema-methods.md): t
 All options default to `true`:
 
 - **`checkImpossibleCases`** — provably unsatisfiable combinations: empty numeric or length ranges, contradictory sign checks, two mutually exclusive string formats, a format or content check conflicting with a length bound, incompatible prefixes/suffixes.
-- **`checkConfusingCases`** — technically valid but almost certainly a mistake: bounds implied by stronger ones (`gt(0).gt(5)`), sign checks implied by bounds (`gt(0).positive()`), `multipleOf` values implied by larger ones, `int().multipleOf(1)`, `lowercase()` combined with `uppercase()`.
+- **`checkConfusingCases`** — technically valid but almost certainly a mistake: bounds implied by stronger ones (`gt(0).gt(5)`), sign checks implied by bounds (`gt(0).positive()`), `multipleOf` values implied by larger ones, `int().multipleOf(1)`, content checks implied by longer ones (`includes('a').includes('abc')`), a `regex()` pattern repeated verbatim, `lowercase()` combined with `uppercase()`.
 - **`checkInapplicableChecks`** — checks that don't apply to the schema's base type. In `zod` the chained spellings are type-safe, so this category mostly concerns `eslint-plugin-zod-mini`; it still covers cases only reachable dynamically.
 
 ## Examples
@@ -36,6 +36,8 @@ All options default to `true`:
 
 ```ts
 import * as z from 'zod';
+
+const ASCII = /^[ -~]*$/;
 
 // impossible — the schema can never match
 z.number().gt(10).lt(5);
@@ -53,6 +55,9 @@ z.number().gt(0).gt(5); // gt(0) redundant
 z.number().int().multipleOf(1); // multipleOf(1) redundant
 z.number().multipleOf(2).multipleOf(4); // multipleOf(2) redundant
 z.string().max(10).max(5); // max(10) redundant
+z.string().startsWith('a').startsWith('abc'); // startsWith('a') redundant
+z.string().includes('a').includes('abc'); // includes('a') redundant
+z.string().regex(ASCII).regex(ASCII); // the second regex adds nothing
 z.string().lowercase().uppercase(); // only matches non-cased strings
 ```
 
@@ -61,12 +66,19 @@ z.string().lowercase().uppercase(); // only matches non-cased strings
 ```ts
 import * as z from 'zod';
 
+const ASCII = /^[ -~]*$/;
+const NON_LATIN = /^\W/;
+
 z.string().min(2).max(10);
 z.number().gt(0).lt(100);
 z.number().gte(5).lte(5); // exactly 5 — valid
 z.number().int().gt(0).multipleOf(2); // positive even integers
 z.number().multipleOf(3).multipleOf(5); // multiples of 15 — intentional
-z.string().startsWith('a').startsWith('abc'); // 'a' is a prefix of 'abc'
+z.string().includes('foo').includes('bar'); // both substrings must occur
+z.string().regex(ASCII).regex(NON_LATIN); // different patterns
+z.string()
+  .regex(ASCII)
+  .regex(/^[ -~]*$/); // same pattern, different spellings — not resolved
 z.string().min(5).includes('@'); // compatible
 z.string().uuid().uuidv4(); // narrowing a uuid to one version
 z.string().guid().uuid(); // every uuid is a guid
@@ -82,13 +94,13 @@ combining them narrows rather than contradicts. Two different UUID versions
 Deliberately out of scope (too complex for a linter):
 
 - Number-theory reasoning — `int()` combined with a range containing no integer (`gt(0).lt(1)`), `multipleOf(k)` with a range containing no multiple
-- `regex()` compatibility with other checks
+- `regex()` compatibility with other checks; two `regex()` calls are compared by their argument source text only, so `regex(ASCII).regex(/^[ -~]*$/)` is not reported
 - Format checks evaluated against `z.literal()` values
 
 ## Overlap with `no-duplicate-schema-methods`
 
 [`no-duplicate-schema-methods`](./no-duplicate-schema-methods.md) excludes `.regex()`, `.includes()`, `.startsWith()` and `.endsWith()`, because repeating them is legitimate.
-This rule reports the ones that conflict, and only when every argument is a string literal.
+This rule reports the repeats that conflict or add nothing — string content checks only when every argument is a string literal, `.regex()` only when the pattern is written identically.
 
 ## When Not To Use It
 

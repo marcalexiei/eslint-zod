@@ -27,7 +27,7 @@ Complements [`no-duplicate-schema-methods`](./no-duplicate-schema-methods.md): t
 All options default to `true`:
 
 - **`checkImpossibleCases`** — provably unsatisfiable combinations: empty numeric or length ranges, contradictory sign checks, two mutually exclusive string formats, a format or content check conflicting with a length bound, incompatible prefixes/suffixes, and a `z.literal()` contradicted by a check.
-- **`checkConfusingCases`** — technically valid but almost certainly a mistake: bounds implied by stronger ones, `multipleOf` values implied by larger ones, `z.lowercase()` combined with `z.uppercase()`, checks a literal already satisfies, and any check on `z.any()`/`z.unknown()`/`z.never()`.
+- **`checkConfusingCases`** — technically valid but almost certainly a mistake: bounds implied by stronger ones, `multipleOf` values implied by larger ones, content checks implied by longer ones (`z.includes('a'), z.includes('abc')`), a `z.regex()` pattern repeated verbatim, `z.lowercase()` combined with `z.uppercase()`, checks a literal already satisfies, and any check on `z.any()`/`z.unknown()`/`z.never()`.
 - **`checkInapplicableChecks`** — checks that don't apply to the schema's base type (`z.number().check(z.minLength(1))`), which silently no-op or reject every value.
 
 ## Examples
@@ -36,6 +36,8 @@ All options default to `true`:
 
 ```ts
 import * as z from 'zod/mini';
+
+const ASCII = /^[ -~]*$/;
 
 // impossible — the schema can never match
 z.number().check(z.gt(10), z.lt(5));
@@ -50,6 +52,9 @@ z.literal(5).check(z.negative());
 
 // confusing — valid but almost certainly a mistake
 z.string().check(z.minLength(1), z.minLength(3)); // minLength(1) redundant
+z.string().check(z.startsWith('a'), z.startsWith('abc')); // startsWith('a') redundant
+z.string().check(z.includes('a'), z.includes('abc')); // includes('a') redundant
+z.string().check(z.regex(ASCII), z.regex(ASCII)); // the second regex adds nothing
 z.string().check(z.lowercase(), z.uppercase()); // only matches non-cased strings
 z.literal('foo').check(z.minLength(2)); // always true — pointless
 z.unknown().check(z.uuid()); // defeats the purpose of unknown
@@ -67,10 +72,15 @@ z.date().check(z.email());
 ```ts
 import * as z from 'zod/mini';
 
+const ASCII = /^[ -~]*$/;
+const NON_LATIN = /^\W/;
+
 z.string().check(z.minLength(1), z.maxLength(10));
 z.number().check(z.gt(0), z.multipleOf(2));
 z.number().check(z.gte(5), z.lte(5)); // exactly 5 — valid
-z.string().check(z.startsWith('a'), z.startsWith('abc')); // compatible prefixes
+z.string().check(z.includes('foo'), z.includes('bar')); // both substrings must occur
+z.string().check(z.regex(ASCII), z.regex(NON_LATIN)); // different patterns
+z.string().check(z.regex(ASCII), z.regex(/^[ -~]*$/)); // same pattern, different spellings — not resolved
 z.union([z.uuid(), z.email()]); // either format — intentional
 z.string().check(z.uuid(), z.uuidv4()); // narrowing a uuid to one version
 z.string().check(z.guid(), z.uuid()); // every uuid is a guid
@@ -86,7 +96,7 @@ combining them narrows rather than contradicts. Two different UUID versions
 Deliberately out of scope (too complex for a linter):
 
 - Number-theory reasoning — `z.int()` combined with a range containing no integer, `z.multipleOf(k)` with a range containing no multiple
-- `z.regex()` compatibility with other checks
+- `z.regex()` compatibility with other checks; two `z.regex()` calls are compared by their argument source text only, so `z.regex(ASCII), z.regex(/^[ -~]*$/)` is not reported
 - Format checks evaluated against `z.literal()` values
 
 ## When Not To Use It
