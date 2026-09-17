@@ -1,5 +1,17 @@
 # eslint-plugin-zod
 
+## 4.14.0
+
+### Minor Changes
+
+- [#463](https://github.com/marcalexiei/eslint-zod/pull/463) [`e10c9a7`](https://github.com/marcalexiei/eslint-zod/commit/e10c9a76a50e07334d851205a8ce7e2032a7ec33) - feat(no-conflicting-checks): report content and pattern checks another one already implies
+
+### Patch Changes
+
+- [#450](https://github.com/marcalexiei/eslint-zod/pull/450) [`bad10a9`](https://github.com/marcalexiei/eslint-zod/commit/bad10a925bddaf15afb6bb62bf4500602fc53b87) - fix(no-duplicate-schema-methods): exclude `regex`, `includes`, `startsWith`, `endsWith`, and `overwrite` from duplicate-call detection
+- Updated dependencies [[`e10c9a7`](https://github.com/marcalexiei/eslint-zod/commit/e10c9a76a50e07334d851205a8ce7e2032a7ec33)]:
+  - @eslint-zod/utils@5.1.0
+
 ## 4.13.1
 
 ### Patch Changes

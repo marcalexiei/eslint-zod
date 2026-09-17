@@ -1,6 +1,6 @@
 {
   "name": "@eslint-zod/utils",
-  "version": "5.0.1",
+  "version": "5.1.0",
   "description": "Shared utilities for eslint-zod plugins",
   "keywords": [
     "eslint",
