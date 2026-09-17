@@ -7,58 +7,68 @@ updates:
       interval: 'monthly'
     open-pull-requests-limit: 10
     groups:
-      github-actions:
+      actions-marcalexiei:
         applies-to: 'version-updates'
         patterns:
-          - '*'
+          - 'marcalexiei/*'
     cooldown:
       default-days: 7
 
   # NOTE: groups intentionally omit `dependency-type`.
-  # Dependabot classifies every pnpm catalog entry (pnpm-workspace.yaml) as
-  # `production` regardless of how the referencing package.json declares it,
-  # so a `dependency-type: development` filter silently excludes all of them
-  # and each one lands in its own PR. See dependabot-core#14824.
-  # The patterns below are explicit name lists, so the filter added nothing.
+  # Dependabot classifies every pnpm catalog entry (pnpm-workspace.yaml) as `production`
+  # regardless of how the referencing package.json declares it,
+  # so a `dependency-type: development` filter silently excludes all of them and each one lands in its own PR.
+  # See https://github.com/dependabot/dependabot-core/issues/14824.
   - package-ecosystem: 'npm'
     directory: '/'
     schedule:
       interval: 'monthly'
     open-pull-requests-limit: 10
+    # A dependency joins the first group it matches, so order is significant.
     groups:
-      dev-changeset:
+      changesets:
         applies-to: 'version-updates'
         patterns:
           - '@changesets/*'
 
-      dev-format:
+      # typescript-eslint ships as one version across all its entry points
+      typescript:
+        applies-to: 'version-updates'
+        patterns:
+          - '@types/*'
+          - '@typescript-eslint/*'
+          - 'typescript'
+          - 'typescript-eslint'
+
+      # `@vitest/coverage-v8` must move with `vitest`
+      vitest:
+        applies-to: 'version-updates'
+        patterns:
+          - '@vitest/*'
+          - 'vitest'
+
+      eslint:
+        applies-to: 'version-updates'
+        patterns:
+          - '@marcalexiei/eslint-config'
+          - 'eslint'
+          - 'eslint-import-resolver-*'
+          - 'eslint-plugin-*'
+
+      prettier:
         applies-to: 'version-updates'
         patterns:
           - '@marcalexiei/prettier-config'
           - 'prettier'
 
-      dev-code-checks:
+      tooling:
         applies-to: 'version-updates'
         patterns:
-          - '@marcalexiei/eslint-config'
-          - '@types/*'
-          - '@typescript-eslint/rule-tester'
-          - '@typescript-eslint/utils'
-          # keep `@vitest/coverage-v8` in the same PR as `vitest`
-          - '@vitest/coverage-v8'
-          - '@vitest/eslint-plugin'
+          - '@arethetypeswrong/cli'
           - 'dedent'
-          - 'eslint'
           - 'eslint-doc-generator'
-          - 'esquery'
-          - 'eslint-import-resolver-typescript'
-          - 'eslint-plugin-eslint-plugin'
-          - 'eslint-plugin-import-x'
-          - 'eslint-plugin-n'
           - 'knip'
+          - 'lefthook'
           - 'tsdown'
-          - 'typescript'
-          - 'typescript-eslint'
-          - 'vitest'
     cooldown:
       default-days: 7
