@@ -1,5 +1,16 @@
 # eslint-plugin-zod-mini
 
+## 1.11.0
+
+### Minor Changes
+
+- [#463](https://github.com/marcalexiei/eslint-zod/pull/463) [`e10c9a7`](https://github.com/marcalexiei/eslint-zod/commit/e10c9a76a50e07334d851205a8ce7e2032a7ec33) - feat(no-conflicting-checks): report content and pattern checks another one already implies
+
+### Patch Changes
+
+- Updated dependencies [[`e10c9a7`](https://github.com/marcalexiei/eslint-zod/commit/e10c9a76a50e07334d851205a8ce7e2032a7ec33)]:
+  - @eslint-zod/utils@5.1.0
+
 ## 1.10.1
 
 ### Patch Changes
