@@ -42,6 +42,6 @@ jobs:
 
     steps:
       - name: Comment on PR
-        uses: changesets/action/pr-comment@8488615a623b1b9c987934bb89eae8af6a946ac1 # v2.1.1
+        uses: changesets/action/pr-comment@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
           body: ${{ needs.pr-status.outputs.comment-body }}
