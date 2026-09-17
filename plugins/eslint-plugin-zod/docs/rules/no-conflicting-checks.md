@@ -85,6 +85,11 @@ Deliberately out of scope (too complex for a linter):
 - `regex()` compatibility with other checks
 - Format checks evaluated against `z.literal()` values
 
+## Overlap with `no-duplicate-schema-methods`
+
+[`no-duplicate-schema-methods`](./no-duplicate-schema-methods.md) excludes `.regex()`, `.includes()`, `.startsWith()` and `.endsWith()`, because repeating them is legitimate.
+This rule reports the ones that conflict, and only when every argument is a string literal.
+
 ## When Not To Use It
 
 There is little reason to disable the rule entirely — the impossible category always indicates a bug. Disable individual categories via the options instead.
