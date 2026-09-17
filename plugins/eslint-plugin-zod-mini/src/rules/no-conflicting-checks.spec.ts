@@ -29,10 +29,42 @@ ruleTester.run(noConflictingChecks.name, noConflictingChecks, {
       `,
     },
     {
-      name: 'one prefix extending the other',
+      name: 'unrelated substrings can both occur',
       code: dedent`
         import * as z from 'zod/mini';
-        z.string().check(z.startsWith('a'), z.startsWith('abc'));
+        z.string().check(z.includes('foo'), z.includes('bar'));
+      `,
+    },
+    {
+      name: 'different regex patterns',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const ASCII = /^[ -~]*$/;
+        const NON_LATIN = /^\W/;
+        z.string().check(z.regex(ASCII), z.regex(NON_LATIN));
+      `,
+    },
+    {
+      name: 'two spellings of the same pattern are not resolved',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const ASCII = /^[ -~]*$/;
+        z.string().check(z.regex(ASCII), z.regex(/^[ -~]*$/));
+      `,
+    },
+    {
+      name: 'regex patterns passed as a spread are not analyzed',
+      code: dedent`
+        import * as z from 'zod/mini';
+        declare const patterns: [RegExp];
+        z.string().check(z.regex(...patterns), z.regex(...patterns));
+      `,
+    },
+    {
+      name: 'regex without an argument is not analyzed',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.regex(), z.regex());
       `,
     },
     {
@@ -366,6 +398,72 @@ ruleTester.run(noConflictingChecks.name, noConflictingChecks, {
       code: dedent`
         import * as z from 'zod/mini';
         z.string().check(z.minLength(1), z.minLength(3));
+      `,
+      errors: [{ messageId: 'redundantCheck' }],
+    },
+    {
+      name: 'prefix implied by a longer one',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.startsWith('a'), z.startsWith('abc'));
+      `,
+      errors: [{ messageId: 'redundantCheck' }],
+    },
+    {
+      name: 'suffix implied by a longer one',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.endsWith('com'), z.endsWith('.com'));
+      `,
+      errors: [{ messageId: 'redundantCheck' }],
+    },
+    {
+      name: 'substring implied by a longer one',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.includes('a'), z.includes('abc'));
+      `,
+      errors: [{ messageId: 'redundantCheck' }],
+    },
+    {
+      name: 'repeated identical content check',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.includes('a')).check(z.includes('a'));
+      `,
+      errors: [{ messageId: 'redundantCheck' }],
+    },
+    {
+      name: 'three prefixes report the two weaker ones once each',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.startsWith('a'), z.startsWith('ab'), z.startsWith('abc'));
+      `,
+      errors: [{ messageId: 'redundantCheck' }, { messageId: 'redundantCheck' }],
+    },
+    {
+      name: 'repeated regex with the same pattern identifier',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const ASCII = /^[ -~]*$/;
+        z.string().check(z.regex(ASCII), z.regex(ASCII));
+      `,
+      errors: [{ messageId: 'redundantCheck' }],
+    },
+    {
+      name: 'repeated regex with the same pattern literal',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.regex(/^[ -~]*$/), z.regex(/^[ -~]*$/));
+      `,
+      errors: [{ messageId: 'redundantCheck' }],
+    },
+    {
+      name: 'repeated regex differing only in the error message',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const ASCII = /^[ -~]*$/;
+        z.string().check(z.regex(ASCII, 'ascii only'), z.regex(ASCII, 'printable only'));
       `,
       errors: [{ messageId: 'redundantCheck' }],
     },
