@@ -12,6 +12,9 @@ This rule disallows calling the same Zod schema method more than once within a s
 
 Methods that are designed to be chained multiple times, such as `.or()`, `.and()`, and `.array()`, are excluded from this check. This also includes `.regex()`, `.includes()`, `.startsWith()`, `.endsWith()`, and `.overwrite()`, since each call applies an independent constraint or transformation — matching a string against two different patterns is common, unlike calling `.min()` twice with different values.
 
+[`no-conflicting-checks`](./no-conflicting-checks.md) owns the excluded content methods:
+it reports the combinations that are unsatisfiable or redundant rather than merely repeated.
+
 ## Examples
 
 ### ❌ Invalid
