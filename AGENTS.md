@@ -1,7 +1,7 @@
 # AGENTS.md
 
 Instructions for any coding agent working in this repo.
-`CLAUDE.md` and `.claude/skills` are symlinks to this file and to `.agents/skills`, so tools that look for their own paths read the same content.
+`CLAUDE.md` and `.claude` are symlinks to this file and to `.agents/`, so tools that look for their own paths read the same content.
 
 ## Repository overview
 

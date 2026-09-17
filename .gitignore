@@ -138,3 +138,16 @@ dist
 
 # lefthook per-developer overrides
 lefthook-local.yml
+
+# agent runtime state — `.claude` symlinks to `.agents`, so tool droppings land here
+.agents/settings.local.json
+.agents/worktrees/
+.agents/checkpoints/
+.agents/mailbox/
+.agents/routines/.state/
+.agents/agent-memory-local/
+.agents/scheduled_tasks.json
+.agents/scheduled_tasks.lock
+.agents/agent-registry.json
+.agents/assistant-daemon-state.json
+.agents/first-run
