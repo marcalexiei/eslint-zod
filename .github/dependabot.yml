@@ -11,6 +11,11 @@ updates:
         applies-to: 'version-updates'
         patterns:
           - 'marcalexiei/*'
+
+      actions-changesets:
+        applies-to: 'version-updates'
+        patterns:
+          - 'changesets/*'
     cooldown:
       default-days: 7
 
