@@ -132,7 +132,7 @@ To skip the hooks for one command, use Git's own flag (`git commit --no-verify`)
 
 Each plugin has its own `docs/rules/` folder. If you change a rule's behavior, update its documentation and run `pnpm run build:docs` from that plugin's directory to regenerate the docs.
 
-If the rule exists in both plugins (see the shared rules list in `CLAUDE.md`), update both plugins' docs and regenerate both.
+If the rule exists in both plugins (see the shared rules list in `AGENTS.md`), update both plugins' docs and regenerate both.
 
 ---
 

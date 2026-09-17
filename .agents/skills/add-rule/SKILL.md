@@ -16,14 +16,14 @@ Follow this file inventory exactly — the `index.spec.ts` consistency specs fai
 
 ## 0b. Name the rule
 
-Follow typescript-eslint's naming, not a repo-local invention (see CLAUDE.md **Ecosystem conventions**):
+Follow typescript-eslint's naming, not a repo-local invention (see AGENTS.md **Ecosystem conventions**):
 
 - `prefer-<preferred>-over-<replaced>` when the rule swaps one spelling for another — `prefer-tuple-over-array-length`, `prefer-enum-over-literal-union`.
 - `no-<thing>` for a plain prohibition, `consistent-<thing>` for a style the rule makes uniform, `require-<thing>` for something it demands.
 - **Name the subject in every member of a family.** `prefer-string-length-over-min-max` and `prefer-map-set-size-over-min-max` both qualify, even though `size` alone would be unambiguous — qualifying some members and not others is a naming scheme that has to be explained. Name the types rather than a category word (`map-set`, not `collection`), and name all of them rather than the dominant one.
 - Length is not a real constraint: existing names run to 39 characters (`prefer-trim-before-string-length-checks`).
 
-A rule that overlaps an existing one keeps its own name and documents the overlap in both docs — see the `all` note in CLAUDE.md before assuming it must be excluded from a config.
+A rule that overlaps an existing one keeps its own name and documents the overlap in both docs — see the `all` note in AGENTS.md before assuming it must be excluded from a config.
 
 ## 1. Rule builder (shared rules only)
 
@@ -85,12 +85,12 @@ In each plugin's `src/index.ts`: add the import (alphabetical), add to the `rule
 
 ## 5. Docs
 
-From each plugin directory run `pnpm build:docs` (builds first, then `eslint-doc-generator` creates the doc stub and updates the README table). Then fill `docs/rules/<rule-name>.md` following the section order in CLAUDE.md (“Rule doc layout”), and re-run `pnpm build:docs` after editing. Keep zod/zod-mini doc structure mirrored; adapt every example's import source and API style.
+From each plugin directory run `pnpm build:docs` (builds first, then `eslint-doc-generator` creates the doc stub and updates the README table). Then fill `docs/rules/<rule-name>.md` following the section order in AGENTS.md (“Rule doc layout”), and re-run `pnpm build:docs` after editing. Keep zod/zod-mini doc structure mirrored; adapt every example's import source and API style.
 
 ## 6. Bookkeeping
 
 - One changeset (`minor`) listing every affected package: each plugin, plus `@eslint-zod/utils` when a builder export was added. `feat:` prefix, and a summary that holds for all of them — name the rule and the behavior it targets, not the builder that implements it.
-- Update CLAUDE.md's AST-helper list if `@eslint-zod/utils` gained root exports (builder/pattern exports and shared-rule membership are derived from the filesystem, not listed in CLAUDE.md).
+- Update AGENTS.md's AST-helper list if `@eslint-zod/utils` gained root exports (builder/pattern exports and shared-rule membership are derived from the filesystem, not listed in AGENTS.md).
 - Update `packages/utils/README.md` for **any** new `@eslint-zod/utils` export — a rule-builder or rule-pattern subpath (add it to the matching list), a root helper/constant, or an exported contract type. This README enumerates every public export by hand and is not verified by any check, so it silently rots if skipped.
 
 ## 7. Verify (from repo root)
