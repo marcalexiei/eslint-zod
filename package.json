@@ -30,7 +30,7 @@
     "@changesets/cli": "3.0.2",
     "@marcalexiei/eslint-config": "7.0.0",
     "@marcalexiei/prettier-config": "catalog:dev",
-    "@types/node": "24.13.2",
+    "@types/node": "26.5.1",
     "@vitest/coverage-v8": "catalog:dev",
     "@vitest/eslint-plugin": "1.6.27",
     "eslint": "10.10.0",
