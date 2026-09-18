@@ -118,7 +118,19 @@ ruleTester.run(noDynamicSchemaValue.name, noDynamicSchemaValue, {
         const schema = z.string().check(z.refine(isValid));
       `,
     },
+    {
+      name: 'non-schema helpers take runtime values by design',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const userSchema = z.string();
+        const pretty = z.prettifyError(err);
+        const json = z.toJSONSchema(userSchema);
+        z.config({ customError: makeError() });
+        z.globalRegistry.add(userSchema, { id: makeId() });
+      `,
+    },
   ],
+
   invalid: [
     {
       name: 'factory called with a dynamic value',

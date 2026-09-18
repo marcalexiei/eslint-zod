@@ -16,6 +16,9 @@ and each `.check(...)` argument), not just the outermost call.
 A hoisted `function` declaration reads as a function literal — the same as the `const` arrow it could be
 rewritten as.
 
+Only schema expressions are checked. The helpers that do something else with a schema —
+`z.toJSONSchema()`, `z.parse()`, `z.prettifyError()`, `z.config()` — take runtime values by design.
+
 ## Why?
 
 This is the criterion [`zod-compiler`](https://www.npmjs.com/package/zod-compiler) uses to decide what it

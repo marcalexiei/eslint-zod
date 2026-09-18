@@ -214,6 +214,16 @@ ruleTester.run(consistentSchemaVarName.name, consistentSchemaVarName, {
         const { shape } = z.object({ a: z.string() });
       `,
     },
+    {
+      name: 'non-schema helper results are not schemas',
+      code: dedent`
+        import * as z from 'zod';
+        const userSchema = z.string();
+        const json = z.toJSONSchema(userSchema);
+        const reg = z.registry();
+        const loc = z.locales.en();
+      `,
+    },
   ],
 
   invalid: [

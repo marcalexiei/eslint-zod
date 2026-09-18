@@ -127,6 +127,23 @@ ruleTester.run(consistentSchemaVarName.name, consistentSchemaVarName, {
         const userSchema = z.string();
       `,
     },
+    {
+      name: 'non-schema helper results are not schemas',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const userSchema = z.string();
+        const json = z.toJSONSchema(userSchema);
+        const reg = z.registry();
+        const loc = z.locales.en();
+      `,
+    },
+    {
+      name: 'a standalone check is not a schema',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const atLeastOne = z.minLength(1);
+      `,
+    },
   ],
 
   invalid: [

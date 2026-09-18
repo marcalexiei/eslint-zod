@@ -3,6 +3,7 @@ import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_NON_SCHEMA_PRODUCING_METHODS } from '../zod-non-schema-producing-methods.js';
+import { isZodSchemaFactoryCall } from '../zod-schema-factory-names.js';
 
 interface Options {
   before?: string;
@@ -24,10 +25,15 @@ export function buildConsistentSchemaVarNameCreate(
       VariableDeclarator(node): void {
         const initNode = node.init;
 
-        if (
-          initNode?.type !== AST_NODE_TYPES.CallExpression ||
-          !detectZodSchemaRootNode(initNode)
-        ) {
+        if (initNode?.type !== AST_NODE_TYPES.CallExpression) {
+          return;
+        }
+
+        const meta = detectZodSchemaRootNode(initNode);
+
+        // Detection accepts any `z.foo()`, so a helper that returns something other than a schema
+        // (`z.toJSONSchema(schema)`, `z.registry()`) reaches here too.
+        if (!meta || !isZodSchemaFactoryCall(meta)) {
           return;
         }
 

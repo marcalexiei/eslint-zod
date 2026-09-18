@@ -18,6 +18,7 @@ The rule ignores:
 - Variables that store parsed values (e.g., `.parse()`, `.safeParse()`)
 - Variables that store a validation result (`z.validate()`, `z.validateAsync()`)
 - Error formatting utilities (e.g., `prettifyError`, `formatError`)
+- Helpers that return something other than a schema (`z.toJSONSchema()`, `z.registry()`, `z.locales.en()`)
 - Non-Zod Mini variable declarations
 
 ## Why?
