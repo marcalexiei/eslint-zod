@@ -1,5 +1,13 @@
 # @eslint-zod/utils
 
+## 5.2.0
+
+### Minor Changes
+
+- [#467](https://github.com/marcalexiei/eslint-zod/pull/467) [`56c6ee4`](https://github.com/marcalexiei/eslint-zod/commit/56c6ee40461d10f67dbbed70fc2fab3aff253cc0) - fix: stop `consistent-schema-var-name` and `no-dynamic-schema-value` reporting top-level helpers such as `z.toJSONSchema()` and `z.prettifyError()`
+
+- [#466](https://github.com/marcalexiei/eslint-zod/pull/466) [`a034823`](https://github.com/marcalexiei/eslint-zod/commit/a034823741eb5a5422e67c726574c276fa925da6) - fix(no-function-scoped-schema): stop reporting top-level helpers that consume a schema, such as `z.toJSONSchema()` and `z.prettifyError()`
+
 ## 5.1.0
 
 ### Minor Changes
