@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { ZOD_SCHEMA_FACTORY_NAMES, isZodSchemaFactoryName } from './zod-schema-factory-names.js';
+import type { ZodSchemaMeta } from './detect-zod-schema-root-node.js';
+import {
+  ZOD_SCHEMA_FACTORY_NAMES,
+  isZodSchemaFactoryCall,
+  isZodSchemaFactoryName,
+} from './zod-schema-factory-names.js';
 import { ZOD_STRING_FORMAT_NAMES } from './zod-string-format-names.js';
 
 describe('ZOD_SCHEMA_FACTORY_NAMES', () => {
@@ -57,5 +62,38 @@ describe('isZodSchemaFactoryName', () => {
     'notAZodExport',
   ])('rejects %s', (name) => {
     expect(isZodSchemaFactoryName(name)).toBe(false);
+  });
+});
+
+describe('isZodSchemaFactoryCall', () => {
+  it.each<[string, ZodSchemaMeta]>([
+    ['z.string()', { schemaDecl: 'namespace', schemaType: 'string', methods: ['string'] }],
+    [
+      'z.object({}).optional()',
+      { schemaDecl: 'namespace', schemaType: 'object', methods: ['object', 'optional'] },
+    ],
+    ['string()', { schemaDecl: 'named', schemaType: 'string', methods: [] }],
+    // the `iso` / `coerce` members are the factories, and are absent from the name list
+    [
+      'z.iso.datetime()',
+      { schemaDecl: 'namespace', schemaType: 'iso', methods: ['iso', 'datetime'] },
+    ],
+    ['iso.datetime()', { schemaDecl: 'named', schemaType: 'iso', methods: ['datetime'] }],
+    [
+      'z.coerce.number()',
+      { schemaDecl: 'namespace', schemaType: 'coerce', methods: ['coerce', 'number'] },
+    ],
+  ])('accepts %s', (_, meta) => {
+    expect(isZodSchemaFactoryCall(meta)).toBe(true);
+  });
+
+  it.each<[string, ZodSchemaMeta]>([
+    [
+      'z.toJSONSchema(schema)',
+      { schemaDecl: 'namespace', schemaType: 'toJSONSchema', methods: ['toJSONSchema'] },
+    ],
+    ['prettifyError(err)', { schemaDecl: 'named', schemaType: 'prettifyError', methods: [] }],
+  ])('rejects %s', (_, meta) => {
+    expect(isZodSchemaFactoryCall(meta)).toBe(false);
   });
 });

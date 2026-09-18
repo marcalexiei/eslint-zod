@@ -1,3 +1,5 @@
+import type { ZodSchemaMeta } from './detect-zod-schema-root-node.js';
+import { getZodChainedMethodNames } from './get-zod-chained-method-names.js';
 import { ZOD_BASE_TYPE_NAMES } from './get-zod-schema-base-type.js';
 
 /**
@@ -82,4 +84,18 @@ const FACTORY_NAMES = new Set<string>(ZOD_SCHEMA_FACTORY_NAMES);
 /** True when `name` is a top-level Zod factory whose call evaluates to a schema. */
 export function isZodSchemaFactoryName(name: string): boolean {
   return FACTORY_NAMES.has(name);
+}
+
+/** Namespaces on `z` that are never called themselves — their members are the factories. */
+const FACTORY_NAMESPACES: ReadonlySet<string> = new Set(['iso', 'coerce']);
+
+/**
+ * True when a detected chain evaluates to a schema, i.e. its factory builds one.
+ * Use it to keep a rule off the top-level helpers that merely consume a schema
+ * (`z.toJSONSchema(schema)`, `z.prettifyError(err)`), which detection reports like any other call.
+ */
+export function isZodSchemaFactoryCall(meta: ZodSchemaMeta): boolean {
+  return FACTORY_NAMESPACES.has(meta.schemaType)
+    ? getZodChainedMethodNames(meta).length > 0
+    : isZodSchemaFactoryName(meta.schemaType);
 }

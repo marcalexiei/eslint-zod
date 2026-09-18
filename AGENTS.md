@@ -104,6 +104,9 @@ AST helpers exported from `@eslint-zod/utils`:
 - `buildZodWrapperUnwrapFix` — replaces a single-argument wrapper call with its argument (e.g. `z.readonly(z.string())` → `z.string()`), preserving any chain on the wrapper; returns `null` when the call doesn't have exactly one non-spread argument.
 - `zodImportScope` / `zodMiniImportScope` / `zodCoreImportScope` — pre-built `ZodImportScope` instances; use `scope.isAllowed(source)` to check whether a source belongs to the plugin's scope
 - `ZOD_NON_SCHEMA_PRODUCING_METHODS` — array of method names that do not return a schema (parse, codec, error formatters)
+- `isZodSchemaFactoryName(name)` / `isZodSchemaFactoryCall(meta)` — whether a factory, or a detected chain, builds a schema.
+  Detection accepts any `z.foo()`, so a rule acting on "this is a schema" must gate on the call form —
+  otherwise it reports `z.toJSONSchema(schema)` and `z.prettifyError(err)` too
 - `ZOD_MUTATING_CHECK_NAMES` — array of Zod check names that mutate the validated value (`trim`, `toLowerCase`, `toUpperCase`, `normalize`, `overwrite`); used in `zod` as chained methods and in `zod-mini` as standalone `.check(...)` arguments
 - `ZOD_IMMUTABLE_SCHEMA_TYPES` — array of schema factory names whose parsed output is already immutable (primitives/scalars, number sub-types, top-level string formats); container factories are intentionally absent. It **spreads** `ZOD_STRING_FORMAT_NAMES` rather than restating it — a hand-copied duplicate of that list had already silently dropped `mac`
 - `ZOD_STRING_FORMAT_NAMES` — array of top-level string-format factory names (`email`, `uuid`, `ipv4`, …) that all parse to `string`; single source of truth shared by `getZodSchemaBaseType`, `ZOD_IMMUTABLE_SCHEMA_TYPES` and format-aware rules (the `iso.*` member formats are intentionally absent)

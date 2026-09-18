@@ -2,6 +2,7 @@ import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 
 import type { ZodImportScope } from '../zod-import-scope.js';
+import { isZodSchemaFactoryCall } from '../zod-schema-factory-names.js';
 
 type MessageIds = 'functionScopedSchema';
 type IsLazyCall = (node: TSESTree.Node) => boolean;
@@ -44,7 +45,13 @@ export function buildNoFunctionScopedSchemaCreate(
     const isLazyCall: IsLazyCall = (node) => isZodSchemaOfType(node, 'lazy');
 
     return createSchemaVisitor({
-      onSchema(node): void {
+      onSchema(node, meta): void {
+        // Detection accepts any `z.foo()`, so top-level helpers that consume a schema
+        // (`z.toJSONSchema(schema)`, `z.prettifyError(err)`) reach here too.
+        if (!isZodSchemaFactoryCall(meta)) {
+          return;
+        }
+
         let current: TSESTree.Node = node;
 
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition

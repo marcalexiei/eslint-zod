@@ -15,6 +15,9 @@ A schema that _must_ live in a function is not reported: the getter of a recursi
 thunk passed to `z.lazy()`. What counts is where the schema they belong to is declared — either idiom
 inside a function is still reported, once.
 
+Only calls that build a schema are reported. The top-level helpers that consume one —
+`z.toJSONSchema()`, `z.prettifyError()`, `z.treeifyError()` — are not, wherever they are called.
+
 ## Why?
 
 Under [`import 'zod/compile'`](https://zod.dev/compile), each schema instance is compiled lazily on its
@@ -53,6 +56,15 @@ const schema = z.string();
 
 function validate(value) {
   return schema.parse(value);
+}
+
+// Helpers that consume a schema rather than build one.
+function toJson() {
+  return z.toJSONSchema(schema);
+}
+
+function format(err) {
+  return z.prettifyError(err);
 }
 ```
 

@@ -54,6 +54,35 @@ ruleTester.run(noFunctionScopedSchema.name, noFunctionScopedSchema, {
         const Category = z.lazy(() => z.object({ name: z.string() }));
       `,
     },
+    {
+      name: 'non-schema helpers called inside a function',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const schema = z.string();
+        function toJson() {
+          return z.toJSONSchema(schema);
+        }
+        function format(err) {
+          return z.prettifyError(err);
+        }
+      `,
+    },
+    {
+      name: 'named non-schema helper called inside a function',
+      code: dedent`
+        import { prettifyError } from 'zod/mini';
+        function format(err) {
+          return prettifyError(err);
+        }
+      `,
+    },
+    {
+      name: 'module-scoped iso schema',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const schema = z.iso.datetime();
+      `,
+    },
   ],
   invalid: [
     {
@@ -118,6 +147,26 @@ ruleTester.run(noFunctionScopedSchema.name, noFunctionScopedSchema, {
         import * as z from 'zod/mini';
         function buildSchema() {
           return z.lazy(() => z.object({ name: z.string() }));
+        }
+      `,
+      errors: [{ messageId: 'functionScopedSchema' }],
+    },
+    {
+      name: 'iso schema built inside a function',
+      code: dedent`
+        import * as z from 'zod/mini';
+        function buildSchema() {
+          return z.iso.datetime();
+        }
+      `,
+      errors: [{ messageId: 'functionScopedSchema' }],
+    },
+    {
+      name: 'schema passed to a non-schema helper inside a function',
+      code: dedent`
+        import * as z from 'zod/mini';
+        function toJson() {
+          return z.toJSONSchema(z.string());
         }
       `,
       errors: [{ messageId: 'functionScopedSchema' }],
