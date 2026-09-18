@@ -2,6 +2,7 @@ import type { TSESTree } from '@typescript-eslint/utils';
 import { ASTUtils, AST_NODE_TYPES, TSESLint } from '@typescript-eslint/utils';
 
 import type { ZodImportScope } from '../zod-import-scope.js';
+import { isZodNonSchemaHelperCall } from '../zod-non-schema-helper-names.js';
 
 type MessageIds = 'dynamicValue';
 type Context = Readonly<TSESLint.RuleContext<MessageIds, []>>;
@@ -128,7 +129,13 @@ export function buildNoDynamicSchemaValueCreate(
     };
 
     return createSchemaVisitor({
-      onSchema(node): void {
+      onSchema(node, meta): void {
+        // Detection accepts any `z.foo()`, and a helper that does not build a schema
+        // (`z.prettifyError(err)`, `z.parse(schema, input)`) takes runtime values by design.
+        if (isZodNonSchemaHelperCall(meta)) {
+          return;
+        }
+
         const chain = collectZodChainMethods(node);
         // Empty on a computed member (`z['string']()`) — collectZodChainMethods is all-or-nothing,
         // so fall back to the one call we know about.

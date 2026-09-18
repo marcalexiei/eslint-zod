@@ -107,6 +107,9 @@ AST helpers exported from `@eslint-zod/utils`:
 - `isZodSchemaFactoryName(name)` / `isZodSchemaFactoryCall(meta)` — whether a factory, or a detected chain, builds a schema.
   Detection accepts any `z.foo()`, so a rule acting on "this is a schema" must gate on the call form —
   otherwise it reports `z.toJSONSchema(schema)` and `z.prettifyError(err)` too
+- `isZodNonSchemaHelperCall(meta)` — the weaker gate for the same problem: it skips the top-level helpers
+  but keeps standalone checks (`z.minLength(1)`), which are part of a schema expression without being factories.
+  Reach for it when a rule inspects a schema's calls rather than the schema itself
 - `ZOD_MUTATING_CHECK_NAMES` — array of Zod check names that mutate the validated value (`trim`, `toLowerCase`, `toUpperCase`, `normalize`, `overwrite`); used in `zod` as chained methods and in `zod-mini` as standalone `.check(...)` arguments
 - `ZOD_IMMUTABLE_SCHEMA_TYPES` — array of schema factory names whose parsed output is already immutable (primitives/scalars, number sub-types, top-level string formats); container factories are intentionally absent. It **spreads** `ZOD_STRING_FORMAT_NAMES` rather than restating it — a hand-copied duplicate of that list had already silently dropped `mac`
 - `ZOD_STRING_FORMAT_NAMES` — array of top-level string-format factory names (`email`, `uuid`, `ipv4`, …) that all parse to `string`; single source of truth shared by `getZodSchemaBaseType`, `ZOD_IMMUTABLE_SCHEMA_TYPES` and format-aware rules (the `iso.*` member formats are intentionally absent)

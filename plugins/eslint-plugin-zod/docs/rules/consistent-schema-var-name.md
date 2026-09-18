@@ -19,6 +19,7 @@ The rule ignores:
 - Variables that store a validation result (`z.validate()`, `z.validateAsync()`)
 - Variables that use `z.codec()` transformations
 - Error formatting utilities (e.g., `prettifyError`, `formatError`)
+- Helpers that return something other than a schema (`z.toJSONSchema()`, `z.registry()`, `z.locales.en()`)
 - Non-Zod variable declarations
 
 ## Why?

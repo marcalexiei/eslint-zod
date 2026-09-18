@@ -62,6 +62,7 @@ AST parsing, import tracking, traversal, and fixer helpers.
 - `ZOD_IMMUTABLE_SCHEMA_TYPES` — schema factory names whose parsed output is already immutable
 - `ZOD_MUTATING_CHECK_NAMES` — Zod check names that mutate the validated value
 - `ZOD_NON_SCHEMA_PRODUCING_METHODS` — Zod method names that do not return a schema
+- `ZOD_NON_SCHEMA_HELPER_NAMES` / `isZodNonSchemaHelperCall(meta)` — top-level `z` exports whose call yields something other than a schema (`z.toJSONSchema`, `z.registry`, `z.parse`); unlike the complement of `isZodSchemaFactoryCall` it leaves standalone checks alone
 - `ZOD_SCHEMA_FACTORY_NAMES` / `isZodSchemaFactoryName(name)` — every top-level Zod export whose call evaluates to a schema; use the predicate instead of a per-rule factory list
 - `isZodSchemaFactoryCall(meta)` — whether a `detectZodSchemaRootNode` result builds a schema; resolves the `iso` / `coerce` namespaces, and rejects the helpers that only consume a schema (`z.toJSONSchema`, `z.prettifyError`)
 - `ZOD_STRING_FORMAT_METHODS` — deprecated `z.string().<format>()` methods and the top-level factory replacing each; type `ZodStringFormatMethodName`
