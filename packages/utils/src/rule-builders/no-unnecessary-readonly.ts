@@ -5,14 +5,9 @@ import { buildZodConstraintsRemoveFix } from '../build-zod-constraints-remove-fi
 import { buildZodWrapperUnwrapFix } from '../build-zod-wrapper-unwrap-fix.js';
 import { ZOD_IMMUTABLE_SCHEMA_TYPES } from '../zod-immutable-schema-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
+import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
 
 type MessageIds = 'unnecessaryReadonly';
-
-/**
- * Chained methods that change the schema's output type,
- * making the immutability of the factory's output irrelevant for what `readonly` ultimately wraps (e.g. `z.string().transform(s => [s]).readonly()`).
- */
-const TYPE_CHANGING_METHODS = ['and', 'array', 'or', 'pipe', 'preprocess', 'transform'];
 
 /**
  * Wrapper factories whose output immutability equals their first argument's (e.g. `z.optional(z.string())` is as immutable as `z.string()`).
@@ -55,7 +50,7 @@ export function buildNoUnnecessaryReadonlyCreate(
     function classifyChain(schemaType: string, chain: ChainItems, endIndex: number): Immutability {
       const precedingNames = chain.slice(1, endIndex).map((it) => it.name);
 
-      if (precedingNames.some((name) => TYPE_CHANGING_METHODS.includes(name))) {
+      if (precedingNames.some((name) => ZOD_TYPE_CHANGING_METHODS.includes(name))) {
         return 'unknown';
       }
       if (precedingNames.includes('readonly') || schemaType === 'readonly') {

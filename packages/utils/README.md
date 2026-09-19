@@ -67,6 +67,7 @@ AST parsing, import tracking, traversal, and fixer helpers.
 - `isZodSchemaFactoryCall(meta)` — whether a `detectZodSchemaRootNode` result builds a schema; resolves the `iso` / `coerce` namespaces, and rejects the helpers that only consume a schema (`z.toJSONSchema`, `z.prettifyError`)
 - `ZOD_STRING_FORMAT_METHODS` — deprecated `z.string().<format>()` methods and the top-level factory replacing each; type `ZodStringFormatMethodName`
 - `ZOD_STRING_FORMAT_NAMES` — top-level string-format factory names that all parse to `string`
+- `ZOD_TYPE_CHANGING_METHODS` — chained methods that rebuild the schema around another type (`array`, `or`, `pipe`, …); a chain's earlier checks do not carry past one
 
 **Check vocabulary**
 

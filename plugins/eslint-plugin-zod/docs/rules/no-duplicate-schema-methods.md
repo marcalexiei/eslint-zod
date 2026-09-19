@@ -12,6 +12,12 @@ This rule disallows calling the same Zod schema method more than once within a s
 
 Methods that are designed to be chained multiple times, such as `.or()`, `.and()`, and `.array()`, are excluded from this check. This also includes `.regex()`, `.includes()`, `.startsWith()`, `.endsWith()`, and `.overwrite()`, since each call applies an independent constraint or transformation — matching a string against two different patterns is common, unlike calling `.min()` twice with different values.
 
+A method that changes the schema's type starts a new chain segment:
+the methods after it constrain the new schema, not the one before.
+`z.string().min(1).array().min(1)` bounds the string's length and then the array's, so it is not a duplicate.
+`.array()` is the only such method whose result takes further constraints —
+`.or()`, `.and()`, `.pipe()` and `.transform()` return schemas with no chainable checks of their own.
+
 [`no-conflicting-checks`](./no-conflicting-checks.md) owns the excluded content methods:
 it reports the combinations that are unsatisfiable or redundant rather than merely repeated.
 
@@ -46,6 +52,9 @@ const cSchema = z.string().or(z.number()).or(z.boolean());
 
 // .array() can be chained to create nested arrays
 const dSchema = z.string().nonempty().array().array();
+
+// .array() starts a new segment — the second .min() bounds the array, not the string
+const fSchema = z.string().min(1).array().min(1);
 
 // .regex() (and .includes()/.startsWith()/.endsWith()/.overwrite()) can be
 // chained to apply multiple independent constraints
