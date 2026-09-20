@@ -1,5 +1,11 @@
 # @eslint-zod/utils
 
+## 5.3.0
+
+### Minor Changes
+
+- [#471](https://github.com/marcalexiei/eslint-zod/pull/471) [`acb0e63`](https://github.com/marcalexiei/eslint-zod/commit/acb0e63282d938d8bbdae4d1ace132aaaed71afa) - feat: export `ZOD_TYPE_CHANGING_METHODS`, the chained methods that rebuild a schema around another type
+
 ## 5.2.0
 
 ### Minor Changes

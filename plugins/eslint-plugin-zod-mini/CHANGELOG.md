@@ -1,5 +1,13 @@
 # eslint-plugin-zod-mini
 
+## 1.11.2
+
+### Patch Changes
+
+- [#471](https://github.com/marcalexiei/eslint-zod/pull/471) [`acb0e63`](https://github.com/marcalexiei/eslint-zod/commit/acb0e63282d938d8bbdae4d1ace132aaaed71afa) - fix(no-duplicate-schema-methods): a type-changing method starts a new chain segment, so `z.string().min(1).array().min(1)` is no longer reported
+- Updated dependencies [[`acb0e63`](https://github.com/marcalexiei/eslint-zod/commit/acb0e63282d938d8bbdae4d1ace132aaaed71afa)]:
+  - @eslint-zod/utils@5.3.0
+
 ## 1.11.1
 
 ### Patch Changes
