@@ -7,6 +7,7 @@ import type { ZodSchemaBaseType } from '../get-zod-schema-base-type.js';
 import type { ZodCheckDescriptor, ZodCheckDomain } from '../zod-check-vocabulary.js';
 import { canonicalizeZodConstraintName, getZodCheckDescriptor } from '../zod-check-vocabulary.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
+import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
 
 /** Options contract implemented by each plugin's rule. */
 export interface NoConflictingChecksOptions {
@@ -25,12 +26,6 @@ export type NoConflictingChecksMessageIds =
   | 'confusingCombination'
   | 'pointlessCheck'
   | 'inapplicableCheck';
-
-/**
- * Chained methods that change the schema's output type;
- * reasoning about the factory's checks past them is unsound, so the whole chain is skipped.
- */
-const TYPE_CHANGING_METHODS = ['and', 'array', 'or', 'pipe', 'preprocess', 'transform'];
 
 /** Length range `[min, max]` of well-known fixed-shape formats. */
 const FORMAT_LENGTH_RANGES = new Map<string, [number, number]>([
@@ -586,7 +581,7 @@ export function buildNoConflictingChecksCreate(
         if (chain.length === 0) {
           return;
         }
-        if (chain.slice(1).some((item) => TYPE_CHANGING_METHODS.includes(item.name))) {
+        if (chain.slice(1).some((item) => ZOD_TYPE_CHANGING_METHODS.includes(item.name))) {
           return;
         }
 

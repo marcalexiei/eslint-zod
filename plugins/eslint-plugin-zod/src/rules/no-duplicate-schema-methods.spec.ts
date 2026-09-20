@@ -131,6 +131,20 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
     },
     {
+      name: 'namespace - min after array applies to the array, not the string',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().min(1).array().min(1);
+      `,
+    },
+    {
+      name: 'namespace - min repeated across nested array layers',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().min(1).array().min(1).array().min(1);
+      `,
+    },
+    {
       name: 'non-zod code is not flagged',
       code: dedent`
         const obj = { trim: () => obj, min: () => obj };
@@ -204,6 +218,14 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         z.string().optional().optional();
       `,
       errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'optional' } }],
+    },
+    {
+      name: 'namespace - duplicate within the segment after array',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().array().min(1).max(5).min(2);
+      `,
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'min' } }],
     },
     {
       name: 'namespace - describe called twice',
