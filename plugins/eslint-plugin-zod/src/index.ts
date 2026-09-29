@@ -25,7 +25,6 @@ import { noOptionalAndDefaultTogether } from './rules/no-optional-and-default-to
 import { noPromiseSchema } from './rules/no-promise-schema.js';
 import { noSchemaWithIsNullable } from './rules/no-schema-with-is-nullable.js';
 import { noSchemaWithIsOptional } from './rules/no-schema-with-is-optional.js';
-import { noStringSchemaWithUuid } from './rules/no-string-schema-with-uuid.js';
 import { noThrowInRefine } from './rules/no-throw-in-refine.js';
 import { noTransformInRecordKey } from './rules/no-transform-in-record-key.js';
 import { noUnknownSchema } from './rules/no-unknown-schema.js';
@@ -86,7 +85,6 @@ const eslintPluginZod = {
     'no-number-schema-with-is-int': noNumberSchemaWithIsInt,
     'no-number-schema-with-safe': noNumberSchemaWithSafe,
     'no-number-schema-with-step': noNumberSchemaWithStep,
-    'no-string-schema-with-uuid': noStringSchemaWithUuid,
     'no-optional-and-default-together': noOptionalAndDefaultTogether,
     'no-promise-schema': noPromiseSchema,
     'no-schema-with-is-nullable': noSchemaWithIsNullable,
