@@ -2,7 +2,7 @@
 
 📝 Enforce `.trim()` is called before string length checks to ensure accurate validation.
 
-💼 This rule is enabled in the ✅ `recommended` config.
+💼 This rule is enabled in the 🔒 `strict` config.
 
 🔧 This rule is automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/latest/user-guide/command-line-interface#--fix).
 

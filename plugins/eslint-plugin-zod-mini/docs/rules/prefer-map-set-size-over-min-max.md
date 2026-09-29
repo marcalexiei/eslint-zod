@@ -2,6 +2,8 @@
 
 📝 Prefer `z.size(n)` over `z.minSize(n)` and `z.maxSize(n)` with the same value on a set or map schema.
 
+💼 This rule is enabled in the 🎨 `stylistic` config.
+
 🔧 This rule is automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/latest/user-guide/command-line-interface#--fix).
 
 <!-- end auto-generated rule header -->

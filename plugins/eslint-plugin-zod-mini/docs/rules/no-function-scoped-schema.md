@@ -2,6 +2,8 @@
 
 📝 Disallow constructing a Zod Mini schema inside a function body.
 
+💼 This rule is enabled in the 🔒 `strict` config.
+
 <!-- end auto-generated rule header -->
 
 ## Rule Details

@@ -80,38 +80,63 @@ const eslintPluginZodMini = {
   } as unknown as Record<string, Rule.RuleModule>,
 } satisfies ESLint.Plugin as CompatiblePlugin;
 
-const baseConfig = {
-  name: `${PLUGIN_NAME}/recommended`,
-  files: ['**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}'],
-  plugins: {
-    'zod-mini': eslintPluginZodMini,
-  },
-};
+function createConfig(name: string, rules: Linter.RulesRecord): CompatibleConfig {
+  return {
+    name: `${PLUGIN_NAME}/${name}`,
+    files: ['**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}'],
+    plugins: {
+      'zod-mini': eslintPluginZodMini,
+    },
+    rules,
+  } satisfies Linter.Config as CompatibleConfig;
+}
 
-const recommendedConfig = {
-  ...baseConfig,
-  rules: {
-    'zod-mini/consistent-import': 'error',
-    'zod-mini/consistent-schema-var-name': 'error',
-    'zod-mini/no-any-schema': 'error',
-    'zod-mini/no-coerce-boolean': 'error',
-    'zod-mini/no-duplicate-schema-methods': 'error',
-    'zod-mini/no-empty-custom-schema': 'error',
-    'zod-mini/no-native-enum': 'error',
-    'zod-mini/no-promise-schema': 'error',
-    'zod-mini/no-throw-in-refine': 'error',
-    'zod-mini/prefer-enum-over-literal-union': 'error',
-    'zod-mini/prefer-meta': 'error',
-    'zod-mini/prefer-nullish': 'error',
-    'zod-mini/require-brand-type-parameter': 'error',
-    'zod-mini/require-error-message': 'error',
-  },
-} satisfies Linter.Config as CompatibleConfig;
+const recommendedRules = {
+  'zod-mini/consistent-import': 'error',
+  'zod-mini/consistent-schema-var-name': 'error',
+  'zod-mini/no-any-schema': 'error',
+  'zod-mini/no-coerce-boolean': 'error',
+  'zod-mini/no-conflicting-checks': 'error',
+  'zod-mini/no-duplicate-schema-methods': 'error',
+  'zod-mini/no-empty-custom-schema': 'error',
+  'zod-mini/no-native-enum': 'error',
+  'zod-mini/no-promise-schema': 'error',
+  'zod-mini/no-throw-in-refine': 'error',
+  'zod-mini/no-transform-in-record-key': 'error',
+  'zod-mini/require-brand-type-parameter': 'error',
+  'zod-mini/require-error-message': 'error',
+} satisfies Linter.RulesRecord;
+
+// `strict` replaces `recommended` rather than layering on it, so it carries its rules.
+const strictRules = {
+  ...recommendedRules,
+  'zod-mini/no-dynamic-schema-value': 'error',
+  'zod-mini/no-function-scoped-schema': 'error',
+  'zod-mini/no-unknown-schema': 'error',
+  'zod-mini/no-unnecessary-readonly': 'error',
+} satisfies Linter.RulesRecord;
+
+const stylisticRules = {
+  'zod-mini/consistent-import-source': 'error',
+  'zod-mini/consistent-object-schema-type': 'error',
+  'zod-mini/consistent-schema-output-type-style': 'error',
+  'zod-mini/prefer-enum-over-literal-union': 'error',
+  'zod-mini/prefer-map-set-size-over-min-max': 'error',
+  'zod-mini/prefer-meta': 'error',
+  'zod-mini/prefer-nullish': 'error',
+  'zod-mini/prefer-string-length-over-min-max': 'error',
+  'zod-mini/prefer-tuple-over-array-length': 'error',
+  'zod-mini/prefer-validate': 'error',
+  'zod-mini/schema-error-property-style': 'error',
+} satisfies Linter.RulesRecord;
 
 export default {
   ...eslintPluginZodMini,
   configs: {
-    recommended: recommendedConfig,
+    recommended: createConfig('recommended', recommendedRules),
+    strict: createConfig('strict', strictRules),
+    stylistic: createConfig('stylistic', stylisticRules),
+    all: createConfig('all', { ...strictRules, ...stylisticRules }),
   },
 } satisfies ESLint.Plugin;
 /**

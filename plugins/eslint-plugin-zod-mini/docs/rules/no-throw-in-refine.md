@@ -2,7 +2,7 @@
 
 📝 Disallow throwing errors directly inside Zod Mini refine callbacks.
 
-💼 This rule is enabled in the ✅ `recommended` config.
+💼 This rule is enabled in the following configs: ✅ `recommended`, 🔒 `strict`.
 
 <!-- end auto-generated rule header -->
 

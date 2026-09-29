@@ -2,6 +2,8 @@
 
 📝 Disallow non-static values passed as arguments in a Zod schema expression.
 
+💼 This rule is enabled in the 🔒 `strict` config.
+
 <!-- end auto-generated rule header -->
 
 ## Rule Details

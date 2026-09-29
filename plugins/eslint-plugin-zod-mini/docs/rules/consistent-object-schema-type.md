@@ -2,6 +2,8 @@
 
 📝 Enforce consistent usage of Zod Mini schema methods.
 
+💼 This rule is enabled in the 🎨 `stylistic` config.
+
 💡 This rule is manually fixable by [editor suggestions](https://eslint.org/docs/latest/use/core-concepts#rule-suggestions).
 
 <!-- end auto-generated rule header -->

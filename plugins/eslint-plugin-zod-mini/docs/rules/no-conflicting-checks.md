@@ -2,6 +2,8 @@
 
 📝 Disallow check combinations that can never match, are redundant, or do not apply to the schema type.
 
+💼 This rule is enabled in the following configs: ✅ `recommended`, 🔒 `strict`.
+
 <!-- end auto-generated rule header -->
 
 ## Rule Details
