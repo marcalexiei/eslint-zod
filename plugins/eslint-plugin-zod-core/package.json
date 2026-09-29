@@ -7,7 +7,8 @@
     "eslint-plugin",
     "eslintplugin",
     "oxlint",
-    "zod"
+    "zod",
+    "zod-core"
   ],
   "homepage": "https://github.com/marcalexiei/eslint-zod#readme",
   "bugs": {
@@ -24,13 +25,12 @@
     "dist"
   ],
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     },
     "./package.json": "./package.json"
   },
@@ -39,7 +39,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "lint:publish": "attw --pack .",
+    "lint:publish": "attw --pack . --profile esm-only",
     "build:docs": "pnpm run build && eslint-doc-generator",
     "lint:docs": "eslint-doc-generator --check",
     "test": "vitest"
@@ -74,6 +74,6 @@
     }
   },
   "engines": {
-    "node": "^20 || ^22 || >=24"
+    "node": "^20.19 || ^22.12 || >=24"
   }
 }
