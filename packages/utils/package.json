@@ -24,42 +24,23 @@
   ],
   "type": "module",
   "sideEffects": false,
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
-  "types": "./dist/index.d.cts",
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
   "exports": {
     ".": {
       "@eslint-zod/source": "./src/index.ts",
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
     },
     "./rule-builders/*": {
       "@eslint-zod/source": "./src/rule-builders/*.ts",
-      "import": {
-        "types": "./dist/rule-builders/*.d.mts",
-        "default": "./dist/rule-builders/*.mjs"
-      },
-      "require": {
-        "types": "./dist/rule-builders/*.d.cts",
-        "default": "./dist/rule-builders/*.cjs"
-      }
+      "types": "./dist/rule-builders/*.d.mts",
+      "default": "./dist/rule-builders/*.mjs"
     },
     "./rule-patterns/*": {
       "@eslint-zod/source": "./src/rule-patterns/*.ts",
-      "import": {
-        "types": "./dist/rule-patterns/*.d.mts",
-        "default": "./dist/rule-patterns/*.mjs"
-      },
-      "require": {
-        "types": "./dist/rule-patterns/*.d.cts",
-        "default": "./dist/rule-patterns/*.cjs"
-      }
+      "types": "./dist/rule-patterns/*.d.mts",
+      "default": "./dist/rule-patterns/*.mjs"
     },
     "./package.json": "./package.json"
   },
@@ -68,7 +49,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "lint:publish": "attw --pack .",
+    "lint:publish": "attw --pack . --profile esm-only",
     "test": "vitest"
   },
   "dependencies": {
@@ -83,6 +64,6 @@
     "vitest": "catalog:dev"
   },
   "engines": {
-    "node": "^20 || ^22 || >=24"
+    "node": "^20.19 || ^22.12 || >=24"
   }
 }

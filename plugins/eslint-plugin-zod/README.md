@@ -207,3 +207,5 @@ Zod is declared as an optional peer dependency in the plugin's `package.json`.
 
 If your project uses Zod v4, the plugin will automatically lint your schemas.
 If you're not using Zod (for example, in a separate ESLint workspace), you don't need to install it.
+
+`eslint` and `oxlint` are optional peer dependencies too: a project runs one of the two linters, so the plugin cannot require either.

@@ -268,7 +268,7 @@ Every `docs/rules/<rule-name>.md` follows the same section order after the auto-
 
 ## Published-artifact checks
 
-`pnpm lint:publish` runs `attw --pack .` in each of the four published packages, checking that the `exports` map resolves types correctly under node10, node16 (CJS and ESM) and bundler. It inspects the `pnpm pack` tarball, so it needs `dist` — that is why the script is separate from `pnpm lint` and why CI runs it after the build step.
+`pnpm lint:publish` runs `attw --pack . --profile esm-only` in each of the four published packages, checking that the `exports` map resolves types correctly under node16 (ESM) and bundler. The packages are ESM-only (#289): CJS consumers load them through Node's `require(esm)`, which is why `engines` starts at 20.19 / 22.12. It inspects the `pnpm pack` tarball, so it needs `dist` — that is why the script is separate from `pnpm lint` and why CI runs it after the build step.
 
 `publint` was evaluated alongside it and left out for now.
 

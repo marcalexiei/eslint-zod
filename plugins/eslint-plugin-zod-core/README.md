@@ -132,3 +132,9 @@ export default defineConfig({
   },
 });
 ```
+
+## Peer dependencies
+
+`eslint`, `oxlint` and `zod` are all optional peer dependencies.
+A project runs one of the two linters, so the plugin cannot require either;
+and the plugin analyzes Zod code without importing Zod at runtime.
