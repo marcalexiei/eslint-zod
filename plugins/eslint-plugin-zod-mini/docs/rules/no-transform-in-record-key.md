@@ -2,6 +2,8 @@
 
 📝 Disallow transforms in z.record() key schemas, which can cause silent key mutations and data loss through key collisions.
 
+💼 This rule is enabled in the following configs: ✅ `recommended`, 🔒 `strict`.
+
 <!-- end auto-generated rule header -->
 
 ## Rule Details

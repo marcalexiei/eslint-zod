@@ -2,7 +2,7 @@
 
 📝 Enforce a consistent import style for Zod Mini.
 
-💼 This rule is enabled in the ✅ `recommended` config.
+💼 This rule is enabled in the following configs: ✅ `recommended`, 🔒 `strict`.
 
 🔧 This rule is automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/latest/user-guide/command-line-interface#--fix).
 
@@ -31,6 +31,8 @@ The rule ensures that:
 - **Correctness**: prevents subtle duplication or shadowing of Zod Mini imports.
 
 Because the rule is fully fixable, large codebases can be migrated automatically.
+
+Unlike most `consistent-*` rules, this one is in `recommended` rather than `stylistic`: import syntax is baseline hygiene, not a matter of taste.
 
 ## Options
 

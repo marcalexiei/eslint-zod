@@ -11,7 +11,13 @@ import type { TSESLint } from '@typescript-eslint/utils';
 export interface PluginLike {
   meta: { name: string; version: string };
   rules?: object;
-  configs: { recommended: { name?: string; rules?: object; plugins?: object } };
+  configs: Record<string, ConfigLike> & { recommended: ConfigLike };
+}
+
+interface ConfigLike {
+  name?: string;
+  rules?: object;
+  plugins?: object;
 }
 
 function getRules(plugin: PluginLike): Record<string, TSESLint.RuleModule<string>> {
@@ -43,6 +49,14 @@ export function getRegisteredRuleNames(plugin: PluginLike): Array<string> {
   return Object.keys(getRules(plugin)).sort();
 }
 
+/** Returns the sorted names of the registered rules that are not deprecated. */
+export function getNonDeprecatedRuleNames(plugin: PluginLike): Array<string> {
+  return Object.entries(getRules(plugin))
+    .filter(([, rule]) => !(rule.meta.deprecated ?? false))
+    .map(([ruleName]) => ruleName)
+    .sort();
+}
+
 /**
  * For each registered rule, returns its name together with the documentation
  * file name (without extension) referenced by its `meta.docs.url`.
@@ -62,15 +76,16 @@ export function getRuleDocReferences(
 }
 
 /**
- * For each entry of the `recommended` config, returns the config key together
+ * For each entry of the given config, returns the config key together
  * with the registered rule it points to (`undefined` when it doesn't resolve).
  */
-export function getRecommendedRuleEntries(
+export function getConfigRuleEntries(
   plugin: PluginLike,
+  configName: string,
 ): Array<{ configRuleName: string; rule: TSESLint.RuleModule<string> | undefined }> {
   const rules = getRules(plugin);
 
-  return Object.keys(plugin.configs.recommended.rules ?? {}).map((configRuleName) => ({
+  return Object.keys(plugin.configs[configName].rules ?? {}).map((configRuleName) => ({
     configRuleName,
     rule: rules[configRuleName.slice(configRuleName.indexOf('/') + 1)],
   }));

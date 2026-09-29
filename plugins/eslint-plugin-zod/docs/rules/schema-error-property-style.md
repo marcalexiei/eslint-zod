@@ -2,6 +2,8 @@
 
 📝 Enforce consistent style for error messages in Zod schema validation (using ESQuery patterns).
 
+💼 This rule is enabled in the 🎨 `stylistic` config.
+
 <!-- end auto-generated rule header -->
 
 ## Rule Details

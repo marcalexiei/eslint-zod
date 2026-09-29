@@ -2,7 +2,7 @@
 
 📝 Enforce `.nullish()` instead of combining `.optional()` and `.nullable()`.
 
-💼 This rule is enabled in the ✅ `recommended` config.
+💼 This rule is enabled in the 🎨 `stylistic` config.
 
 🔧 This rule is automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/latest/user-guide/command-line-interface#--fix).
 

@@ -2,7 +2,7 @@
 
 📝 Disallow using deprecated `isInt` on a Zod number schema; check the `format` property instead.
 
-💼 This rule is enabled in the ✅ `recommended` config.
+💼 This rule is enabled in the following configs: ✅ `recommended`, 🔒 `strict`.
 
 <!-- end auto-generated rule header -->
 

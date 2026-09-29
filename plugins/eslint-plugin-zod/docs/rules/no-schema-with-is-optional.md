@@ -2,7 +2,7 @@
 
 📝 Disallow deprecated `.isOptional()` on a Zod schema; use `safeParse(undefined).success` instead.
 
-💼 This rule is enabled in the ✅ `recommended` config.
+💼 This rule is enabled in the following configs: ✅ `recommended`, 🔒 `strict`.
 
 <!-- end auto-generated rule header -->
 

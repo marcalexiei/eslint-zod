@@ -2,8 +2,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  getConfigRuleEntries,
   getDocFileNames,
-  getRecommendedRuleEntries,
   getRegisteredRuleNames,
   getRuleDocReferences,
   getRuleFileNames,
@@ -51,7 +51,7 @@ describe('recommended config', () => {
   });
 
   it('only references registered, non-deprecated rules', () => {
-    for (const { configRuleName, rule } of getRecommendedRuleEntries(plugin)) {
+    for (const { configRuleName, rule } of getConfigRuleEntries(plugin, 'recommended')) {
       expect(configRuleName).toMatch(/^zod-core\//);
       expect(rule, `rule \`${configRuleName}\` is not registered in the plugin`).toBeDefined();
       expect(

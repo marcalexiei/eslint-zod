@@ -2,6 +2,8 @@
 
 📝 Disallow usage of `z.unknown()` in Zod schemas.
 
+💼 This rule is enabled in the 🔒 `strict` config.
+
 <!-- end auto-generated rule header -->
 
 ## Rule Details

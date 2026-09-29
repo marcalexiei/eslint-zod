@@ -112,54 +112,79 @@ const eslintPluginZod = {
   } as unknown as Record<string, Rule.RuleModule>,
 } satisfies ESLint.Plugin as CompatiblePlugin;
 
-const baseConfig = {
-  name: `${PLUGIN_NAME}/recommended`,
-  files: ['**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}'],
-  plugins: {
-    zod: eslintPluginZod,
-  },
-};
+function createConfig(name: string, rules: Linter.RulesRecord): CompatibleConfig {
+  return {
+    name: `${PLUGIN_NAME}/${name}`,
+    files: ['**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}'],
+    plugins: {
+      zod: eslintPluginZod,
+    },
+    rules,
+  } satisfies Linter.Config as CompatibleConfig;
+}
 
-const recommendedConfig = {
-  ...baseConfig,
-  rules: {
-    'zod/array-style': 'error',
-    'zod/consistent-import': 'error',
-    'zod/consistent-schema-var-name': 'error',
-    'zod/no-any-schema': 'error',
-    'zod/no-coerce-boolean': 'error',
-    'zod/no-duplicate-schema-methods': 'error',
-    'zod/no-empty-custom-schema': 'error',
-    'zod/no-native-enum': 'error',
-    'zod/no-number-schema-with-finite': 'error',
-    'zod/no-number-schema-with-int': 'error',
-    'zod/no-number-schema-with-is-finite': 'error',
-    'zod/no-number-schema-with-is-int': 'error',
-    'zod/no-number-schema-with-safe': 'error',
-    'zod/no-number-schema-with-step': 'error',
-    'zod/no-optional-and-default-together': 'error',
-    'zod/no-promise-schema': 'error',
-    'zod/no-schema-with-is-nullable': 'error',
-    'zod/no-schema-with-is-optional': 'error',
-    'zod/no-throw-in-refine': 'error',
-    'zod/prefer-enum-over-literal-union': 'error',
-    'zod/prefer-loose-object': 'error',
-    'zod/prefer-meta': 'error',
-    'zod/prefer-meta-last': 'error',
-    'zod/prefer-nullish': 'error',
-    'zod/prefer-strict-object': 'error',
-    'zod/prefer-top-level-string-formats': 'error',
-    'zod/prefer-string-schema-with-trim': 'error',
-    'zod/prefer-trim-before-string-length-checks': 'error',
-    'zod/require-brand-type-parameter': 'error',
-    'zod/require-error-message': 'error',
-  },
-} satisfies Linter.Config as CompatibleConfig;
+const recommendedRules = {
+  'zod/consistent-import': 'error',
+  'zod/consistent-schema-var-name': 'error',
+  'zod/no-any-schema': 'error',
+  'zod/no-coerce-boolean': 'error',
+  'zod/no-conflicting-checks': 'error',
+  'zod/no-duplicate-schema-methods': 'error',
+  'zod/no-empty-custom-schema': 'error',
+  'zod/no-native-enum': 'error',
+  'zod/no-number-schema-with-finite': 'error',
+  'zod/no-number-schema-with-int': 'error',
+  'zod/no-number-schema-with-is-finite': 'error',
+  'zod/no-number-schema-with-is-int': 'error',
+  'zod/no-number-schema-with-safe': 'error',
+  'zod/no-number-schema-with-step': 'error',
+  'zod/no-optional-and-default-together': 'error',
+  'zod/no-promise-schema': 'error',
+  'zod/no-schema-with-is-nullable': 'error',
+  'zod/no-schema-with-is-optional': 'error',
+  'zod/no-throw-in-refine': 'error',
+  'zod/no-transform-in-record-key': 'error',
+  'zod/prefer-top-level-string-formats': 'error',
+  'zod/require-brand-type-parameter': 'error',
+  'zod/require-error-message': 'error',
+} satisfies Linter.RulesRecord;
+
+// `strict` replaces `recommended` rather than layering on it, so it carries its rules.
+const strictRules = {
+  ...recommendedRules,
+  'zod/no-dynamic-schema-value': 'error',
+  'zod/no-function-scoped-schema': 'error',
+  'zod/no-unknown-schema': 'error',
+  'zod/no-unnecessary-readonly': 'error',
+  'zod/prefer-trim-before-string-length-checks': 'error',
+} satisfies Linter.RulesRecord;
+
+const stylisticRules = {
+  'zod/array-style': 'error',
+  'zod/consistent-import-source': 'error',
+  'zod/consistent-object-schema-type': 'error',
+  'zod/consistent-schema-output-type-style': 'error',
+  'zod/prefer-enum-over-literal-union': 'error',
+  'zod/prefer-loose-object': 'error',
+  'zod/prefer-map-set-size-over-min-max': 'error',
+  'zod/prefer-meta': 'error',
+  'zod/prefer-meta-last': 'error',
+  'zod/prefer-nullish': 'error',
+  'zod/prefer-strict-object': 'error',
+  'zod/prefer-string-length-over-min-max': 'error',
+  'zod/prefer-string-schema-with-trim': 'error',
+  'zod/prefer-tuple-over-array-length': 'error',
+  'zod/prefer-validate': 'error',
+  'zod/schema-error-property-style': 'error',
+} satisfies Linter.RulesRecord;
 
 export default {
   ...eslintPluginZod,
   configs: {
-    recommended: recommendedConfig,
+    recommended: createConfig('recommended', recommendedRules),
+    strict: createConfig('strict', strictRules),
+    stylistic: createConfig('stylistic', stylisticRules),
+    all: createConfig('all', { ...strictRules, ...stylisticRules }),
   },
 } satisfies ESLint.Plugin;
 /**

@@ -2,8 +2,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  getConfigRuleEntries,
   getDocFileNames,
-  getRecommendedRuleEntries,
+  getNonDeprecatedRuleNames,
   getRegisteredRuleNames,
   getRuleDocReferences,
   getRuleFileNames,
@@ -41,30 +42,65 @@ describe('plugin export', async () => {
   });
 });
 
-describe('recommended config', () => {
+const CONFIG_NAMES = ['recommended', 'strict', 'stylistic', 'all'] as const;
+
+function getConfigRuleNames(configName: string): Array<string> {
+  return getConfigRuleEntries(plugin, configName)
+    .map((entry) => entry.configRuleName)
+    .sort();
+}
+
+describe.each(CONFIG_NAMES)('%s config', (configName) => {
   it('has correct shape', () => {
-    const recommendedConfig = plugin.configs.recommended;
-    expect(recommendedConfig).toBeTypeOf('object');
-    expect(recommendedConfig.name).toBe('eslint-plugin-zod/recommended');
-    expect(recommendedConfig.plugins).toHaveProperty('zod');
-    expect(recommendedConfig.rules).toBeTypeOf('object');
+    const config = plugin.configs[configName];
+    expect(config).toBeTypeOf('object');
+    expect(config.name).toBe(`eslint-plugin-zod/${configName}`);
+    expect(config.plugins).toHaveProperty('zod');
+    expect(config.rules).toBeTypeOf('object');
   });
 
   it('only references registered, non-deprecated rules', () => {
-    for (const { configRuleName, rule } of getRecommendedRuleEntries(plugin)) {
+    for (const { configRuleName, rule } of getConfigRuleEntries(plugin, configName)) {
       expect(configRuleName).toMatch(/^zod\//);
       expect(rule, `rule \`${configRuleName}\` is not registered in the plugin`).toBeDefined();
       expect(
         rule?.meta.deprecated ?? false,
-        `deprecated rule \`${configRuleName}\` must not be part of the recommended config`,
+        `deprecated rule \`${configRuleName}\` must not be part of the ${configName} config`,
       ).toBe(false);
     }
+  });
+});
+
+describe('config composition', () => {
+  const recommended = getConfigRuleNames('recommended');
+  const strict = getConfigRuleNames('strict');
+  const stylistic = getConfigRuleNames('stylistic');
+  const all = getConfigRuleNames('all');
+
+  it('`strict` is a superset of `recommended`', () => {
+    expect(strict).toEqual(expect.arrayContaining(recommended));
+  });
+
+  it('`strict` and `stylistic` do not overlap', () => {
+    expect(strict.filter((ruleName) => stylistic.includes(ruleName))).toEqual([]);
+  });
+
+  it('`all` is exactly `strict` and `stylistic`', () => {
+    expect(all).toEqual([...strict, ...stylistic].sort());
+  });
+
+  it('`all` contains every non-deprecated rule', () => {
+    const nonDeprecated = getNonDeprecatedRuleNames(plugin).map((ruleName) => `zod/${ruleName}`);
+    expect(all).toEqual(nonDeprecated);
   });
 
   it('has correct type shape', () => {
     expectTypeOf(plugin.configs).toHaveProperty('recommended').toBeObject();
+    expectTypeOf(plugin.configs).toHaveProperty('strict').toBeObject();
+    expectTypeOf(plugin.configs).toHaveProperty('stylistic').toBeObject();
+    expectTypeOf(plugin.configs).toHaveProperty('all').toBeObject();
 
-    // keys different from recommended should not be types
+    // keys different from the declared configs should not be types
     expectTypeOf(plugin.configs).not.toMatchObjectType<{
       otherObject: object;
     }>();

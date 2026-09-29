@@ -2,7 +2,7 @@
 
 📝 Enforce a consistent naming convention for Zod schema variables.
 
-💼 This rule is enabled in the ✅ `recommended` config.
+💼 This rule is enabled in the following configs: ✅ `recommended`, 🔒 `strict`.
 
 <!-- end auto-generated rule header -->
 
@@ -30,6 +30,8 @@ Using a consistent naming convention for Zod schemas provides several benefits:
 2. **Better Code Navigation**: Easier to find schema declarations when all follow the same pattern
 3. **Self-Documenting Code**: The prefix/suffix helps document the variable's purpose
 4. **Consistency**: Maintains a uniform naming convention across the project
+
+Unlike most `consistent-*` rules, this one is in `recommended` rather than `stylistic`: schema naming is baseline hygiene, not a matter of taste.
 
 ## Options
 
