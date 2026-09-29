@@ -1,5 +1,11 @@
 # @eslint-zod/utils
 
+## 6.0.0
+
+### Major Changes
+
+- [#475](https://github.com/marcalexiei/eslint-zod/pull/475) [`c227d7a`](https://github.com/marcalexiei/eslint-zod/commit/c227d7a8e82d9e8357ee20d3a0e7fc5188ca4919) - feat!: publish ESM only and require Node `^20.19 || ^22.12 || >=24`; CommonJS configs still load the package through `require()`, under `.default`.
+
 ## 5.3.0
 
 ### Minor Changes

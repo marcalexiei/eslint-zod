@@ -1,5 +1,49 @@
 # eslint-plugin-zod-mini
 
+## 2.0.0
+
+### Major Changes
+
+- [#474](https://github.com/marcalexiei/eslint-zod/pull/474) [`ae3ae1a`](https://github.com/marcalexiei/eslint-zod/commit/ae3ae1a0db9066a32d2d91fef825dee8dd5aeb02) - feat!: split configs into `recommended`, `strict`, `stylistic` and `all`.
+
+  #### Migration guide
+
+  `recommended` now holds only rules that catch bugs or deprecated APIs.
+  Three rules left it for `stylistic`: `prefer-enum-over-literal-union`, `prefer-meta` and `prefer-nullish`.
+
+  Two rules joined it: `no-conflicting-checks` and `no-transform-in-record-key`.
+
+  To keep every rule you had, add `stylistic`:
+
+  ```diff
+   export default defineConfig(
+     eslintPluginZodMini.configs.recommended,
+  +  eslintPluginZodMini.configs.stylistic,
+   );
+  ```
+
+  `stylistic` also enables rules that were in no config before.
+  To avoid them, re-enable only the three rules instead:
+
+  ```js
+  {
+    rules: {
+      'zod-mini/prefer-enum-over-literal-union': 'error',
+      'zod-mini/prefer-meta': 'error',
+      'zod-mini/prefer-nullish': 'error',
+    },
+  }
+  ```
+
+  In Oxlint, spread each config's `rules` the same way.
+
+- [#475](https://github.com/marcalexiei/eslint-zod/pull/475) [`c227d7a`](https://github.com/marcalexiei/eslint-zod/commit/c227d7a8e82d9e8357ee20d3a0e7fc5188ca4919) - feat!: publish ESM only and require Node `^20.19 || ^22.12 || >=24`; CommonJS configs still load the package through `require()`, under `.default`.
+
+### Patch Changes
+
+- Updated dependencies [[`c227d7a`](https://github.com/marcalexiei/eslint-zod/commit/c227d7a8e82d9e8357ee20d3a0e7fc5188ca4919)]:
+  - @eslint-zod/utils@6.0.0
+
 ## 1.11.2
 
 ### Patch Changes

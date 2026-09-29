@@ -1,5 +1,54 @@
 # eslint-plugin-zod
 
+## 5.0.0
+
+### Major Changes
+
+- [#473](https://github.com/marcalexiei/eslint-zod/pull/473) [`353e773`](https://github.com/marcalexiei/eslint-zod/commit/353e773b0843002a96ca121365fbcedd24135c0d) - feat!: remove the deprecated `no-string-schema-with-uuid` rule; use `prefer-top-level-string-formats` instead.
+
+- [#474](https://github.com/marcalexiei/eslint-zod/pull/474) [`ae3ae1a`](https://github.com/marcalexiei/eslint-zod/commit/ae3ae1a0db9066a32d2d91fef825dee8dd5aeb02) - feat!: split configs into `recommended`, `strict`, `stylistic` and `all`.
+
+  #### Migration guide
+
+  `recommended` now holds only rules that catch bugs or deprecated APIs.
+  Nine rules left it:
+
+  - to `stylistic`: `array-style`, `prefer-enum-over-literal-union`, `prefer-loose-object`, `prefer-meta`, `prefer-meta-last`, `prefer-nullish`, `prefer-strict-object`, `prefer-string-schema-with-trim`
+  - to `strict`: `prefer-trim-before-string-length-checks`
+
+  Two rules joined it: `no-conflicting-checks` and `no-transform-in-record-key`.
+
+  To keep every rule you had, add `stylistic` and switch to `strict`:
+
+  ```diff
+   export default defineConfig(
+  -  eslintPluginZod.configs.recommended,
+  +  eslintPluginZod.configs.strict,
+  +  eslintPluginZod.configs.stylistic,
+   );
+  ```
+
+  Both configs also enable rules that were in no config before.
+  To avoid them, stay on `recommended` and re-enable the rules you want one by one:
+
+  ```js
+  {
+    rules: {
+      'zod/array-style': 'error',
+      'zod/prefer-trim-before-string-length-checks': 'error',
+    },
+  }
+  ```
+
+  In Oxlint, spread each config's `rules` the same way.
+
+- [#475](https://github.com/marcalexiei/eslint-zod/pull/475) [`c227d7a`](https://github.com/marcalexiei/eslint-zod/commit/c227d7a8e82d9e8357ee20d3a0e7fc5188ca4919) - feat!: publish ESM only and require Node `^20.19 || ^22.12 || >=24`; CommonJS configs still load the package through `require()`, under `.default`.
+
+### Patch Changes
+
+- Updated dependencies [[`c227d7a`](https://github.com/marcalexiei/eslint-zod/commit/c227d7a8e82d9e8357ee20d3a0e7fc5188ca4919)]:
+  - @eslint-zod/utils@6.0.0
+
 ## 4.14.2
 
 ### Patch Changes
