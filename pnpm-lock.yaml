@@ -30,8 +30,8 @@ catalogs:
       specifier: 3.7.1
       version: 3.7.1
     prettier:
-      specifier: 3.9.6
-      version: 3.9.6
+      specifier: 3.9.9
+      version: 3.9.9
     tsdown:
       specifier: 0.23.0
       version: 0.23.0
@@ -60,7 +60,7 @@ importers:
         version: 7.0.0(@vitest/eslint-plugin@1.6.27)(eslint-import-resolver-typescript@4.4.5)(eslint-plugin-import-x@4.17.1)(eslint@10.10.0)(typescript-eslint@8.70.0)
       '@marcalexiei/prettier-config':
         specifier: catalog:dev
-        version: 2.0.0(prettier@3.9.6)
+        version: 2.0.0(prettier@3.9.9)
       '@types/node':
         specifier: 24.13.2
         version: 24.13.2
@@ -93,7 +93,7 @@ importers:
         version: 2.1.12
       prettier:
         specifier: catalog:dev
-        version: 3.9.6
+        version: 3.9.9
       typescript:
         specifier: 6.0.3
         version: 6.0.3
@@ -108,7 +108,7 @@ importers:
     dependencies:
       '@marcalexiei/prettier-config':
         specifier: catalog:dev
-        version: 2.0.0(prettier@3.9.6)
+        version: 2.0.0(prettier@3.9.9)
       '@typescript-eslint/rule-tester':
         specifier: catalog:dev
         version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
@@ -120,7 +120,7 @@ importers:
         version: 3.7.1(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       prettier:
         specifier: catalog:dev
-        version: 3.9.6
+        version: 3.9.9
       tsdown:
         specifier: catalog:dev
         version: 0.23.0(@arethetypeswrong/core@0.18.5)(oxc-resolver@11.24.2)(typescript@6.0.3)
@@ -2238,8 +2238,8 @@ packages:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}
     engines: {node: '>= 0.8.0'}
 
-  prettier@3.9.6:
-    resolution: {integrity: sha512-OpN0zzVdiaiAhxpuuj5efpIS4sY9j7bY6uR5mnj5yPzGkdkjNKSJeUThPb60Jw29QuAZgA4o+/iB49kFiaBX6g==}
+  prettier@3.9.9:
+    resolution: {integrity: sha512-Z/CJHIkdujO/OtN7nXUii0Rf3VT5SRuhjBA82Xvu2XhBUgX3nhP67T0LHceBdQLex7OOFGTox+Q5Yg8Jk2Qivg==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -2969,9 +2969,9 @@ snapshots:
     optionalDependencies:
       '@vitest/eslint-plugin': 1.6.27(@typescript-eslint/eslint-plugin@8.70.0)(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)(vitest@5.0.0)
 
-  '@marcalexiei/prettier-config@2.0.0(prettier@3.9.6)':
+  '@marcalexiei/prettier-config@2.0.0(prettier@3.9.9)':
     dependencies:
-      prettier: 3.9.6
+      prettier: 3.9.9
 
   '@napi-rs/wasm-runtime@1.2.3(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)':
     dependencies:
@@ -4354,7 +4354,7 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier@3.9.6: {}
+  prettier@3.9.9: {}
 
   pretty-format@30.4.1:
     dependencies:
