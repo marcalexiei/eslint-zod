@@ -15,8 +15,8 @@ catalogs:
     # build & test toolchain
     tsdown: '0.23.0'
     # keep `@vitest/coverage-v8` aligned with `vitest`
-    '@vitest/coverage-v8': '5.0.0'
-    vitest: '5.0.0'
+    '@vitest/coverage-v8': '5.0.1'
+    vitest: '5.0.1'
 
     # published-artifact checks
     '@arethetypeswrong/cli': '0.18.5'
