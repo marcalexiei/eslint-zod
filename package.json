@@ -33,7 +33,7 @@
     "@types/node": "24.13.2",
     "@vitest/coverage-v8": "catalog:dev",
     "@vitest/eslint-plugin": "1.6.27",
-    "eslint": "10.10.0",
+    "eslint": "10.11.0",
     "eslint-import-resolver-typescript": "4.4.5",
     "eslint-plugin-eslint-plugin": "7.6.2",
     "eslint-plugin-import-x": "4.17.1",
