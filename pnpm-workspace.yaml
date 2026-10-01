@@ -25,7 +25,7 @@ catalogs:
     '@marcalexiei/prettier-config': '2.0.0'
     dedent: '1.7.2'
     eslint-doc-generator: '3.7.1'
-    prettier: '3.9.6'
+    prettier: '3.9.9'
 
 overrides:
   # vitest declares an optional `@types/node` peer: without a version here the
