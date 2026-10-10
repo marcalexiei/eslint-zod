@@ -14,10 +14,15 @@ on:
 
 permissions: {}
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: Test on Node ${{ matrix.node }} with ESLint ${{ matrix.eslint }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
 
     permissions:
       contents: read
@@ -47,6 +52,8 @@ jobs:
           # Both ESLint legs of a Node.js version share a cache key.
           save-cache: ${{ matrix.eslint == 10 }}
 
+      # The lockfile pins one ESLint major; the matrix tests the others.
+      # jactionlint ignore=adhoc-packages
       - name: Install ESLint (if needed)
         if: ${{ matrix.eslint != 10 }}
         env:
@@ -58,7 +65,8 @@ jobs:
 
   coverage:
     name: Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
 
     permissions:
       contents: read
@@ -82,7 +90,8 @@ jobs:
 
   code-checks:
     name: Code checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
 
     permissions:
       contents: read
@@ -115,8 +124,9 @@ jobs:
 
   ci-ok:
     name: CI OK
-    runs-on: ubuntu-latest
-    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    if: ${{ always() }}
     needs:
       - test
       - coverage

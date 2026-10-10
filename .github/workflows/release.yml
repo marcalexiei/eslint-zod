@@ -18,6 +18,10 @@ concurrency:
 
 permissions: {}
 
+defaults:
+  run:
+    shell: bash
+
 env:
   HUSKY: 0
 
@@ -28,7 +32,8 @@ jobs:
     environment: release-npm
 
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
 
     permissions:
       contents: write # required to push release commits and tags
@@ -71,7 +76,8 @@ jobs:
     name: Comment
     needs: release
     if: ${{ needs.release.outputs.published == 'true' }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
 
     environment: release-npm # where the release helper's credentials live
 
@@ -103,7 +109,8 @@ jobs:
 
   on-ci-fail:
     name: 'Failure'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
     if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     steps:
       - run: echo "CI failed. Release will not run"
