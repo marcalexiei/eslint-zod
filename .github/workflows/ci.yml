@@ -41,7 +41,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@ce1673b7269a1dd87e174de9c40a71eb912edd9f # v2.4.1
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@92c64c084d3479cff756151cb8163d03608f2acd # v2.4.2
         with:
           node-version: ${{ matrix.node }}
           # Both ESLint legs of a Node.js version share a cache key.
@@ -70,7 +70,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@ce1673b7269a1dd87e174de9c40a71eb912edd9f # v2.4.1
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@92c64c084d3479cff756151cb8163d03608f2acd # v2.4.2
         with:
           save-cache: false # shares its cache key with Code checks
 
@@ -94,7 +94,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@ce1673b7269a1dd87e174de9c40a71eb912edd9f # v2.4.1
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@92c64c084d3479cff756151cb8163d03608f2acd # v2.4.2
 
       - name: Build
         run: pnpm run build
