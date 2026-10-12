@@ -1,6 +1,7 @@
 import type { TSESLint } from '@typescript-eslint/utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/utils';
 
+import { getZodChainedMethodNames } from '../get-zod-chained-method-names.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_NON_SCHEMA_PRODUCING_METHODS } from '../zod-non-schema-producing-methods.js';
 import { isZodSchemaFactoryCall } from '../zod-schema-factory-names.js';
@@ -17,8 +18,9 @@ export function buildConsistentSchemaVarNameCreate(
   options: readonly [Options],
 ) => TSESLint.RuleListener {
   return function create(context, [{ before = '', after = '' }]) {
-    const { importDeclarationListener, detectZodSchemaRootNode, collectZodChainMethods } =
-      scope.createTracker({ kind: 'value' });
+    const { importDeclarationListener, detectZodSchemaRootNode } = scope.createTracker({
+      kind: 'value',
+    });
 
     return {
       ImportDeclaration: importDeclarationListener,
@@ -37,9 +39,10 @@ export function buildConsistentSchemaVarNameCreate(
           return;
         }
 
-        const chainMethods = collectZodChainMethods(initNode).map((it) => it.name);
+        // `meta` names property accesses too, so a parse result is seen through `.parse(input).tags.map(fn)`.
+        const chainNames = [meta.schemaType, ...getZodChainedMethodNames(meta)];
 
-        if (ZOD_NON_SCHEMA_PRODUCING_METHODS.some((it) => chainMethods.includes(it))) {
+        if (ZOD_NON_SCHEMA_PRODUCING_METHODS.some((it) => chainNames.includes(it))) {
           return;
         }
 

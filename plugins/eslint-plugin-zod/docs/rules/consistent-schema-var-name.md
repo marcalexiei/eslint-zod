@@ -15,7 +15,7 @@ If only `before` or `after` is configured, a variable name equal to that token i
 
 The rule ignores:
 
-- Variables that store parsed values (e.g., `.parse()`, `.safeParse()`)
+- Variables that store parsed values (e.g., `.parse()`, `.safeParse()`), or a value derived from one (`.parse(input).tags.map(fn)`)
 - Variables that store a validation result (`z.validate()`, `z.validateAsync()`)
 - Variables that use `z.codec()` transformations
 - Error formatting utilities (e.g., `prettifyError`, `formatError`)

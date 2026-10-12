@@ -182,6 +182,24 @@ ruleTester.run(consistentSchemaVarName.name, consistentSchemaVarName, {
       `,
     },
     {
+      // https://github.com/marcalexiei/eslint-zod/issues/490
+      name: 'should handle methods after a property access on a parse result',
+      code: dedent`
+        import * as z from 'zod';
+        const trimmedTags = z.object({ tags: z.array(z.string()) }).parse(input).tags.map(tag => tag.trim());
+        const firstTag = z.array(z.string()).parse(input)[0].trim();
+      `,
+    },
+    {
+      // https://github.com/marcalexiei/eslint-zod/issues/490
+      name: 'should handle methods after a property access on a parse result (named)',
+      code: dedent`
+        import { array, object, string } from 'zod';
+        const trimmedTags = object({ tags: array(string()) }).parse(input).tags.map(tag => tag.trim());
+        const firstTag = array(string()).parse(input)[0].trim();
+      `,
+    },
+    {
       name: 'valid prefix only',
       code: dedent`
         import * as z from 'zod';
