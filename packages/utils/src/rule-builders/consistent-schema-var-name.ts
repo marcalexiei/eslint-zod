@@ -11,6 +11,13 @@ interface Options {
   after?: string;
 }
 
+/** Prepends `before`, capitalizing `name` after a prefix that ends in a letter so the result stays camelCase. */
+function addPrefix(before: string, name: string): string {
+  return /\p{L}$/u.test(before)
+    ? before + name.charAt(0).toUpperCase() + name.slice(1)
+    : before + name;
+}
+
 export function buildConsistentSchemaVarNameCreate(
   scope: ZodImportScope,
 ): (
@@ -70,7 +77,7 @@ export function buildConsistentSchemaVarNameCreate(
         const expected =
           matchesBarePrefix || matchesBareSuffix
             ? before + after
-            : (validPrefix ? '' : before) + name + (validSuffix ? '' : after);
+            : (validPrefix ? name : addPrefix(before, name)) + (validSuffix ? '' : after);
 
         context.report({
           node,

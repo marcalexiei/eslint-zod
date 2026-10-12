@@ -440,5 +440,38 @@ ruleTester.run(consistentSchemaVarName.name, consistentSchemaVarName, {
       ],
       output: null,
     },
+    {
+      // https://github.com/marcalexiei/eslint-zod/issues/491
+      name: 'missing letter prefix keeps the name camelCase',
+      code: dedent`
+        import * as z from 'zod';
+        const user = z.string();
+      `,
+      options: [{ before: 'z', after: '' }],
+      errors: [{ messageId: 'invalidName', data: { expected: 'zUser' } }],
+      output: null,
+    },
+    {
+      // https://github.com/marcalexiei/eslint-zod/issues/491
+      name: 'missing letter prefix and suffix',
+      code: dedent`
+        import * as z from 'zod';
+        const user = z.string();
+      `,
+      options: [{ before: 'z', after: 'Schema' }],
+      errors: [{ messageId: 'invalidName', data: { expected: 'zUserSchema' } }],
+      output: null,
+    },
+    {
+      // https://github.com/marcalexiei/eslint-zod/issues/491
+      name: 'has suffix but missing letter prefix',
+      code: dedent`
+        import * as z from 'zod';
+        const userSchema = z.string();
+      `,
+      options: [{ before: 'z', after: 'Schema' }],
+      errors: [{ messageId: 'invalidName', data: { expected: 'zUserSchema' } }],
+      output: null,
+    },
   ],
 });

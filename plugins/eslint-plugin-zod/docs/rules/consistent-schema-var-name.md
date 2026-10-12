@@ -44,6 +44,9 @@ Unlike most `consistent-*` rules, this one is in `recommended` rather than `styl
 
 <!-- end auto-generated rule options list -->
 
+When `before` ends in a letter, the suggested name capitalizes the original one so it stays camelCase: with `"before": "z"`, `user` is reported as `zUser`.
+Any other prefix is prepended as is (`$user`).
+
 ## Why is there no autofix or suggestion?
 
 **TL;DR:** Use your IDE's rename functionality, it's far more robust and already battle-tested.
