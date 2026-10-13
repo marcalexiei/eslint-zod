@@ -71,13 +71,14 @@ There is no 'all' scope — rules in `eslint-plugin-zod` never fire on `zod/mini
 
 ### Shared utilities (`@eslint-zod/utils`)
 
-`@eslint-zod/utils` exposes three groups of export paths:
+`@eslint-zod/utils` exposes four groups of export paths:
 
 - `@eslint-zod/utils` (`packages/utils/src/`) — AST parsing, import tracking, traversal, and fixer helpers
+- `@eslint-zod/utils/rule-types` (`packages/utils/src/rule-types.ts`) — the linter's rule API as structural types (see **Linter independence** below); kept off the root, which is about Zod, and where a bare `Scope` would sit beside `ZodImportScope`
 - `@eslint-zod/utils/rule-builders/<rule-name>` (`packages/utils/src/rule-builders/`) — one export per shared rule builder; the file name matches the rule name (e.g. `consistent-import.ts` → `@eslint-zod/utils/rule-builders/consistent-import`)
 - `@eslint-zod/utils/rule-patterns/<pattern-name>` (`packages/utils/src/rule-patterns/`) — recurring rule shapes parameterized by the names they differ in (see **Rule patterns** below)
 
-Both subpath groups are exposed by a single wildcard exports-map entry each (`./rule-builders/*`, `./rule-patterns/*`), so adding a file is enough — there is no per-file entry to keep in sync. Every file in those directories is therefore public: helpers that are not builders or patterns live at `src/` root instead (e.g. `import-syntax-helpers.ts`, re-exported through `consistent-import`).
+The builder and pattern groups are exposed by a single wildcard exports-map entry each (`./rule-builders/*`, `./rule-patterns/*`), so adding a file is enough — there is no per-file entry to keep in sync. Every file in those directories is therefore public: helpers that are not builders or patterns live at `src/` root instead (e.g. `import-syntax-helpers.ts`, re-exported through `consistent-import`).
 
 `IMPORT_SYNTAXES` and `ImportSyntax` are exported from `@eslint-zod/utils/rule-builders/consistent-import` (not from the root).
 
@@ -160,6 +161,7 @@ Everything else is local to `@eslint-zod/utils`:
 
 - `rule-types.ts` declares the slice of the rule API the rules read (`RuleContext`, `RuleListener`, `RuleFixer`, `SourceCode`, `Scope`, …).
   The types are structural, so ESLint's and typescript-eslint's own objects are assignable to them.
+  It is published as `@eslint-zod/utils/rule-types`, with its own exports-map and tsdown entry.
 - `createRuleCreator(getRuleURL)` builds each plugin's rule factory: it sets the docs URL and merges the user's options over `defaultOptions`.
 - `findVariable` is a module-local scope walk, and a scope definition's kind is compared as a string literal (`definition.type === 'ImportBinding'`).
 

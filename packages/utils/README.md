@@ -36,12 +36,7 @@ AST parsing, import tracking, traversal, and fixer helpers.
 
 **Rule authoring**
 
-The package needs no linter installed: its only typescript-eslint dependency is `@typescript-eslint/types`, for the AST.
-
-- `createRuleCreator(getRuleURL)` — builds a plugin's rule factory; each rule gets its docs URL, and `create` receives the user's options merged over `defaultOptions`. Type `RuleDefinition` is what the factory takes
-- types `RuleContext`, `RuleListener`, `RuleModule`, `RuleMeta` — the slice of the rule API the helpers read, declared structurally, so ESLint's and typescript-eslint's own objects are assignable to them
-- types `RuleFix`, `RuleFixer`, `ReportDescriptor`, `ReportFixFunction`, `ReportSuggestionArray`, `SuggestionReportDescriptor` — reports and fixes
-- types `SourceCode`, `TokenSearchOptions`, `Scope`, `ScopeVariable`, `ScopeDefinition`, `ScopeReference` — source and scope access
+- `createRuleCreator(getRuleURL)` — builds a plugin's rule factory; each rule gets its docs URL, and `create` receives the user's options merged over `defaultOptions`. Type `RuleDefinition` is what the factory takes; the types it is written against live in [`@eslint-zod/utils/rule-types`](#rule-types--eslint-zodutilsrule-types)
 
 **Import tracking & scopes**
 
@@ -88,6 +83,14 @@ Canonical names shared by both API styles, so rule logic compares `zod`'s `.min(
 - `canonicalizeZodConstraintName(constraint, baseType)` — reduce a constraint's spelling to its canonical name
 - `getZodCheckDescriptor(canonicalName)` — what a check means: which base types accept it and what it bounds
 - types `ZodCheckDescriptor`, `ZodCheckBound`, `ZodCheckDomain`
+
+### Rule types — `@eslint-zod/utils/rule-types`
+
+The slice of the linter's rule API the helpers read. The types are structural, so ESLint's and typescript-eslint's own objects are assignable to them and no linter has to be installed: the package's only typescript-eslint dependency is `@typescript-eslint/types`, for the AST.
+
+- `RuleContext`, `RuleListener`, `RuleModule`, `RuleMeta` — the rule itself
+- `RuleFix`, `RuleFixer`, `ReportDescriptor`, `ReportFixFunction`, `ReportSuggestionArray`, `SuggestionReportDescriptor` — reports and fixes
+- `SourceCode`, `TokenSearchOptions`, `Scope`, `ScopeVariable`, `ScopeDefinition`, `ScopeReference` — source and scope access
 
 ### Shared rule builders — `@eslint-zod/utils/rule-builders/<rule-name>`
 
