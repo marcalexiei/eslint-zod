@@ -22,6 +22,7 @@ body:
       options:
         - label: eslint-plugin-zod
         - label: eslint-plugin-zod-mini
+        - label: eslint-plugin-zod-core
     validations:
       required: true
 

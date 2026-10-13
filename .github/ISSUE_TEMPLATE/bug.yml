@@ -17,6 +17,7 @@ body:
       options:
         - eslint-plugin-zod
         - eslint-plugin-zod-mini
+        - eslint-plugin-zod-core
     validations:
       required: true
 
@@ -54,7 +55,7 @@ body:
     attributes:
       label: 💻 System info
       description: |
-        Output of `npx envinfo --npmPackages 'eslint,eslint-plugin-zod,eslint-plugin-zod-mini' --binaries`
+        Output of `npx envinfo --npmPackages 'eslint,eslint-plugin-zod,eslint-plugin-zod-mini,eslint-plugin-zod-core' --binaries`
       render: shell
     validations:
       required: true
