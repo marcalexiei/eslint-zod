@@ -1,11 +1,12 @@
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import { AST_NODE_TYPES } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES } from '@typescript-eslint/types';
+import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import { buildZodWrapperUnwrapFix } from './build-zod-wrapper-unwrap-fix.js';
+import type { RuleFixer, SourceCode } from './rule-types.js';
 
 function makeFixer(): {
-  fixer: TSESLint.RuleFixer;
+  fixer: RuleFixer;
   calls: { replaced?: { node: TSESTree.Node; text: string } };
 } {
   const calls: { replaced?: { node: TSESTree.Node; text: string } } = {};
@@ -14,18 +15,18 @@ function makeFixer(): {
       calls.replaced = { node, text };
       return { range: node.range, text };
     },
-  } as unknown as TSESLint.RuleFixer;
+  } as unknown as RuleFixer;
   return { fixer, calls };
 }
 
 function makeSourceCode(
   text: string,
   comments: Array<{ range: [number, number] }> = [],
-): Readonly<TSESLint.SourceCode> {
+): Readonly<SourceCode> {
   return {
     getText: () => text,
     getAllComments: () => comments,
-  } as unknown as Readonly<TSESLint.SourceCode>;
+  } as unknown as Readonly<SourceCode>;
 }
 
 function makeCall(

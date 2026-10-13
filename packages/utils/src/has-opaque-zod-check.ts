@@ -1,4 +1,4 @@
-import type { TSESTree } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/types';
 
 import type { ZodSchemaConstraint } from './collect-zod-schema-constraints.js';
 

@@ -54,9 +54,7 @@
     "test": "vitest"
   },
   "dependencies": {
-    "@typescript-eslint/scope-manager": "catalog:deps",
     "@typescript-eslint/types": "catalog:deps",
-    "@typescript-eslint/utils": "catalog:deps",
     "esquery": "^1.6.0"
   },
   "devDependencies": {

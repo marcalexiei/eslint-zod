@@ -1,7 +1,8 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 type MessageIds = 'noTransformInRecordKey';
@@ -16,7 +17,7 @@ type MessageIds = 'noTransformInRecordKey';
 export function buildNoTransformInRecordKeyCreate(
   scope: ZodImportScope,
   transformNames: ReadonlyArray<string>,
-): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const {
       createSchemaVisitor,

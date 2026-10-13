@@ -1,15 +1,15 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint } from '@typescript-eslint/utils';
 
 import { hasCommentInRange } from '../has-comment-in-range.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
+import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 type MessageIds = 'noCoerceBoolean' | 'useStringbool';
 
 export function buildNoCoerceBooleanCreate(
   scope: ZodImportScope,
-): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
@@ -57,7 +57,7 @@ export function buildNoCoerceBooleanCreate(
           suggest: [
             {
               messageId: 'useStringbool',
-              fix(fixer): TSESLint.RuleFix {
+              fix(fixer): RuleFix {
                 const namespaceText = context.sourceCode.getText(namespaceNode);
                 return fixer.replaceText(factoryCallee, `${namespaceText}.stringbool`);
               },

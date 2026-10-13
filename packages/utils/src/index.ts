@@ -1,3 +1,25 @@
+// rule authoring
+export { createRuleCreator } from './create-rule-creator.js';
+export type { RuleDefinition } from './create-rule-creator.js';
+export type {
+  ReportDescriptor,
+  ReportFixFunction,
+  ReportSuggestionArray,
+  RuleContext,
+  RuleFix,
+  RuleFixer,
+  RuleListener,
+  RuleMeta,
+  RuleModule,
+  Scope,
+  ScopeDefinition,
+  ScopeReference,
+  ScopeVariable,
+  SourceCode,
+  SuggestionReportDescriptor,
+  TokenSearchOptions,
+} from './rule-types.js';
+
 // import tracking & scopes
 export type {
   ZodChainItem,

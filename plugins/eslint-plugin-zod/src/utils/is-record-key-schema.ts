@@ -1,6 +1,6 @@
 import type { ZodSchemaImportTracker } from '@eslint-zod/utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESTree } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/types';
 
 const RECORD_FACTORIES = ['record', 'partialRecord', 'looseRecord'];
 

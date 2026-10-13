@@ -1,15 +1,16 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 
 import { hasCommentInRange } from '../has-comment-in-range.js';
 import { hasParenthesizedReceiver } from '../has-parenthesized-receiver.js';
+import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 type MessageIds = 'missingTypeParameter' | 'removeBrandFunction';
 
 export function buildRequireBrandTypeParameterCreate(
   scope: ZodImportScope,
-): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
@@ -55,7 +56,7 @@ export function buildRequireBrandTypeParameterCreate(
               : [
                   {
                     messageId: 'removeBrandFunction',
-                    fix(fixer): TSESLint.RuleFix {
+                    fix(fixer): RuleFix {
                       return fixer.removeRange(removal);
                     },
                   },

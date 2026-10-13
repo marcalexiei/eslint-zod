@@ -41,8 +41,7 @@ export default defineConfig(
     },
   },
   {
-    // The root of `@typescript-eslint/utils` and its `ts-eslint` entry load `eslint` at import time,
-    // which is only an optional peer: runtime code goes through the entry points that do not.
+    // Published code must load without `eslint` or typescript-eslint installed.
     files: ['packages/utils/src/**/*.ts', 'plugins/*/src/**/*.ts'],
     ignores: ['**/*.spec.ts'],
     rules: {
@@ -51,32 +50,33 @@ export default defineConfig(
         {
           paths: [
             {
-              name: '@typescript-eslint/utils',
-              allowTypeImports: true,
-              message:
-                'Import values from `@typescript-eslint/types`, `@typescript-eslint/scope-manager`, `@typescript-eslint/utils/ast-utils` or `@typescript-eslint/utils/eslint-utils`.',
-            },
-            {
-              name: '@typescript-eslint/utils/ts-eslint',
-              allowTypeImports: true,
-              message: 'This entry loads `eslint`: import types only.',
-            },
-            {
               name: 'eslint',
               allowTypeImports: true,
               message: '`eslint` is an optional peer: import types only.',
+            },
+          ],
+          patterns: [
+            {
+              regex: '^@typescript-eslint/(?!types$)',
+              message:
+                'Use the rule types exported by `@eslint-zod/utils`, and `@typescript-eslint/types` for the AST.',
             },
           ],
         },
       ],
     },
   },
+  {
+    // the one exception: a type-only cast, erased from the build
+    files: ['plugins/*/src/utils/create-plugin-rule.ts'],
+    rules: { '@typescript-eslint/no-restricted-imports': 'off' },
+  },
   configVitest,
   {
     ...pluginEslintPlugin.configs.recommended,
     rules: {
       ...pluginEslintPlugin.configs.recommended.rules,
-      // handled by typescript-eslint ESLintUtils.`RuleCreator`
+      // handled by `createRuleCreator`
       'eslint-plugin/require-meta-default-options': 'off',
     },
   },

@@ -1,13 +1,13 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint } from '@typescript-eslint/utils';
 
 import { hasCommentInRange } from '../has-comment-in-range.js';
 import { readsZodSchemaProperty } from '../reads-zod-schema-property.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 export function buildPreferEnumOverLiteralUnionCreate(
   scope: ZodImportScope,
-): (context: Readonly<TSESLint.RuleContext<'useEnum', []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<'useEnum'>>) => RuleListener {
   return function create(context) {
     const { createSchemaVisitor, detectZodSchemaRootNode, collectZodChainMethods } =
       scope.createTracker({ kind: 'value' });

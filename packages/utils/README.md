@@ -34,6 +34,15 @@ Every export carries JSDoc with usage notes — refer to the linked source files
 
 AST parsing, import tracking, traversal, and fixer helpers.
 
+**Rule authoring**
+
+The package needs no linter installed: its only typescript-eslint dependency is `@typescript-eslint/types`, for the AST.
+
+- `createRuleCreator(getRuleURL)` — builds a plugin's rule factory; each rule gets its docs URL, and `create` receives the user's options merged over `defaultOptions`. Type `RuleDefinition` is what the factory takes
+- types `RuleContext`, `RuleListener`, `RuleModule`, `RuleMeta` — the slice of the rule API the helpers read, declared structurally, so ESLint's and typescript-eslint's own objects are assignable to them
+- types `RuleFix`, `RuleFixer`, `ReportDescriptor`, `ReportFixFunction`, `ReportSuggestionArray`, `SuggestionReportDescriptor` — reports and fixes
+- types `SourceCode`, `TokenSearchOptions`, `Scope`, `ScopeVariable`, `ScopeDefinition`, `ScopeReference` — source and scope access
+
 **Import tracking & scopes**
 
 - `ZodImportScope` — the class defining which import sources a plugin considers in-scope; `scope.createTracker({ kind })` is how rules get a per-file import tracker; `kind` is required, and `sourceCode` enables the scope-aware resolvers below

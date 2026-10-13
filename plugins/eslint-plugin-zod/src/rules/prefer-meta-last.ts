@@ -4,8 +4,8 @@ import {
   hasParenthesizedReceiver,
   zodImportScope,
 } from '@eslint-zod/utils';
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESTree } from '@typescript-eslint/utils';
 
 import { createZodPluginRule } from '../utils/create-plugin-rule.js';
 

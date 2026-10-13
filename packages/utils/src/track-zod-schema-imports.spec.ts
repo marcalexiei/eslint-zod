@@ -1,8 +1,9 @@
-import { AST_NODE_TYPES } from '@typescript-eslint/utils';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES } from '@typescript-eslint/types';
+import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import type { ZodSchemaMeta } from './detect-zod-schema-root-node.js';
+import type { SourceCode } from './rule-types.js';
 import { zodImportScope, zodMiniImportScope } from './zod-import-scope.js';
 
 // --- minimal AST mock helpers ---
@@ -552,7 +553,7 @@ describe('resolveZodImport', () => {
     const defs = [importDefinition, ...Array.from({ length: extraDefinitions }, () => ({}))];
     const sourceCode = {
       getScope: () => ({ set: new Map([['z', { defs }]]), upper: null }),
-    } as unknown as TSESLint.SourceCode;
+    } as unknown as SourceCode;
     const tracker = zodImportScope.createTracker({ kind: 'value', sourceCode });
     tracker.importDeclarationListener(mockImportDecl('zod', [specifier]));
     return { resolve: () => tracker.resolveZodImport(makeIdent('z')), specifier };

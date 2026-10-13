@@ -1,5 +1,5 @@
-import type { TSESTree } from '@typescript-eslint/utils';
-import { AST_NODE_TYPES } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES } from '@typescript-eslint/types';
+import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import type { ZodSchemaMeta } from './detect-zod-schema-root-node.js';

@@ -1,11 +1,12 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 
 import { buildZodWrapperUnwrapFix } from '../build-zod-wrapper-unwrap-fix.js';
 import type { ZodSchemaMeta } from '../detect-zod-schema-root-node.js';
 import { hasCommentInRange } from '../has-comment-in-range.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import { readsZodSchemaProperty } from '../reads-zod-schema-property.js';
+import type { RuleContext, RuleFix, RuleFixer, RuleListener } from '../rule-types.js';
 import type { ZodChainItem } from '../track-zod-schema-imports.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
@@ -26,7 +27,7 @@ type MessageIds = 'preferNullish';
  */
 export function buildPreferNullishCreate(
   scope: ZodImportScope,
-): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const { sourceCode } = context;
     const {
@@ -42,10 +43,10 @@ export function buildPreferNullishCreate(
      * named style renames the callee identifier to `nullish`'s local name and returns `null` when `nullish` was not imported (an unsafe fix).
      */
     function renameWrapperFactory(
-      fixer: TSESLint.RuleFixer,
+      fixer: RuleFixer,
       wrapper: ZodChainItem,
       schemaDecl: 'namespace' | 'named',
-    ): TSESLint.RuleFix | null {
+    ): RuleFix | null {
       const { callee } = wrapper.node;
 
       // A namespace schema is detected only when its factory is a member of the namespace.

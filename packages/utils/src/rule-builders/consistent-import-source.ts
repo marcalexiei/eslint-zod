@@ -1,5 +1,4 @@
-import type { TSESLint } from '@typescript-eslint/utils';
-
+import type { ReportSuggestionArray, RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 type MessageIds = 'sourceNotAllowed' | 'replaceSource';
@@ -11,11 +10,9 @@ export interface ConsistentImportSourceOptions<TSource extends string> {
 export function buildConsistentImportSourceCreate<TSources extends ReadonlyArray<string>>(
   scope: ZodImportScope<TSources>,
 ): (
-  context: Readonly<
-    TSESLint.RuleContext<MessageIds, [ConsistentImportSourceOptions<TSources[number]>]>
-  >,
+  context: Readonly<RuleContext<MessageIds, [ConsistentImportSourceOptions<TSources[number]>]>>,
   options: readonly [ConsistentImportSourceOptions<TSources[number]>],
-) => TSESLint.RuleListener {
+) => RuleListener {
   return function create(context, [{ sources }]) {
     return {
       ImportDeclaration(node): void {
@@ -35,10 +32,10 @@ export function buildConsistentImportSourceCreate<TSources extends ReadonlyArray
             source: sourceValue,
             sources: sources.map((s) => `"${s}"`).join(', '),
           },
-          suggest: sources.map<TSESLint.ReportSuggestionArray<MessageIds>[number]>((it) => ({
+          suggest: sources.map<ReportSuggestionArray<MessageIds>[number]>((it) => ({
             messageId: 'replaceSource',
             data: { valid: it, invalid: sourceValue },
-            fix(fixer): TSESLint.RuleFix {
+            fix(fixer): RuleFix {
               return fixer.replaceText(
                 node.source,
                 // Replacing using the raw value

@@ -16,7 +16,7 @@
   "dependencies": {
     "@marcalexiei/prettier-config": "catalog:dev",
     "@typescript-eslint/rule-tester": "catalog:dev",
-    "@typescript-eslint/utils": "catalog:deps",
+    "@typescript-eslint/utils": "catalog:dev",
     "eslint-doc-generator": "catalog:dev",
     "prettier": "catalog:dev",
     "tsdown": "catalog:dev",

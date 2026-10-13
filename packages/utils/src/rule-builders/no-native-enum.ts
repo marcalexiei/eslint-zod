@@ -1,6 +1,5 @@
-import type { TSESLint } from '@typescript-eslint/utils';
-
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 type MessageIds = 'useEnum';
@@ -13,7 +12,7 @@ type MessageIds = 'useEnum';
  */
 export function buildNoNativeEnumCreate(
   scope: ZodImportScope,
-): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 

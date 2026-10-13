@@ -150,13 +150,27 @@ Each package has a `@eslint-zod/source` custom export condition pointing to its 
 - `tsconfig.json` — used by `tsc -b`. Has `composite: true`, `outDir`, and `references` to other workspace packages for correct incremental build ordering.
 - `tsconfig.eslint.json` — used by `eslint.config.js` (`parserOptions.project`). Has no `composite`, no `references`, and no `outDir`. Without project references, `@typescript-eslint/parser` resolves cross-package imports via `customConditions` → source, so type errors in `@eslint-zod/utils` propagate live to plugin callers in both the CLI and the IDE ESLint extension.
 
-### Runtime imports from typescript-eslint
+### Linter independence
 
-`eslint` is an optional peer, so the plugins must load without it (the oxlint-only install).
-The root of `@typescript-eslint/utils` loads `eslint` at import time (so does its `ts-eslint` entry), so runtime code never imports values from it:
-`AST_NODE_TYPES` comes from `@typescript-eslint/types`, `DefinitionType` from `@typescript-eslint/scope-manager`,
-`findVariable` from `@typescript-eslint/utils/ast-utils` and `RuleCreator` from `@typescript-eslint/utils/eslint-utils`.
-Type-only imports from the root are fine, and a `no-restricted-imports` entry in `eslint.config.js` enforces the split.
+`eslint` is an optional peer, so the plugins must load — and type-check — without it (the oxlint-only install).
+Published code imports one typescript-eslint package: `@typescript-eslint/types`, for the AST types and `AST_NODE_TYPES`.
+It has no dependencies and no peers, whereas `@typescript-eslint/utils` requires both `eslint` and `typescript`.
+
+Everything else is local to `@eslint-zod/utils`:
+
+- `rule-types.ts` declares the slice of the rule API the rules read (`RuleContext`, `RuleListener`, `RuleFixer`, `SourceCode`, `Scope`, …).
+  The types are structural, so ESLint's and typescript-eslint's own objects are assignable to them.
+- `createRuleCreator(getRuleURL)` builds each plugin's rule factory: it sets the docs URL and merges the user's options over `defaultOptions`.
+- `findVariable` is a module-local scope walk, and a scope definition's kind is compared as a string literal (`definition.type === 'ImportBinding'`).
+
+Two rules for `rule-types.ts`:
+
+- **Add a member only when a rule needs it.** Each one is a claim that every supported linter provides it.
+- **Declare members as properties, not methods.** Methods are compared bivariantly, which would hide a signature that does not match the linter's.
+
+A `no-restricted-imports` entry in `eslint.config.js` enforces all this, with one exception.
+Each plugin's `create-plugin-rule.ts` casts its creator to the type of typescript-eslint's `RuleCreator`, so `meta.schema` stays checked as JSON Schema and `RuleTester` accepts the rule modules.
+That import is type-only, which is why `@typescript-eslint/utils` is a devDependency of the plugins and never reaches their build.
 
 ## zod vs zod/mini API differences
 

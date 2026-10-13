@@ -1,8 +1,9 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 import esquery from 'esquery';
 
 import { getStaticPropertyName } from '../get-static-property-name.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 export interface SchemaErrorPropertyStyleOptions {
@@ -15,9 +16,9 @@ type MessageIds = 'invalidStyle' | 'invalidSelector';
 export function buildSchemaErrorPropertyStyleCreate(
   scope: ZodImportScope,
 ): (
-  context: Readonly<TSESLint.RuleContext<MessageIds, [SchemaErrorPropertyStyleOptions]>>,
+  context: Readonly<RuleContext<MessageIds, [SchemaErrorPropertyStyleOptions]>>,
   options: readonly [SchemaErrorPropertyStyleOptions],
-) => TSESLint.RuleListener {
+) => RuleListener {
   return function create(context, [{ selector, example }]) {
     const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 

@@ -1,9 +1,9 @@
-import { DefinitionType } from '@typescript-eslint/scope-manager';
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import { findVariable } from '@typescript-eslint/utils/ast-utils';
 
+import { findVariable } from '../find-variable.js';
 import { getStaticPropertyName } from '../get-static-property-name.js';
+import type { RuleContext, RuleFix, RuleListener, ScopeVariable } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_NON_SCHEMA_PRODUCING_METHODS } from '../zod-non-schema-producing-methods.js';
 import { isZodSchemaFactoryName } from '../zod-schema-factory-names.js';
@@ -42,20 +42,20 @@ function isPropertyName(node: TSESTree.Identifier): boolean {
 export function buildPreferValidateCreate(
   scope: ZodImportScope,
   api: ZodValidateApiStyle,
-): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const { sourceCode } = context;
     const tracker = scope.createTracker({ kind: 'value', sourceCode });
     const calls: Array<TSESTree.CallExpression> = [];
     const identifiers = new Set<string>();
 
-    function variable(node: TSESTree.Identifier): TSESLint.Scope.Variable | null {
+    function variable(node: TSESTree.Identifier): ScopeVariable | null {
       return findVariable(sourceCode.getScope(node), node.name);
     }
 
     function schemaSource(
       node: TSESTree.Node,
-      seen = new Set<TSESLint.Scope.Variable>(),
+      seen = new Set<ScopeVariable>(),
     ): TSESTree.ImportDeclaration | undefined {
       if (node.type === AST_NODE_TYPES.Identifier) {
         const found = variable(node);
@@ -65,7 +65,7 @@ export function buildPreferValidateCreate(
         seen.add(found);
         const [definition] = found.defs;
         if (
-          definition.type !== DefinitionType.Variable ||
+          definition.type !== 'Variable' ||
           definition.parent.kind !== 'const' ||
           definition.node.id.type !== AST_NODE_TYPES.Identifier ||
           !definition.node.init ||
@@ -340,7 +340,7 @@ export function buildPreferValidateCreate(
                 {
                   messageId: 'useValidate',
                   data: { method: replacement },
-                  fix: (fixer): Array<TSESLint.RuleFix> =>
+                  fix: (fixer): Array<RuleFix> =>
                     edits.map((edit) => fixer.replaceTextRange(edit.range, edit.text)),
                 },
               ],

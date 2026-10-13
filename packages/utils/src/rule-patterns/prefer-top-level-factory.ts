@@ -1,7 +1,6 @@
-import type { TSESLint } from '@typescript-eslint/utils';
-
 import { buildZodChainReplacementFix } from '../build-zod-chain-replacement-fix.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_MUTATING_CHECK_NAMES } from '../zod-mutating-check-names.js';
 import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
@@ -53,7 +52,7 @@ export function buildPreferTopLevelFactoryCreate<
   TOptions extends ReadonlyArray<unknown> = [],
 >(
   options: PreferTopLevelFactoryOptions<TMessageIds>,
-): (context: Readonly<TSESLint.RuleContext<TMessageIds, TOptions>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<TMessageIds, TOptions>>) => RuleListener {
   const { scope, factoryName, replacements, messageId, ignore = [] } = options;
 
   const ignored = new Set(ignore);

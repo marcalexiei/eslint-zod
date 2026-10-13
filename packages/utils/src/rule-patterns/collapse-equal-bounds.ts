@@ -1,5 +1,5 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 
 import { buildZodChainRemoveMethodFix } from '../build-zod-chain-remove-method-fix.js';
 import type { ZodSchemaConstraint } from '../collect-zod-schema-constraints.js';
@@ -9,6 +9,7 @@ import { hasCommentInRange } from '../has-comment-in-range.js';
 import { hasOpaqueZodCheck } from '../has-opaque-zod-check.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import { readIntegerLiteralValue } from '../read-integer-literal-value.js';
+import type { RuleContext, RuleFix, RuleFixer, RuleListener, SourceCode } from '../rule-types.js';
 import type { ZodCheckDomain } from '../zod-check-vocabulary.js';
 import { canonicalizeZodConstraintName, getZodCheckDescriptor } from '../zod-check-vocabulary.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
@@ -61,11 +62,11 @@ function readBoundValue(constraint: ZodSchemaConstraint): number | null {
  * `null` for a computed callee, or a named import the file lacks.
  */
 function buildBoundRenameFix(opts: {
-  fixer: TSESLint.RuleFixer;
+  fixer: RuleFixer;
   constraint: ZodSchemaConstraint;
   exactCheckName: string;
   getNamedImportLocal: (originalName: string) => string | undefined;
-}): TSESLint.RuleFix | null {
+}): RuleFix | null {
   const { fixer, constraint, exactCheckName, getNamedImportLocal } = opts;
   const { callee } = constraint.node;
 
@@ -95,11 +96,11 @@ function buildBoundRenameFix(opts: {
  * or that argument plus one separator.
  */
 function buildBoundRemoveFix(opts: {
-  fixer: TSESLint.RuleFixer;
+  fixer: RuleFixer;
   methods: Array<{ name: string; node: TSESTree.CallExpression }>;
   constraint: ZodSchemaConstraint;
-  sourceCode: TSESLint.SourceCode;
-}): TSESLint.RuleFix | null {
+  sourceCode: SourceCode;
+}): RuleFix | null {
   const { fixer, methods, constraint, sourceCode } = opts;
 
   if (constraint.origin === 'chained' || constraint.argumentCount === 1) {
@@ -139,7 +140,7 @@ function buildBoundRemoveFix(opts: {
  */
 export function buildCollapseEqualBoundsCreate<TMessageIds extends string>(
   options: CollapseEqualBoundsOptions<TMessageIds>,
-): (context: Readonly<TSESLint.RuleContext<TMessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<TMessageIds>>) => RuleListener {
   const { scope, baseTypes, domain, messageId } = options;
   const exactCheckName = EXACT_CHECK_BY_DOMAIN[domain];
 

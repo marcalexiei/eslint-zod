@@ -1,7 +1,7 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint } from '@typescript-eslint/utils';
 
 import { getZodChainedMethodNames } from '../get-zod-chained-method-names.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_NON_SCHEMA_PRODUCING_METHODS } from '../zod-non-schema-producing-methods.js';
 import { isZodSchemaFactoryCall } from '../zod-schema-factory-names.js';
@@ -21,9 +21,9 @@ function addPrefix(before: string, name: string): string {
 export function buildConsistentSchemaVarNameCreate(
   scope: ZodImportScope,
 ): (
-  context: Readonly<TSESLint.RuleContext<'invalidName', [ConsistentSchemaVarNameOptions]>>,
+  context: Readonly<RuleContext<'invalidName', [ConsistentSchemaVarNameOptions]>>,
   options: readonly [ConsistentSchemaVarNameOptions],
-) => TSESLint.RuleListener {
+) => RuleListener {
   return function create(context, [{ before = '', after = '' }]) {
     const { importDeclarationListener, detectZodSchemaRootNode } = scope.createTracker({
       kind: 'value',

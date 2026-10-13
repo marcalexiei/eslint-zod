@@ -1,4 +1,4 @@
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/types';
 
 import {
   getNamespaceAliasNameFrom,
@@ -6,6 +6,7 @@ import {
   shouldIdentifierBeRenamed,
 } from '../import-syntax-helpers.js';
 import type { ImportGroupData, ImportSyntax } from '../import-syntax-helpers.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 export interface ConsistentImportOptions<TSyntax extends ImportSyntax = ImportSyntax> {
@@ -17,9 +18,9 @@ type MessageIds = 'changeImportSyntax' | 'removeDuplicate' | 'convertUsage';
 export function buildConsistentImportCreate<TSyntax extends ImportSyntax = ImportSyntax>(
   scope: ZodImportScope,
 ): (
-  context: Readonly<TSESLint.RuleContext<MessageIds, [ConsistentImportOptions<TSyntax>]>>,
+  context: Readonly<RuleContext<MessageIds, [ConsistentImportOptions<TSyntax>]>>,
   options: readonly [ConsistentImportOptions<TSyntax>],
-) => TSESLint.RuleListener {
+) => RuleListener {
   return function create(context, [options]) {
     const { syntax } = options;
 

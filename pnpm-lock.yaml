@@ -7,13 +7,7 @@ settings:
 
 catalogs:
   deps:
-    '@typescript-eslint/scope-manager':
-      specifier: ^8.70.0
-      version: 8.70.0
     '@typescript-eslint/types':
-      specifier: ^8.70.0
-      version: 8.70.0
-    '@typescript-eslint/utils':
       specifier: ^8.70.0
       version: 8.70.0
   dev:
@@ -24,6 +18,9 @@ catalogs:
       specifier: 2.0.0
       version: 2.0.0
     '@typescript-eslint/rule-tester':
+      specifier: 8.70.0
+      version: 8.70.0
+    '@typescript-eslint/utils':
       specifier: 8.70.0
       version: 8.70.0
     '@vitest/coverage-v8':
@@ -119,7 +116,7 @@ importers:
         specifier: catalog:dev
         version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       '@typescript-eslint/utils':
-        specifier: catalog:deps
+        specifier: catalog:dev
         version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       eslint-doc-generator:
         specifier: catalog:dev
@@ -136,15 +133,9 @@ importers:
 
   packages/utils:
     dependencies:
-      '@typescript-eslint/scope-manager':
-        specifier: catalog:deps
-        version: 8.70.0
       '@typescript-eslint/types':
         specifier: catalog:deps
         version: 8.70.0
-      '@typescript-eslint/utils':
-        specifier: catalog:deps
-        version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       esquery:
         specifier: ^1.6.0
         version: 1.7.0
@@ -173,9 +164,6 @@ importers:
       '@typescript-eslint/types':
         specifier: catalog:deps
         version: 8.70.0
-      '@typescript-eslint/utils':
-        specifier: catalog:deps
-        version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       eslint:
         specifier: ^9 || ^10
         version: 10.10.0(jiti@2.7.0)(supports-color@7.2.0)
@@ -193,6 +181,9 @@ importers:
         specifier: workspace:*
         version: link:../../packages/tooling
       '@typescript-eslint/rule-tester':
+        specifier: catalog:dev
+        version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
+      '@typescript-eslint/utils':
         specifier: catalog:dev
         version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       dedent:
@@ -213,9 +204,6 @@ importers:
       '@eslint-zod/utils':
         specifier: workspace:*
         version: link:../../packages/utils
-      '@typescript-eslint/utils':
-        specifier: catalog:deps
-        version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       eslint:
         specifier: ^9 || ^10
         version: 10.10.0(jiti@2.7.0)(supports-color@7.2.0)
@@ -233,6 +221,9 @@ importers:
         specifier: workspace:*
         version: link:../../packages/tooling
       '@typescript-eslint/rule-tester':
+        specifier: catalog:dev
+        version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
+      '@typescript-eslint/utils':
         specifier: catalog:dev
         version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       dedent:
@@ -256,9 +247,6 @@ importers:
       '@typescript-eslint/types':
         specifier: catalog:deps
         version: 8.70.0
-      '@typescript-eslint/utils':
-        specifier: catalog:deps
-        version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       eslint:
         specifier: ^9 || ^10
         version: 10.10.0(jiti@2.7.0)(supports-color@7.2.0)
@@ -276,6 +264,9 @@ importers:
         specifier: workspace:*
         version: link:../../packages/tooling
       '@typescript-eslint/rule-tester':
+        specifier: catalog:dev
+        version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
+      '@typescript-eslint/utils':
         specifier: catalog:dev
         version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       dedent:

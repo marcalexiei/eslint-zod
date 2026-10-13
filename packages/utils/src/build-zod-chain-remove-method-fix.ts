@@ -1,8 +1,9 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 
 import { hasCommentInRange } from './has-comment-in-range.js';
 import { hasParenthesizedReceiver } from './has-parenthesized-receiver.js';
+import type { RuleFix, RuleFixer, SourceCode } from './rule-types.js';
 
 /**
  * Remove one call from a zod method chain, e.g. `z.number().min(0).finite()` →
@@ -12,11 +13,11 @@ import { hasParenthesizedReceiver } from './has-parenthesized-receiver.js';
  * or, given a `sourceCode`, when a comment sits in the removed text.
  */
 export function buildZodChainRemoveMethodFix(opts: {
-  fixer: TSESLint.RuleFixer;
+  fixer: RuleFixer;
   methods: Array<{ name: string; node: TSESTree.CallExpression }>;
   removeIndex: number;
-  sourceCode?: Pick<TSESLint.SourceCode, 'getAllComments'>;
-}): TSESLint.RuleFix | null {
+  sourceCode?: Pick<SourceCode, 'getAllComments'>;
+}): RuleFix | null {
   const { fixer, methods, removeIndex, sourceCode } = opts;
 
   if (removeIndex < 1) {

@@ -1,14 +1,11 @@
-import type { TSESLint } from '@typescript-eslint/utils';
-
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
 
 export function buildNoDuplicateSchemaMethodsCreate(
   scope: ZodImportScope,
   excludedMethods: ReadonlyArray<string>,
-): (
-  context: Readonly<TSESLint.RuleContext<'noDuplicateSchemaMethod', []>>,
-) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<'noDuplicateSchemaMethod'>>) => RuleListener {
   return function create(context) {
     const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 

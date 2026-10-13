@@ -1,5 +1,5 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 
 import { buildZodConstraintsRemoveFix } from '../build-zod-constraints-remove-fix.js';
 import type { ZodSchemaConstraint } from '../collect-zod-schema-constraints.js';
@@ -7,6 +7,7 @@ import { hasOpaqueZodCheck } from '../has-opaque-zod-check.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import { readIntegerLiteralValue } from '../read-integer-literal-value.js';
 import { readsZodSchemaProperty } from '../reads-zod-schema-property.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import { canonicalizeZodConstraintName } from '../zod-check-vocabulary.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_MUTATING_CHECK_NAMES } from '../zod-mutating-check-names.js';
@@ -51,7 +52,7 @@ interface LengthCandidate {
  */
 export function buildPreferTupleOverArrayLengthCreate(
   scope: ZodImportScope,
-): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const { createSchemaVisitor, collectZodChainMethods, collectZodSchemaConstraints } =
       scope.createTracker({ kind: 'value' });

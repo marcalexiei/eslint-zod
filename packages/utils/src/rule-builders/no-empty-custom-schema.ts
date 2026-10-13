@@ -1,10 +1,9 @@
-import type { TSESLint } from '@typescript-eslint/utils';
-
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 export function buildNoEmptyCustomSchemaCreate(
   scope: ZodImportScope,
-): (context: Readonly<TSESLint.RuleContext<'noEmptyCustomSchema', []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<'noEmptyCustomSchema'>>) => RuleListener {
   return function create(context) {
     const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 

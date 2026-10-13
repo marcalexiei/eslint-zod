@@ -1,13 +1,13 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint } from '@typescript-eslint/utils';
 
+import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 type MessageIds = 'noZAny' | 'useUnknown';
 
 export function buildNoAnySchemaCreate(
   scope: ZodImportScope,
-): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
@@ -35,7 +35,7 @@ export function buildNoAnySchemaCreate(
             ? [
                 {
                   messageId: 'useUnknown',
-                  fix(fixer): TSESLint.RuleFix {
+                  fix(fixer): RuleFix {
                     return fixer.replaceText(factoryCallee.property, 'unknown');
                   },
                 },

@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint } from '@typescript-eslint/utils';
 
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 /** Options for {@link buildDeprecatedSchemaPropertyCreate}. */
@@ -23,7 +23,7 @@ export interface DeprecatedSchemaPropertyOptions<TMessageIds extends string> {
  */
 export function buildDeprecatedSchemaPropertyCreate<TMessageIds extends string>(
   options: DeprecatedSchemaPropertyOptions<TMessageIds>,
-): (context: Readonly<TSESLint.RuleContext<TMessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<TMessageIds>>) => RuleListener {
   const { scope, schemaType, propertyName, messageId } = options;
 
   return function create(context) {

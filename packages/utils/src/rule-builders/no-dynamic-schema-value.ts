@@ -1,16 +1,16 @@
-import { DefinitionType } from '@typescript-eslint/scope-manager';
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import { findVariable } from '@typescript-eslint/utils/ast-utils';
 
+import { findVariable } from '../find-variable.js';
 import { getZodChainedMethodNames } from '../get-zod-chained-method-names.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { isZodNonSchemaHelperCall } from '../zod-non-schema-helper-names.js';
 import { ZOD_NON_SCHEMA_PRODUCING_METHODS } from '../zod-non-schema-producing-methods.js';
 
 type MessageIds = 'dynamicValue';
-type Context = Readonly<TSESLint.RuleContext<MessageIds, []>>;
+type Context = Readonly<RuleContext<MessageIds>>;
 
 interface StaticCheckState {
   context: Context;
@@ -78,18 +78,18 @@ function isStaticExpression(node: TSESTree.Node, state: StaticCheckState): boole
       );
 
     case AST_NODE_TYPES.Identifier: {
-      const def = findVariable(state.context.sourceCode.getScope(node), node)?.defs[0];
+      const def = findVariable(state.context.sourceCode.getScope(node), node.name)?.defs[0];
       if (!def) {
         return false;
       }
 
       // A hoisted declaration is a function literal, exactly like `const f = () => {}`.
-      if (def.type === DefinitionType.ImportBinding || def.type === DefinitionType.FunctionName) {
+      if (def.type === 'ImportBinding' || def.type === 'FunctionName') {
         return true;
       }
 
       if (
-        def.type !== DefinitionType.Variable ||
+        def.type !== 'Variable' ||
         def.parent.kind !== 'const' ||
         def.node.init === null ||
         state.resolving.has(def.node)
@@ -120,7 +120,7 @@ function isStaticExpression(node: TSESTree.Node, state: StaticCheckState): boole
  */
 export function buildNoDynamicSchemaValueCreate(
   scope: ZodImportScope,
-): (context: Context) => TSESLint.RuleListener {
+): (context: Context) => RuleListener {
   return function create(context) {
     const { createSchemaVisitor, detectZodSchemaRootNode, collectZodChainMethods } =
       scope.createTracker({ kind: 'value' });

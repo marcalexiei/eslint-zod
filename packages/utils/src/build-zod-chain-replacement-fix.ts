@@ -1,7 +1,8 @@
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/types';
 
 import { hasCommentInRange } from './has-comment-in-range.js';
 import { hasParenthesizedReceiver } from './has-parenthesized-receiver.js';
+import type { RuleFix, RuleFixer, SourceCode } from './rule-types.js';
 
 /**
  * Utility to generate a fixer for replacing a method chain like z.string().uuid() or z.number().int()
@@ -11,13 +12,13 @@ import { hasParenthesizedReceiver } from './has-parenthesized-receiver.js';
  * @returns Fixer replaceTextRange call
  */
 export function buildZodChainReplacementFix(opts: {
-  sourceCode: TSESLint.SourceCode;
-  fixer: TSESLint.RuleFixer;
+  sourceCode: SourceCode;
+  fixer: RuleFixer;
   methods: Array<{ name: string; node: TSESTree.CallExpression }>;
   fromIndex: number;
   toIndex: number;
   toMethodName: string;
-}): TSESLint.RuleFix | null {
+}): RuleFix | null {
   const { sourceCode, fixer, methods, fromIndex, toIndex, toMethodName } = opts;
   // prettier-ignore
   const fromNode = methods[fromIndex]?.node as TSESTree.CallExpression | undefined;

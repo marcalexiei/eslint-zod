@@ -1,5 +1,5 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESTree } from '@typescript-eslint/utils';
 
 /** What {@link detectZodSchemaRootNode} learned about a zod call chain. */
 export interface ZodSchemaMeta {

@@ -1,6 +1,6 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint } from '@typescript-eslint/utils';
 
+import type { ReportSuggestionArray, RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 export const ZOD_OBJECT_METHODS = Object.freeze(['object', 'looseObject', 'strictObject'] as const);
@@ -16,9 +16,9 @@ type MessageIds = 'consistentMethod' | 'useMethod';
 export function buildConsistentObjectSchemaTypeCreate(
   scope: ZodImportScope,
 ): (
-  context: Readonly<TSESLint.RuleContext<MessageIds, [ConsistentObjectSchemaTypeOptions]>>,
+  context: Readonly<RuleContext<MessageIds, [ConsistentObjectSchemaTypeOptions]>>,
   options: readonly [ConsistentObjectSchemaTypeOptions],
-) => TSESLint.RuleListener {
+) => RuleListener {
   return function create(context, [{ allow: allowedList }]) {
     const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
@@ -50,10 +50,10 @@ export function buildConsistentObjectSchemaTypeCreate(
           messageId: 'consistentMethod',
           data: { actual: schemaType, allowedList: allowedList.join(',') },
           suggest: factoryName
-            ? allowedList.map<TSESLint.ReportSuggestionArray<MessageIds>[number]>((it) => ({
+            ? allowedList.map<ReportSuggestionArray<MessageIds>[number]>((it) => ({
                 messageId: 'useMethod',
                 data: { expected: it },
-                fix(fixer): TSESLint.RuleFix {
+                fix(fixer): RuleFix {
                   return fixer.replaceText(factoryName, it);
                 },
               }))

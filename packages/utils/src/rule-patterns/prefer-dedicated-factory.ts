@@ -1,9 +1,10 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 
 import { getStaticPropertyName } from '../get-static-property-name.js';
 import { hasCommentInRange } from '../has-comment-in-range.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 /** Options for {@link buildPreferDedicatedFactoryCreate}. */
@@ -62,7 +63,7 @@ function callsMethod(node: TSESTree.CallExpression, names: ReadonlyArray<string>
  */
 export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
   options: PreferDedicatedFactoryOptions<TMessageIds>,
-): (context: Readonly<TSESLint.RuleContext<TMessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<TMessageIds>>) => RuleListener {
   const {
     scope,
     factoryName,

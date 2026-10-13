@@ -1,7 +1,8 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 
 import { hasCommentInRange } from './has-comment-in-range.js';
+import type { RuleFix, RuleFixer, SourceCode } from './rule-types.js';
 
 /**
  * Replace a single-argument wrapper call with its argument, e.g.
@@ -16,10 +17,10 @@ import { hasCommentInRange } from './has-comment-in-range.js';
  * - a comment inside the wrapper would be dropped.
  */
 export function buildZodWrapperUnwrapFix(opts: {
-  fixer: TSESLint.RuleFixer;
-  sourceCode: Readonly<TSESLint.SourceCode>;
+  fixer: RuleFixer;
+  sourceCode: Readonly<SourceCode>;
   wrapperCall: TSESTree.CallExpression;
-}): TSESLint.RuleFix | null {
+}): RuleFix | null {
   const { fixer, sourceCode, wrapperCall } = opts;
 
   if (wrapperCall.arguments.length !== 1) {

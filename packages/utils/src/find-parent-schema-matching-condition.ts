@@ -1,5 +1,5 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESTree } from '@typescript-eslint/utils';
 
 /**
  * Walks up the AST from a Zod call expression and returns `true` when an

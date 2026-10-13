@@ -1,8 +1,9 @@
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import { AST_NODE_TYPES } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES } from '@typescript-eslint/types';
+import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import { buildZodChainReplacementFix } from './build-zod-chain-replacement-fix.js';
+import type { RuleFixer, SourceCode } from './rule-types.js';
 
 function makeIdent(name: string): TSESTree.Identifier {
   return {
@@ -37,15 +38,15 @@ function makeCall(
 function makeSourceCode(
   textMap: Map<TSESTree.Node, string>,
   comments: Array<{ range: [number, number] }> = [],
-): TSESLint.SourceCode {
+): SourceCode {
   return {
     getText: (node: TSESTree.Node) => textMap.get(node) ?? '',
     getAllComments: () => comments,
-  } as unknown as TSESLint.SourceCode;
+  } as unknown as SourceCode;
 }
 
 function makeFixer(): {
-  fixer: TSESLint.RuleFixer;
+  fixer: RuleFixer;
   calls: { replaceTextRange?: { range: [number, number]; text: string } };
 } {
   const calls: {
@@ -56,7 +57,7 @@ function makeFixer(): {
       calls.replaceTextRange = { range, text };
       return { range, text };
     },
-  } as unknown as TSESLint.RuleFixer;
+  } as unknown as RuleFixer;
   return { fixer, calls };
 }
 

@@ -1,10 +1,11 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 
 import type { ZodSchemaConstraint } from '../collect-zod-schema-constraints.js';
 import { getZodSchemaBaseType } from '../get-zod-schema-base-type.js';
 import type { ZodSchemaBaseType } from '../get-zod-schema-base-type.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodCheckDescriptor, ZodCheckDomain } from '../zod-check-vocabulary.js';
 import { canonicalizeZodConstraintName, getZodCheckDescriptor } from '../zod-check-vocabulary.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
@@ -167,10 +168,8 @@ function strongestUpper(bounds: Array<Bound>): Bound | undefined {
 export function buildNoConflictingChecksCreate(
   scope: ZodImportScope,
 ): (
-  context: Readonly<
-    TSESLint.RuleContext<NoConflictingChecksMessageIds, [NoConflictingChecksOptions]>
-  >,
-) => TSESLint.RuleListener {
+  context: Readonly<RuleContext<NoConflictingChecksMessageIds, [NoConflictingChecksOptions]>>,
+) => RuleListener {
   return function create(context) {
     const options = {
       checkImpossibleCases: true,

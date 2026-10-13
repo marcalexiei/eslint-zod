@@ -1,5 +1,4 @@
-import type { TSESLint } from '@typescript-eslint/utils';
-
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 type MessageIds = 'noPromiseSchema';
@@ -14,7 +13,7 @@ type MessageIds = 'noPromiseSchema';
  */
 export function buildNoPromiseSchemaCreate(
   scope: ZodImportScope,
-): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const { createSchemaVisitor } = scope.createTracker({ kind: 'value' });
 

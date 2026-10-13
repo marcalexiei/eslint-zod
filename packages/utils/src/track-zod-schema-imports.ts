@@ -1,14 +1,14 @@
-import { DefinitionType } from '@typescript-eslint/scope-manager';
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import { findVariable } from '@typescript-eslint/utils/ast-utils';
 
 import { collectZodSchemaConstraints } from './collect-zod-schema-constraints.js';
 import type { ZodSchemaConstraint } from './collect-zod-schema-constraints.js';
 import { detectZodSchemaRootNode, isZodSchemaOfType } from './detect-zod-schema-root-node.js';
 import type { ZodImports, ZodSchemaMeta } from './detect-zod-schema-root-node.js';
+import { findVariable } from './find-variable.js';
 import { getStaticPropertyName } from './get-static-property-name.js';
 import { getZodChainedMethodNames } from './get-zod-chained-method-names.js';
+import type { RuleListener, SourceCode } from './rule-types.js';
 import type { ZodImportScope } from './zod-import-scope.js';
 
 /** One zod import: the export it names, its local identifier, and the declaration carrying it. */
@@ -37,7 +37,7 @@ export interface ZodTrackerOptions {
    */
   kind: ZodImportKind;
   /** Enables the scope-aware `resolveZodImport` / `resolveZodExport`. */
-  sourceCode?: TSESLint.SourceCode;
+  sourceCode?: SourceCode;
 }
 
 /** The callee of a chain call written as a member: `z.string` or `<schema>.min`. */
@@ -126,7 +126,7 @@ export interface ZodSchemaImportTracker {
    */
   createSchemaVisitor: <TSchemaType extends string = string>(
     options: ZodSchemaVisitorOptions<TSchemaType>,
-  ) => TSESLint.RuleListener;
+  ) => RuleListener;
 
   /**
    * Returns true if the given name was imported as a zod namespace (e.g. `import * as z` or `import { z }`).
@@ -382,7 +382,7 @@ export function trackZodSchemaImports(
     // more than one definition means the binding is re-declared, so the import does not settle its value
     const definition = variable?.defs.length === 1 ? variable.defs[0] : undefined;
     if (
-      definition?.type !== DefinitionType.ImportBinding ||
+      definition?.type !== 'ImportBinding' ||
       definition.node.type === AST_NODE_TYPES.TSImportEqualsDeclaration
     ) {
       return null;
@@ -410,7 +410,7 @@ export function trackZodSchemaImports(
     createSchemaVisitor<TSchemaType extends string>({
       schemaType,
       onSchema,
-    }: ZodSchemaVisitorOptions<TSchemaType>): TSESLint.RuleListener {
+    }: ZodSchemaVisitorOptions<TSchemaType>): RuleListener {
       const allowed: ReadonlyArray<string> | undefined =
         typeof schemaType === 'string' ? [schemaType] : schemaType;
 

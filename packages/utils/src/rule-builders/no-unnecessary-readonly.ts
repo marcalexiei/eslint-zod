@@ -1,10 +1,11 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 
 import { buildZodConstraintsRemoveFix } from '../build-zod-constraints-remove-fix.js';
 import { buildZodWrapperUnwrapFix } from '../build-zod-wrapper-unwrap-fix.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import { readsZodSchemaProperty } from '../reads-zod-schema-property.js';
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodChainItem } from '../track-zod-schema-imports.js';
 import { ZOD_IMMUTABLE_SCHEMA_TYPES } from '../zod-immutable-schema-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
@@ -40,7 +41,7 @@ type ChainItems = Array<ZodChainItem>;
  */
 export function buildNoUnnecessaryReadonlyCreate(
   scope: ZodImportScope,
-): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const {
       createSchemaVisitor,

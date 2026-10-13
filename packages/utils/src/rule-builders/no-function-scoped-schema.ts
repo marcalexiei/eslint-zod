@@ -1,6 +1,7 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
 
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { isZodSchemaFactoryCall } from '../zod-schema-factory-names.js';
 
@@ -36,7 +37,7 @@ function isRecursiveSchemaThunk(node: TSESTree.Node, isLazyCall: IsLazyCall): bo
  */
 export function buildNoFunctionScopedSchemaCreate(
   scope: ZodImportScope,
-): (context: Readonly<TSESLint.RuleContext<MessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const { createSchemaVisitor, isZodSchemaOfType } = scope.createTracker({ kind: 'value' });
     // Populated with every reported root,

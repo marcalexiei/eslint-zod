@@ -1,4 +1,4 @@
-import type { TSESTree } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/types';
 
 /**
  * Whether the object of a member expression is wrapped in parentheses: `(z.string()).min(1)`.

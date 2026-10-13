@@ -1,11 +1,11 @@
-import type { TSESLint } from '@typescript-eslint/utils';
 import { describe, expect, it } from 'vitest';
 
 import { hasCommentInRange } from './has-comment-in-range.js';
+import type { SourceCode } from './rule-types.js';
 
 const sourceCode = {
   getAllComments: () => [{ range: [10, 20] }],
-} as unknown as TSESLint.SourceCode;
+} as unknown as SourceCode;
 
 describe('hasCommentInRange', () => {
   it('is true when a comment lies inside the range', () => {

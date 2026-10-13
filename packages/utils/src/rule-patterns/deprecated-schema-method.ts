@@ -1,5 +1,4 @@
-import type { TSESLint } from '@typescript-eslint/utils';
-
+import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_NON_SCHEMA_PRODUCING_METHODS } from '../zod-non-schema-producing-methods.js';
 
@@ -22,7 +21,7 @@ export interface DeprecatedSchemaMethodOptions<TMessageIds extends string> {
  */
 export function buildDeprecatedSchemaMethodCreate<TMessageIds extends string>(
   options: DeprecatedSchemaMethodOptions<TMessageIds>,
-): (context: Readonly<TSESLint.RuleContext<TMessageIds, []>>) => TSESLint.RuleListener {
+): (context: Readonly<RuleContext<TMessageIds>>) => RuleListener {
   const { scope, methodName, messageId } = options;
 
   return function create(context) {

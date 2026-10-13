@@ -1,5 +1,5 @@
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
-import { AST_NODE_TYPES } from '@typescript-eslint/utils';
+import { AST_NODE_TYPES } from '@typescript-eslint/types';
+import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import { buildZodConstraintsRemoveFix } from './build-zod-constraints-remove-fix.js';
@@ -7,6 +7,7 @@ import type {
   ZodChainedConstraint,
   ZodCheckArgumentConstraint,
 } from './collect-zod-schema-constraints.js';
+import type { RuleFixer } from './rule-types.js';
 
 function makeNodeWithRange(
   start: number,
@@ -24,7 +25,7 @@ function makeNodeWithRange(
 }
 
 function makeFixer(): {
-  fixer: TSESLint.RuleFixer;
+  fixer: RuleFixer;
   removedRanges: Array<[number, number]>;
 } {
   const removedRanges: Array<[number, number]> = [];
@@ -33,7 +34,7 @@ function makeFixer(): {
       removedRanges.push(range);
       return { range };
     },
-  } as unknown as TSESLint.RuleFixer;
+  } as unknown as RuleFixer;
   return { fixer, removedRanges };
 }
 

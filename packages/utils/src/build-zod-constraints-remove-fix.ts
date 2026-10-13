@@ -1,7 +1,8 @@
-import type { TSESLint, TSESTree } from '@typescript-eslint/utils';
+import type { TSESTree } from '@typescript-eslint/types';
 
 import { buildZodChainRemoveMethodFix } from './build-zod-chain-remove-method-fix.js';
 import type { ZodSchemaConstraint } from './collect-zod-schema-constraints.js';
+import type { RuleFix, RuleFixer, SourceCode } from './rule-types.js';
 
 /**
  * Build the fixes that remove the given constraints from a zod chain,
@@ -18,16 +19,16 @@ import type { ZodSchemaConstraint } from './collect-zod-schema-constraints.js';
  * position); callers should then report without fixing.
  */
 export function buildZodConstraintsRemoveFix(opts: {
-  fixer: TSESLint.RuleFixer;
+  fixer: RuleFixer;
   /** Chain items from `collectZodChainMethods`, factory first. */
   methods: Array<{ name: string; node: TSESTree.CallExpression }>;
   constraints: Array<ZodSchemaConstraint>;
   /** When given, a removal that would drop a comment returns `null`. */
-  sourceCode?: Pick<TSESLint.SourceCode, 'getAllComments'>;
-}): Array<TSESLint.RuleFix> | null {
+  sourceCode?: Pick<SourceCode, 'getAllComments'>;
+}): Array<RuleFix> | null {
   const { fixer, methods, constraints, sourceCode } = opts;
 
-  const fixes: Array<TSESLint.RuleFix> = [];
+  const fixes: Array<RuleFix> = [];
   // chainIndex of a `.check(...)` call → how many of its arguments are
   // targeted, and how many arguments it has in total.
   const checkRemovals = new Map<number, { targeted: number; argumentCount: number }>();
