@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildNoCoerceBooleanCreate } from '@eslint-zod/utils/rule-builders/no-coerce-boolean';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const noCoerceBoolean = createZodPluginRule({
   name: 'no-coerce-boolean',

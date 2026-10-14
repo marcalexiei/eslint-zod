@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildCollapseEqualBoundsCreate } from '@eslint-zod/utils/rule-patterns/collapse-equal-bounds';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const preferStringLengthOverMinMax = createZodPluginRule({
   name: 'prefer-string-length-over-min-max',

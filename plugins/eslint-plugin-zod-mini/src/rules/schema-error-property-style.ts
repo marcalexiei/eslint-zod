@@ -1,7 +1,7 @@
 import { zodMiniImportScope } from '@eslint-zod/utils';
 import { buildSchemaErrorPropertyStyleCreate } from '@eslint-zod/utils/rule-builders/schema-error-property-style';
 
-import { createZodMiniPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodMiniPluginRule } from '../meta.js';
 
 export const schemaErrorPropertyStyle = createZodMiniPluginRule({
   name: 'schema-error-property-style',

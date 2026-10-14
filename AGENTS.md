@@ -162,7 +162,10 @@ Everything else is local to `@eslint-zod/utils`:
 - `rule-types.ts` declares the slice of the rule API the rules read (`RuleContext`, `RuleListener`, `RuleFixer`, `SourceCode`, `Scope`, …).
   The types are structural, so ESLint's and typescript-eslint's own objects are assignable to them.
   It is published as `@eslint-zod/utils/rule-types`, with its own exports-map and tsdown entry.
-- `createRuleCreator(getRuleURL)` builds each plugin's rule factory: it sets the docs URL and merges the user's options over `defaultOptions`.
+- `createPluginMeta(packageJSONURL)` gives a plugin its name, version and rule factory in one call; that call is all a plugin's `src/meta.ts` holds.
+  The factory comes from `createRuleCreator(getRuleURL)`, which sets the docs URL and merges the user's options over `defaultOptions`.
+- `json-schema.ts` vendors typescript-eslint's JSON Schema types for `meta.schema`.
+  A looser type there is the one thing its `RuleTester` rejects in a rule module, so the specs stop type-checking if the copy drifts.
 - `findVariable` is a module-local scope walk, and a scope definition's kind is compared as a string literal (`definition.type === 'ImportBinding'`).
 
 Two rules for `rule-types.ts`:
@@ -170,9 +173,8 @@ Two rules for `rule-types.ts`:
 - **Add a member only when a rule needs it.** Each one is a claim that every supported linter provides it.
 - **Declare members as properties, not methods.** Methods are compared bivariantly, which would hide a signature that does not match the linter's.
 
-A `no-restricted-imports` entry in `eslint.config.js` enforces all this, with one exception.
-Each plugin's `create-plugin-rule.ts` casts its creator to the type of typescript-eslint's `RuleCreator`, so `meta.schema` stays checked as JSON Schema and `RuleTester` accepts the rule modules.
-That import is type-only, which is why `@typescript-eslint/utils` is a devDependency of the plugins and never reaches their build.
+A `no-restricted-imports` entry in `eslint.config.js` enforces all this.
+Beyond the types package, only the specs and `@eslint-zod/tooling` use typescript-eslint, for `RuleTester`.
 
 ## zod vs zod/mini API differences
 

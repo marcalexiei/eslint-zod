@@ -63,7 +63,7 @@ Don't extract a pattern when the rules differ in their _fix strategy_ rather tha
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildXxxCreate } from '@eslint-zod/utils/rule-builders/<rule-name>';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const xxx = createZodPluginRule({
   name: '<rule-name>',
@@ -73,7 +73,7 @@ export const xxx = createZodPluginRule({
 });
 ```
 
-Per plugin: `createZodPluginRule`/`zodImportScope` (zod), `createZodMiniPluginRule`/`zodMiniImportScope` (mini), `createZodCorePluginRule`/`zodCoreImportScope` (core). Adapt `docs.description` and messages to the plugin's API spelling (e.g. `` `.readonly()` `` vs `` `z.readonly()` ``).
+Per plugin: `createZodPluginRule`/`zodImportScope` (zod), `createZodMiniPluginRule`/`zodMiniImportScope` (mini), `createZodPluginRule`/`zodCoreImportScope` (core). Adapt `docs.description` and messages to the plugin's API spelling (e.g. `` `.readonly()` `` vs `` `z.readonly()` ``).
 
 ## 3. Specs
 

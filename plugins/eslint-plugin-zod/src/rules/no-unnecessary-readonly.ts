@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildNoUnnecessaryReadonlyCreate } from '@eslint-zod/utils/rule-builders/no-unnecessary-readonly';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const noUnnecessaryReadonly = createZodPluginRule({
   name: 'no-unnecessary-readonly',

@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildPreferValidateCreate } from '@eslint-zod/utils/rule-builders/prefer-validate';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const preferValidate = createZodPluginRule({
   name: 'prefer-validate',

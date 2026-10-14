@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildPreferTupleOverArrayLengthCreate } from '@eslint-zod/utils/rule-builders/prefer-tuple-over-array-length';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const preferTupleOverArrayLength = createZodPluginRule({
   name: 'prefer-tuple-over-array-length',

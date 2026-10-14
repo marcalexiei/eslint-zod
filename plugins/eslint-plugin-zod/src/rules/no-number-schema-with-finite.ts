@@ -1,6 +1,6 @@
 import { buildZodChainRemoveMethodFix, zodImportScope } from '@eslint-zod/utils';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const noNumberSchemaWithFinite = createZodPluginRule({
   name: 'no-number-schema-with-finite',

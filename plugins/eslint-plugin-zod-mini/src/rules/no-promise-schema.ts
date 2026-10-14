@@ -1,7 +1,7 @@
 import { zodMiniImportScope } from '@eslint-zod/utils';
 import { buildNoPromiseSchemaCreate } from '@eslint-zod/utils/rule-builders/no-promise-schema';
 
-import { createZodMiniPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodMiniPluginRule } from '../meta.js';
 
 export const noPromiseSchema = createZodMiniPluginRule({
   name: 'no-promise-schema',

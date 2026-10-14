@@ -1,6 +1,6 @@
 import { zodImportScope } from '@eslint-zod/utils';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const noNumberSchemaWithStep = createZodPluginRule({
   name: 'no-number-schema-with-step',

@@ -4,7 +4,7 @@ import {
   buildConsistentObjectSchemaTypeCreate,
 } from '@eslint-zod/utils/rule-builders/consistent-object-schema-type';
 
-import { createZodMiniPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodMiniPluginRule } from '../meta.js';
 
 export const consistentObjectSchemaType = createZodMiniPluginRule({
   name: 'consistent-object-schema-type',

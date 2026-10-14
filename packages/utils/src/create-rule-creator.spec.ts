@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createRuleCreator } from './create-rule-creator.js';
+import { createPluginMeta, createRuleCreator } from './create-rule-creator.js';
 import type { RuleContext } from './rule-types.js';
 
 interface Options {
@@ -106,5 +106,31 @@ describe('createRuleCreator', () => {
 
     expect(defaultOptions).toStrictEqual([{ nested: { a: 1 } }, 'x']);
     expect(received[0]?.[0]).not.toBe(defaultOptions[0]);
+  });
+});
+
+describe('createPluginMeta', () => {
+  const meta = createPluginMeta(new URL('../package.json', import.meta.url));
+
+  it('reads the name and version from the package.json', () => {
+    expect(meta.name).toBe('@eslint-zod/utils');
+    expect(meta.version).toMatch(/^\d+\.\d+\.\d+/);
+  });
+
+  it('points a rule at its doc under the package directory', () => {
+    expect(meta.getRuleURL('sample')).toBe(
+      'https://github.com/marcalexiei/eslint-zod/blob/HEAD/packages/utils/docs/rules/sample.md',
+    );
+  });
+
+  it('builds rules that carry that url', () => {
+    const rule = meta.createRule({
+      name: 'sample',
+      meta: { type: 'problem', docs: { description: 'A rule.' }, messages: {}, schema: [] },
+      defaultOptions: [],
+      create: () => ({}),
+    });
+
+    expect(rule.meta.docs.url).toBe(meta.getRuleURL('sample'));
   });
 });

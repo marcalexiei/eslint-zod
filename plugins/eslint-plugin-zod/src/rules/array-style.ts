@@ -2,7 +2,7 @@ import { hasCommentInRange, zodImportScope } from '@eslint-zod/utils';
 import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 const ZOD_ARRAY_STYLES = ['function', 'method'];
 

@@ -1,7 +1,7 @@
 import { zodMiniImportScope } from '@eslint-zod/utils';
 import { buildNoThrowInRefineCreate } from '@eslint-zod/utils/rule-builders/no-throw-in-refine';
 
-import { createZodMiniPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodMiniPluginRule } from '../meta.js';
 
 export const noThrowInRefine = createZodMiniPluginRule({
   name: 'no-throw-in-refine',

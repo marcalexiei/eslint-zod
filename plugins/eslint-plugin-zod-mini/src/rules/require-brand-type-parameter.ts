@@ -1,7 +1,7 @@
 import { zodMiniImportScope } from '@eslint-zod/utils';
 import { buildRequireBrandTypeParameterCreate } from '@eslint-zod/utils/rule-builders/require-brand-type-parameter';
 
-import { createZodMiniPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodMiniPluginRule } from '../meta.js';
 
 export const requireBrandTypeParameter = createZodMiniPluginRule({
   name: 'require-brand-type-parameter',

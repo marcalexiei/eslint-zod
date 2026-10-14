@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildNoEmptyCustomSchemaCreate } from '@eslint-zod/utils/rule-builders/no-empty-custom-schema';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const noEmptyCustomSchema = createZodPluginRule({
   name: 'no-empty-custom-schema',

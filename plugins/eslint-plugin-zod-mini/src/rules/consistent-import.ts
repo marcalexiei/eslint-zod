@@ -4,7 +4,7 @@ import {
   buildConsistentImportCreate,
 } from '@eslint-zod/utils/rule-builders/consistent-import';
 
-import { createZodMiniPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodMiniPluginRule } from '../meta.js';
 
 export const consistentImport = createZodMiniPluginRule({
   name: 'consistent-import',

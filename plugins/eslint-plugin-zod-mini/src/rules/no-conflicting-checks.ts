@@ -1,7 +1,7 @@
 import { zodMiniImportScope } from '@eslint-zod/utils';
 import { buildNoConflictingChecksCreate } from '@eslint-zod/utils/rule-builders/no-conflicting-checks';
 
-import { createZodMiniPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodMiniPluginRule } from '../meta.js';
 
 export const noConflictingChecks = createZodMiniPluginRule({
   name: 'no-conflicting-checks',

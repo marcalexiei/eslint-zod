@@ -7,7 +7,7 @@ import {
 import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const preferMetaLast = createZodPluginRule({
   name: 'prefer-meta-last',

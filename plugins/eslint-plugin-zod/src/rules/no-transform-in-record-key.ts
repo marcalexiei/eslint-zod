@@ -1,7 +1,7 @@
 import { ZOD_MUTATING_CHECK_NAMES, zodImportScope } from '@eslint-zod/utils';
 import { buildNoTransformInRecordKeyCreate } from '@eslint-zod/utils/rule-builders/no-transform-in-record-key';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 const TRANSFORM_METHODS = [...ZOD_MUTATING_CHECK_NAMES, 'transform', 'map'];
 

@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildNoDynamicSchemaValueCreate } from '@eslint-zod/utils/rule-builders/no-dynamic-schema-value';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const noDynamicSchemaValue = createZodPluginRule({
   name: 'no-dynamic-schema-value',

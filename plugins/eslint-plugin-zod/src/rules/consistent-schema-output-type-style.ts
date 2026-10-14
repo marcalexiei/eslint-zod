@@ -4,7 +4,7 @@ import {
   buildConsistentSchemaOutputTypeStyleCreate,
 } from '@eslint-zod/utils/rule-builders/consistent-schema-output-type-style';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const consistentSchemaOutputTypeStyle = createZodPluginRule({
   name: 'consistent-schema-output-type-style',

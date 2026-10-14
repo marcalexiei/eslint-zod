@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildRequireErrorMessageCreate } from '@eslint-zod/utils/rule-builders/require-error-message';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const requireErrorMessage = createZodPluginRule({
   name: 'require-error-message',

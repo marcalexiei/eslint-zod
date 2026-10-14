@@ -66,11 +66,6 @@ export default defineConfig(
       ],
     },
   },
-  {
-    // the one exception: a type-only cast, erased from the build
-    files: ['plugins/*/src/utils/create-plugin-rule.ts'],
-    rules: { '@typescript-eslint/no-restricted-imports': 'off' },
-  },
   configVitest,
   {
     ...pluginEslintPlugin.configs.recommended,

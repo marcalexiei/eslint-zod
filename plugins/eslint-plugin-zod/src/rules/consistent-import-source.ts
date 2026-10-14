@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildConsistentImportSourceCreate } from '@eslint-zod/utils/rule-builders/consistent-import-source';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const consistentImportSource = createZodPluginRule({
   name: 'consistent-import-source',

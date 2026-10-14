@@ -1,7 +1,7 @@
 import { zodMiniImportScope } from '@eslint-zod/utils';
 import { buildNoFunctionScopedSchemaCreate } from '@eslint-zod/utils/rule-builders/no-function-scoped-schema';
 
-import { createZodMiniPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodMiniPluginRule } from '../meta.js';
 
 export const noFunctionScopedSchema = createZodMiniPluginRule({
   name: 'no-function-scoped-schema',

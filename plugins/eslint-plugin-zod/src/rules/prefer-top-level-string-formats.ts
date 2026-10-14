@@ -2,7 +2,7 @@ import { ZOD_STRING_FORMAT_METHODS, zodImportScope } from '@eslint-zod/utils';
 import type { ZodStringFormatMethodName } from '@eslint-zod/utils';
 import { buildPreferTopLevelFactoryCreate } from '@eslint-zod/utils/rule-patterns/prefer-top-level-factory';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 const TOP_LEVEL_STRING_FORMATS_URL = 'https://zod.dev/v4?id=top-level-string-formats';
 

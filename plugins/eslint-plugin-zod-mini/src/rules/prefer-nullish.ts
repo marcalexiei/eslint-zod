@@ -1,7 +1,7 @@
 import { zodMiniImportScope } from '@eslint-zod/utils';
 import { buildPreferNullishCreate } from '@eslint-zod/utils/rule-builders/prefer-nullish';
 
-import { createZodMiniPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodMiniPluginRule } from '../meta.js';
 
 export const preferNullish = createZodMiniPluginRule({
   name: 'prefer-nullish',

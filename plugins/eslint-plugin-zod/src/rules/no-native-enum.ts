@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildNoNativeEnumCreate } from '@eslint-zod/utils/rule-builders/no-native-enum';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const noNativeEnum = createZodPluginRule({
   name: 'no-native-enum',

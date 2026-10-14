@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildNoAnySchemaCreate } from '@eslint-zod/utils/rule-builders/no-any-schema';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const noAnySchema = createZodPluginRule({
   name: 'no-any-schema',

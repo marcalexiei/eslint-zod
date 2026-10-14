@@ -1,7 +1,7 @@
 import { ZOD_TYPE_CHANGING_METHODS, hasCommentInRange, zodImportScope } from '@eslint-zod/utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 const preferredMethods = ['none', 'default', 'optional'] as const;
 

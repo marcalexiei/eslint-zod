@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const preferMeta = createZodPluginRule({
   name: 'prefer-meta',

@@ -1,7 +1,7 @@
 import { hasCommentInRange, hasParenthesizedReceiver, zodImportScope } from '@eslint-zod/utils';
 import type { TSESTree } from '@typescript-eslint/types';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 import { isRecordKeySchema } from '../utils/is-record-key-schema.js';
 
 const LENGTH_CHECK_METHODS = ['min', 'max', 'length', 'nonempty'];

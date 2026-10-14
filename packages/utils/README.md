@@ -36,7 +36,8 @@ AST parsing, import tracking, traversal, and fixer helpers.
 
 **Rule authoring**
 
-- `createRuleCreator(getRuleURL)` — builds a plugin's rule factory; each rule gets its docs URL, and `create` receives the user's options merged over `defaultOptions`. Type `RuleDefinition` is what the factory takes; the types it is written against live in [`@eslint-zod/utils/rule-types`](#rule-types--eslint-zodutilsrule-types)
+- `createRuleCreator(getRuleURL)` — builds a rule factory; each rule gets its docs URL, and `create` receives the user's options merged over `defaultOptions`. Types `RuleCreator` (the factory) and `RuleDefinition` (what it takes); the types they are written against live in [`@eslint-zod/utils/rule-types`](#rule-types--eslint-zodutilsrule-types)
+- `createPluginMeta(packageJSONURL)` — a plugin's `name`, `version`, `getRuleURL` and `createRule`, read from its `package.json`; rule docs are expected at `docs/rules/<rule-name>.md` under `repository.directory`. Type `PluginMeta`
 
 **Import tracking & scopes**
 
@@ -89,6 +90,7 @@ Canonical names shared by both API styles, so rule logic compares `zod`'s `.min(
 The slice of the linter's rule API the helpers read. The types are structural, so ESLint's and typescript-eslint's own objects are assignable to them and no linter has to be installed: the package's only typescript-eslint dependency is `@typescript-eslint/types`, for the AST.
 
 - `RuleContext`, `RuleListener`, `RuleModule`, `RuleMeta` — the rule itself
+- `JSONSchema4` — the type of `meta.schema`, vendored from typescript-eslint so its `RuleTester` accepts the rule modules
 - `RuleFix`, `RuleFixer`, `ReportDescriptor`, `ReportFixFunction`, `ReportSuggestionArray`, `SuggestionReportDescriptor` — reports and fixes
 - `SourceCode`, `TokenSearchOptions`, `Scope`, `ScopeVariable`, `ScopeDefinition`, `ScopeReference` — source and scope access
 

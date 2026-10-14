@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildDeprecatedSchemaMethodCreate } from '@eslint-zod/utils/rule-patterns/deprecated-schema-method';
 
-import { createZodPluginRule } from '../utils/create-plugin-rule.js';
+import { createZodPluginRule } from '../meta.js';
 
 export const noSchemaWithIsNullable = createZodPluginRule({
   name: 'no-schema-with-is-nullable',

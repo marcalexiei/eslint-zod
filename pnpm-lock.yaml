@@ -183,9 +183,6 @@ importers:
       '@typescript-eslint/rule-tester':
         specifier: catalog:dev
         version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
-      '@typescript-eslint/utils':
-        specifier: catalog:dev
-        version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       dedent:
         specifier: catalog:dev
         version: 1.7.2
@@ -221,9 +218,6 @@ importers:
         specifier: workspace:*
         version: link:../../packages/tooling
       '@typescript-eslint/rule-tester':
-        specifier: catalog:dev
-        version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
-      '@typescript-eslint/utils':
         specifier: catalog:dev
         version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       dedent:
@@ -264,9 +258,6 @@ importers:
         specifier: workspace:*
         version: link:../../packages/tooling
       '@typescript-eslint/rule-tester':
-        specifier: catalog:dev
-        version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
-      '@typescript-eslint/utils':
         specifier: catalog:dev
         version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       dedent:

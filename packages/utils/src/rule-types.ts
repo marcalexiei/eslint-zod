@@ -1,5 +1,9 @@
 import type { TSESTree } from '@typescript-eslint/types';
 
+import type { JSONSchema4 } from './json-schema.js';
+
+export type { JSONSchema4 } from './json-schema.js';
+
 /**
  * The slice of the linter's rule API this package reads, declared structurally
  * so that no linter has to be installed for the types to resolve.
@@ -151,8 +155,7 @@ export interface RuleMeta<TMessageIds extends string> {
   type: 'layout' | 'problem' | 'suggestion';
   docs: { description: string; url?: string };
   messages: Record<TMessageIds, string>;
-  /** JSON Schema of the options; left loose, as the linter validates it when the rule loads. */
-  schema: object | ReadonlyArray<object>;
+  schema: JSONSchema4 | ReadonlyArray<JSONSchema4>;
   fixable?: 'code' | 'whitespace';
   hasSuggestions?: boolean;
   deprecated?: boolean | object;
