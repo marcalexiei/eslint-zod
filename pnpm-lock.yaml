@@ -9,7 +9,7 @@ catalogs:
   deps:
     '@typescript-eslint/types':
       specifier: ^8.70.0
-      version: 8.71.2
+      version: 8.71.1
   dev:
     '@arethetypeswrong/cli':
       specifier: 0.18.5
@@ -129,7 +129,7 @@ importers:
     dependencies:
       '@typescript-eslint/types':
         specifier: catalog:deps
-        version: 8.71.2
+        version: 8.71.1
       esquery:
         specifier: ^1.6.0
         version: 1.7.0
@@ -157,7 +157,7 @@ importers:
         version: link:../../packages/utils
       '@typescript-eslint/types':
         specifier: catalog:deps
-        version: 8.71.2
+        version: 8.71.1
       eslint:
         specifier: ^9 || ^10
         version: 10.12.0(jiti@2.7.0)(supports-color@7.2.0)
@@ -234,7 +234,7 @@ importers:
         version: link:../../packages/utils
       '@typescript-eslint/types':
         specifier: catalog:deps
-        version: 8.71.2
+        version: 8.71.1
       eslint:
         specifier: ^9 || ^10
         version: 10.12.0(jiti@2.7.0)(supports-color@7.2.0)
@@ -1076,6 +1076,10 @@ packages:
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
       typescript: '>=4.8.4 <6.1.0'
+
+  '@typescript-eslint/types@8.71.1':
+    resolution: {integrity: sha512-ybYnPTUwg3VQQOFEiBPLs8Jxl1ry2vXdn1kVKguomBbvxpetdu3MKTNDqFNUrlG8ylP9MpZosmXMFYlGQHk1oQ==}
+    engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   '@typescript-eslint/types@8.71.2':
     resolution: {integrity: sha512-y5Ukl3oVp7e/VGxqIoEXoeb/Roj71PAJ4WG/N/RGj+eeDvKRLM15kGr9MijLbN0i03S52zxu31Z98E5gWChJKw==}
@@ -3249,6 +3253,8 @@ snapshots:
       typescript: 6.0.3
     transitivePeerDependencies:
       - supports-color
+
+  '@typescript-eslint/types@8.71.1': {}
 
   '@typescript-eslint/types@8.71.2': {}
 
