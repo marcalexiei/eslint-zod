@@ -4,7 +4,7 @@ import type { ImportSyntax } from '@eslint-zod/utils/rule-builders/consistent-im
 
 import { createZodPluginRule } from '../meta.js';
 
-const SYNTAXES = ['namespace', 'named'] as const satisfies ReadonlyArray<ImportSyntax>;
+const SYNTAXES = ['namespace', 'named', 'default'] as const satisfies ReadonlyArray<ImportSyntax>;
 
 export const consistentImport = createZodPluginRule({
   name: 'consistent-import',

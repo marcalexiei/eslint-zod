@@ -49,6 +49,8 @@ Unlike most `consistent-*` rules, this one is in `recommended` rather than `styl
 - **`namespace`** (default): `import * as z from 'zod/mini'`
 - **`named`**: `import { z } from 'zod/mini'`
 
+There is no `default` syntax: `zod/mini` and `zod/v4-mini` have no default export.
+
 The default is `namespace`, as it avoids named import collisions and makes usage explicit (`z.string()`, `z.object()`, etc.).
 
 ## Examples

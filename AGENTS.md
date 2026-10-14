@@ -216,6 +216,7 @@ A rule is shared when the same file name exists in both plugins' `src/rules/` (t
 
 `eslint-plugin-zod-core` additionally shares `consistent-import` and `consistent-schema-output-type-style` (built from the same rule builders with `zodCoreImportScope`). When updating either of those rules, keep the core counterpart's docs and specs in sync too, adapting examples to `zod/v4/core` imports.
 Core's `consistent-import` offers only the `namespace` syntax: `named` means `import { z }`, and `zod/v4/core` has no `z` export.
+`default` is offered by `eslint-plugin-zod` only: `zod/mini`, `zod/v4-mini` and `zod/v4/core` have no default export.
 
 ## Quality expectations
 

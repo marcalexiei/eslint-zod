@@ -4,6 +4,7 @@ import type { ImportSyntax } from '@eslint-zod/utils/rule-builders/consistent-im
 
 import { createZodMiniPluginRule } from '../meta.js';
 
+// `zod/mini` and `zod/v4-mini` have no default export.
 const SYNTAXES = ['namespace', 'named'] as const satisfies ReadonlyArray<ImportSyntax>;
 
 export const consistentImport = createZodMiniPluginRule({
@@ -34,5 +35,5 @@ export const consistentImport = createZodMiniPluginRule({
     ],
   },
   defaultOptions: [{ syntax: 'namespace' }],
-  create: buildConsistentImportCreate(zodMiniImportScope),
+  create: buildConsistentImportCreate<(typeof SYNTAXES)[number]>(zodMiniImportScope),
 });

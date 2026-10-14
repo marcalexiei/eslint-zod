@@ -107,6 +107,8 @@ export function buildConsistentImportCreate<TSyntax extends ImportSyntax = Impor
                   } else {
                     importSpecifier = `{ z as ${namespaceAliasName} }`;
                   }
+                } else if (syntax === 'default') {
+                  importSpecifier = namespaceAliasName;
                 } else {
                   importSpecifier = `* as ${namespaceAliasName}`;
                 }

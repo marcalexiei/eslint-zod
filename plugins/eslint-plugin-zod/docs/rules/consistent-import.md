@@ -11,12 +11,11 @@
 ## Rule details
 
 This rule enforces a single, consistent import style for Zod across a codebase.
-Zod's API can be reached through three import forms, two of which the rule can enforce:
+Zod's API can be reached through three import forms, and the rule can enforce any of them:
 
 - **Namespace import**: `import * as z from 'zod'`
 - **Named import**: `import { z } from 'zod'`
-- **Default import**: `import z from 'zod'` — always rewritten to the configured syntax
-  (see [Why there is no `default` syntax](#why-there-is-no-default-syntax))
+- **Default import**: `import z from 'zod'`
 
 The rule ensures that:
 
@@ -40,9 +39,9 @@ Unlike most `consistent-*` rules, this one is in `recommended` rather than `styl
 
 <!-- begin auto-generated rule options list -->
 
-| Name     | Description                                 | Type   | Choices              |
-| :------- | :------------------------------------------ | :----- | :------------------- |
-| `syntax` | Specifies the import syntax to use for Zod. | String | `namespace`, `named` |
+| Name     | Description                                 | Type   | Choices                         |
+| :------- | :------------------------------------------ | :----- | :------------------------------ |
+| `syntax` | Specifies the import syntax to use for Zod. | String | `namespace`, `named`, `default` |
 
 <!-- end auto-generated rule options list -->
 
@@ -50,27 +49,24 @@ Unlike most `consistent-*` rules, this one is in `recommended` rather than `styl
 
 - **`namespace`** (default): `import * as z from 'zod'`
 - **`named`**: `import { z } from 'zod'`
+- **`default`**: `import z from 'zod'`
 
-The default is `namespace`, as it avoids named import collisions and makes usage explicit (`z.string()`, `z.object()`, etc.).
+The default is `namespace`: it is the form the [Zod docs](https://zod.dev/basics) use,
+it avoids named import collisions and makes usage explicit (`z.string()`, `z.object()`, etc.).
 
-### Why there is no `default` syntax
+### Tree-shaking
 
-`import z from 'zod'` works at runtime, but is deliberately not a third `syntax` choice
-([#409](https://github.com/marcalexiei/eslint-zod/issues/409)):
+Only `import * as z` is tree-shaken by every bundler
+([zod#4433](https://github.com/colinhacks/zod/issues/4433#issuecomment-2921500831)).
+`named` and `default` are tree-shaken by Rollup and Webpack, and by neither under esbuild
+([evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)).
 
-- The [Zod docs](https://zod.dev/basics) use `import * as z from 'zod'` throughout.
-- It never tree-shakes better than `named`, and only `import * as z` is tree-shaken by every bundler
-  ([zod#4433](https://github.com/colinhacks/zod/issues/4433#issuecomment-2921500831)):
-  - **Zod ≥ 4.5.0** — the entrypoint does `export { z, z as default }`
-    ([zod#6384](https://github.com/colinhacks/zod/pull/6384)), so the two are the same binding.
-    Rollup and Webpack tree-shake both, esbuild tree-shakes neither
-    ([evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)).
-  - **Zod < 4.5.0** — the entrypoint does `export { z }; export default z;`,
-    and the default export is a materialized namespace object that no bundler tree-shakes.
-- `zod/mini`, `zod/v4-mini` and `zod/v4/core` have no default export, so a shared option would have to
-  be forked per plugin — for a form with no advantage over `namespace`.
+If you pick `default`, use Zod ≥ 4.5.0:
 
-It is therefore reported under either `syntax` and rewritten to it.
+- **Zod ≥ 4.5.0** — the entrypoint does `export { z, z as default }`
+  ([zod#6384](https://github.com/colinhacks/zod/pull/6384)), so `default` and `named` are the same binding.
+- **Zod < 4.5.0**, and `zod/v3` on every version — the entrypoint does `export { z }; export default z;`,
+  and the default export is a materialized namespace object that no bundler tree-shakes.
 
 ## Examples
 
@@ -149,6 +145,42 @@ z.string();
 
 ```ts
 import { z } from 'zod';
+import { ZodString } from 'zod';
+```
+
+### `default`
+
+#### ✅ Valid
+
+```ts
+import z from 'zod';
+
+z.string();
+z.array(z.number());
+```
+
+```ts
+import type z from 'zod';
+
+type Schema = z.ZodArray<z.ZodNumber>;
+```
+
+#### ❌ Invalid
+
+```ts
+import * as z from 'zod';
+
+z.string();
+```
+
+```ts
+import { z } from 'zod';
+
+z.string();
+```
+
+```ts
+import z from 'zod';
 import { ZodString } from 'zod';
 ```
 

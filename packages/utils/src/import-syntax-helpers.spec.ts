@@ -49,6 +49,13 @@ function makeStringLiteralNamedSpec(localName: string): TSESTree.ImportSpecifier
   } as unknown as TSESTree.ImportSpecifier;
 }
 
+function makeDefaultSpec(localName: string): TSESTree.ImportDefaultSpecifier {
+  return {
+    type: AST_NODE_TYPES.ImportDefaultSpecifier,
+    local: makeIdent(localName),
+  } as unknown as TSESTree.ImportDefaultSpecifier;
+}
+
 function makeNamespaceSpec(localName: string): TSESTree.ImportNamespaceSpecifier {
   return {
     type: AST_NODE_TYPES.ImportNamespaceSpecifier,
@@ -100,6 +107,19 @@ describe('isGroupFirstImportKindValidForSyntax', () => {
     const group = { hasOnlyTypeImports: false, nodes: [makeImportDecl([makeNamespaceSpec('z')])] };
 
     expect(isGroupFirstImportKindValidForSyntax(group, 'namespace')).toBe(true);
+  });
+
+  it('accepts a lone default specifier for `default` syntax', () => {
+    const group = { hasOnlyTypeImports: false, nodes: [makeImportDecl([makeDefaultSpec('z')])] };
+
+    expect(isGroupFirstImportKindValidForSyntax(group, 'default')).toBe(true);
+    expect(isGroupFirstImportKindValidForSyntax(group, 'namespace')).toBe(false);
+  });
+
+  it('rejects a namespace specifier for `default` syntax', () => {
+    const group = { hasOnlyTypeImports: false, nodes: [makeImportDecl([makeNamespaceSpec('z')])] };
+
+    expect(isGroupFirstImportKindValidForSyntax(group, 'default')).toBe(false);
   });
 
   it('rejects a group whose first import has more than one specifier', () => {

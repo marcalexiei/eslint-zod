@@ -485,6 +485,147 @@ ruleTester.run(`${consistentImport.name} named`, consistentImport, {
   ],
 });
 
+ruleTester.run(`${consistentImport.name} default`, consistentImport, {
+  valid: [
+    {
+      name: 'default import',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import z from 'zod';
+        const aSchema = z.string();
+      `,
+    },
+    {
+      name: 'aliased default import',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import zod from 'zod';
+        const aSchema = zod.string();
+      `,
+    },
+    {
+      name: 'type-only default import',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import type z from 'zod';
+        type Schema = z.ZodString;
+      `,
+    },
+    {
+      name: 'zod v4 and v3',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import z4 from 'zod/v4';
+        import z3 from 'zod/v3';
+      `,
+    },
+  ],
+  invalid: [
+    {
+      name: 'namespace import',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import * as z from 'zod';
+        const aSchema = z.string();
+      `,
+      errors: [{ messageId: 'changeImportSyntax', data: { syntax: 'default' } }],
+      output: dedent`
+        import z from 'zod';
+        const aSchema = z.string();
+      `,
+    },
+    {
+      name: 'named import',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import { z } from 'zod';
+        const aSchema = z.string();
+      `,
+      errors: [{ messageId: 'changeImportSyntax', data: { syntax: 'default' } }],
+      output: dedent`
+        import z from 'zod';
+        const aSchema = z.string();
+      `,
+    },
+    {
+      name: 'named import (different name from z)',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import { z as zod } from 'zod';
+        const aSchema = zod.string();
+      `,
+      errors: [{ messageId: 'changeImportSyntax', data: { syntax: 'default' } }],
+      output: dedent`
+        import zod from 'zod';
+        const aSchema = zod.string();
+      `,
+    },
+    {
+      name: 'named runtime import',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import { string } from 'zod';
+        const aSchema = string();
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'default' } },
+        { messageId: 'convertUsage', data: { syntax: 'default' } },
+      ],
+      output: dedent`
+        import z from 'zod';
+        const aSchema = z.string();
+      `,
+    },
+    {
+      name: 'mixed default + named',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import z, { object } from 'zod';
+        const aSchema = object({});
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'default' } },
+        { messageId: 'convertUsage', data: { syntax: 'default' } },
+      ],
+      output: dedent`
+        import z from 'zod';
+        const aSchema = z.object({});
+      `,
+    },
+    {
+      name: 'type-only namespace import',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import type * as z from 'zod';
+        type Schema = z.ZodString;
+      `,
+      errors: [{ messageId: 'changeImportSyntax', data: { syntax: 'default' } }],
+      output: dedent`
+        import type z from 'zod';
+        type Schema = z.ZodString;
+      `,
+    },
+    {
+      name: 'duplicate import',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import z from 'zod';
+        import { ZodString } from 'zod';
+        const aSchema: ZodString = z.string();
+      `,
+      errors: [
+        { messageId: 'removeDuplicate', line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'default' }, line: 3 },
+      ],
+      output: dedent`
+        import z from 'zod';
+
+        const aSchema: z.ZodString = z.string();
+      `,
+    },
+  ],
+});
+
 jsRuleTester.run(
   `${consistentImport.name} plain JS`,
   consistentImport as unknown as ESLintRule.RuleModule,
@@ -511,7 +652,7 @@ jsRuleTester.run(
 describe(`${consistentImport.name} options`, () => {
   it('offers only the syntaxes this plugin supports', () => {
     expect(consistentImport.meta.schema).toMatchObject([
-      { properties: { syntax: { enum: ['namespace', 'named'] } } },
+      { properties: { syntax: { enum: ['namespace', 'named', 'default'] } } },
     ]);
   });
 });

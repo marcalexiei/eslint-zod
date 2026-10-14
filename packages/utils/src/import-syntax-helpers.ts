@@ -5,13 +5,9 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
  * Import syntaxes the `consistent-import` builder can enforce; each plugin offers its own subset:
  * - `'namespace'` → `import * as z from 'zod'`
  * - `'named'` → `import { z } from 'zod'`
- *
- * A default import (`import z from 'zod'`) is not a syntax of its own:
- * it satisfies neither option and is rewritten to whichever one is configured.
- *
- * @see https://github.com/marcalexiei/eslint-zod/issues/409
+ * - `'default'` → `import z from 'zod'`
  */
-export const IMPORT_SYNTAXES = ['namespace', 'named'] as const;
+export const IMPORT_SYNTAXES = ['namespace', 'named', 'default'] as const;
 export type ImportSyntax = (typeof IMPORT_SYNTAXES)[number];
 
 export interface ImportGroupData {
@@ -21,7 +17,7 @@ export interface ImportGroupData {
 
 /**
  * Determines whether the first import in a group is valid for a given import
- * syntax (`named` or `namespace`), taking into account whether the group
+ * syntax (`namespace`, `named` or `default`), taking into account whether the group
  * contains only type imports.
  *
  * Rules enforced:
@@ -30,6 +26,8 @@ export interface ImportGroupData {
  *   - That specifier must be a named import of identifier `z`
  * - For `namespace` syntax:
  *   - The first import must have exactly one namespace specifier
+ * - For `default` syntax:
+ *   - The first import must have exactly one default specifier
  * - If the group contains only type imports, the first import must explicitly
  *   be declared as `import type`
  *
@@ -58,7 +56,10 @@ export function isGroupFirstImportKindValidForSyntax(
       ? specifier.type === AST_NODE_TYPES.ImportSpecifier &&
         specifier.imported.type === AST_NODE_TYPES.Identifier &&
         specifier.imported.name === 'z'
-      : specifier.type === AST_NODE_TYPES.ImportNamespaceSpecifier;
+      : specifier.type ===
+        (syntax === 'default'
+          ? AST_NODE_TYPES.ImportDefaultSpecifier
+          : AST_NODE_TYPES.ImportNamespaceSpecifier);
 
   if (!isValidForSyntax) {
     return false;
