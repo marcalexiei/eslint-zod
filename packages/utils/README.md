@@ -124,7 +124,8 @@ Each rule shared between `eslint-plugin-zod` and `eslint-plugin-zod-mini` (some 
 - `buildRequireErrorMessageCreate(scope)`
 - `buildSchemaErrorPropertyStyleCreate(scope)` — also exports `SchemaErrorPropertyStyleOptions`
 
-The `consistent-import` builder additionally re-exports `IMPORT_SYNTAXES` and `ImportSyntax`.
+The `consistent-import` builder additionally re-exports `IMPORT_SYNTAXES` and `ImportSyntax`: every syntax the builder can enforce.
+Each plugin declares the subset it offers in its own rule schema.
 
 ### Rule patterns — `@eslint-zod/utils/rule-patterns/<pattern-name>`
 

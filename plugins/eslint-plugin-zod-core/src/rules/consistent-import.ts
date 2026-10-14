@@ -1,7 +1,11 @@
 import { zodCoreImportScope } from '@eslint-zod/utils';
 import { buildConsistentImportCreate } from '@eslint-zod/utils/rule-builders/consistent-import';
+import type { ImportSyntax } from '@eslint-zod/utils/rule-builders/consistent-import';
 
 import { createZodPluginRule } from '../meta.js';
+
+// `named` means `import { z }`, and `zod/v4/core` has no `z` export.
+const SYNTAXES = ['namespace'] as const satisfies ReadonlyArray<ImportSyntax>;
 
 export const consistentImport = createZodPluginRule({
   name: 'consistent-import',
@@ -23,8 +27,7 @@ export const consistentImport = createZodPluginRule({
           syntax: {
             description: 'Specifies the import syntax to use for Zod core.',
             type: 'string',
-            // `named` means `import { z }`, and `zod/v4/core` has no `z` export.
-            enum: ['namespace'],
+            enum: [...SYNTAXES],
           },
         },
         additionalProperties: false,
@@ -32,5 +35,5 @@ export const consistentImport = createZodPluginRule({
     ],
   },
   defaultOptions: [{ syntax: 'namespace' }],
-  create: buildConsistentImportCreate<'namespace'>(zodCoreImportScope),
+  create: buildConsistentImportCreate<(typeof SYNTAXES)[number]>(zodCoreImportScope),
 });

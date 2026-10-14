@@ -81,6 +81,9 @@ There is no 'all' scope — rules in `eslint-plugin-zod` never fire on `zod/mini
 The builder and pattern groups are exposed by a single wildcard exports-map entry each (`./rule-builders/*`, `./rule-patterns/*`), so adding a file is enough — there is no per-file entry to keep in sync. Every file in those directories is therefore public: helpers that are not builders or patterns live at `src/` root instead (e.g. `import-syntax-helpers.ts`, re-exported through `consistent-import`).
 
 `IMPORT_SYNTAXES` and `ImportSyntax` are exported from `@eslint-zod/utils/rule-builders/consistent-import` (not from the root).
+They list every syntax the builder can enforce, not what a plugin offers:
+each plugin declares its own `SYNTAXES` tuple for the schema `enum`.
+When that tuple is a strict subset, it is also the builder's type argument, so `defaultOptions` cannot name a syntax the plugin does not offer.
 
 AST helpers exported from `@eslint-zod/utils`:
 

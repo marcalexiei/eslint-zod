@@ -2,7 +2,7 @@ import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 /**
- * Supported import syntaxes for the `consistent-import` rule:
+ * Import syntaxes the `consistent-import` builder can enforce; each plugin offers its own subset:
  * - `'namespace'` → `import * as z from 'zod'`
  * - `'named'` → `import { z } from 'zod'`
  *
