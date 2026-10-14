@@ -1,5 +1,89 @@
 # @eslint-zod/utils
 
+## 6.1.0
+
+### Minor Changes
+
+- [#504](https://github.com/marcalexiei/eslint-zod/pull/504) [`d479242`](https://github.com/marcalexiei/eslint-zod/commit/d4792420d74fc0392190d07e70bd7343d14c5031) - feat: export the options types of the shared rule builders
+
+- [#524](https://github.com/marcalexiei/eslint-zod/pull/524) [`9cbc143`](https://github.com/marcalexiei/eslint-zod/commit/9cbc14386727a2c72815033f5fa1470794592c0e) - feat: add `hasCommentInRange`
+
+- [#513](https://github.com/marcalexiei/eslint-zod/pull/513) [`9e5ad45`](https://github.com/marcalexiei/eslint-zod/commit/9e5ad4566698cd31c63285b53080949edfbb7484) - feat: add `hasParenthesizedReceiver`
+
+- [#507](https://github.com/marcalexiei/eslint-zod/pull/507) [`5752bec`](https://github.com/marcalexiei/eslint-zod/commit/5752bec65ee66a075ca354174122818338f579bf) - feat: add the `findZodChainedMethod` tracker method
+
+- [#506](https://github.com/marcalexiei/eslint-zod/pull/506) [`bc110d2`](https://github.com/marcalexiei/eslint-zod/commit/bc110d2d3379a76eef3324637adf3e91cf283581) - feat: add `member` to the items of `collectZodChainMethods`
+
+- [#560](https://github.com/marcalexiei/eslint-zod/pull/560) [`5f3da15`](https://github.com/marcalexiei/eslint-zod/commit/5f3da15bee748aee01a819c13960c61a8be1e9f3) - feat: add `createRuleCreator`, `createPluginMeta` and the `@eslint-zod/utils/rule-types` entry, replacing the `@typescript-eslint/utils` dependency
+
+### Patch Changes
+
+- [#531](https://github.com/marcalexiei/eslint-zod/pull/531) [`52e42d5`](https://github.com/marcalexiei/eslint-zod/commit/52e42d537c964cc75da11d8e9839400a9ad18b0c) - fix: detect a schema chain that ends in a property access
+
+- [#505](https://github.com/marcalexiei/eslint-zod/pull/505) [`9f0c4f2`](https://github.com/marcalexiei/eslint-zod/commit/9f0c4f23a8573c3cde985322d09967290bd1a2d5) - fix: stop crashing on a factory call that shares a method's name
+
+- [#548](https://github.com/marcalexiei/eslint-zod/pull/548) [`1fd9cc4`](https://github.com/marcalexiei/eslint-zod/commit/1fd9cc430954a533b7d4e9344408e71ffb342db9) - fix: withhold more fixes that would drop a comment
+
+- [#529](https://github.com/marcalexiei/eslint-zod/pull/529) [`8f5efaf`](https://github.com/marcalexiei/eslint-zod/commit/8f5efaf10851c956bf9cbd3d13f20f5dbbe5674b) - fix(no-conflicting-checks): stop comparing checks across a mutating check
+
+- [#512](https://github.com/marcalexiei/eslint-zod/pull/512) [`16c7cc6`](https://github.com/marcalexiei/eslint-zod/commit/16c7cc62ddadfae82cfb9e5a3885fdff269e9a1b) - fix(no-conflicting-checks): stop crashing on a zero bigint divisor
+
+- [#522](https://github.com/marcalexiei/eslint-zod/pull/522) [`1e998a1`](https://github.com/marcalexiei/eslint-zod/commit/1e998a1620a122f9bcacb8d9a01d86a1d0a403e4) - fix(require-error-message): handle shorthand, quoted and computed keys
+
+- [#503](https://github.com/marcalexiei/eslint-zod/pull/503) [`e283a27`](https://github.com/marcalexiei/eslint-zod/commit/e283a27474e0c754dfadf2b1fe503a4a811dee43) - fix(consistent-import): avoid false positive and invalid fix on every `import` in a plain JavaScript file
+
+- [#539](https://github.com/marcalexiei/eslint-zod/pull/539) [`6f4051c`](https://github.com/marcalexiei/eslint-zod/commit/6f4051c49b21bc81e8f68e288fdeab001472df0e) - fix: load without `eslint` installed
+
+- [#534](https://github.com/marcalexiei/eslint-zod/pull/534) [`3f2542d`](https://github.com/marcalexiei/eslint-zod/commit/3f2542d4f8cf99b68f8ede1c96c82a1f497be9cb) - fix: recognise zod factories imported under an alias
+
+- [#514](https://github.com/marcalexiei/eslint-zod/pull/514) [`551b0f4`](https://github.com/marcalexiei/eslint-zod/commit/551b0f486f55b2ac1a3faac0176daa1cd329b601) - fix(prefer-enum-over-literal-union): only accept bare `z.literal()` members
+
+- [#552](https://github.com/marcalexiei/eslint-zod/pull/552) [`e4017fd`](https://github.com/marcalexiei/eslint-zod/commit/e4017fd6da3d54333d50fa04385f384d1829d9f6) - fix: stop two fixes moving a length check ahead of a check that rewrites the value
+
+- [#530](https://github.com/marcalexiei/eslint-zod/pull/530) [`9fe66d9`](https://github.com/marcalexiei/eslint-zod/commit/9fe66d9a31b78b51edea2afa468f3d3e75cf6115) - fix(no-dynamic-schema-value): ignore the input of a chained parse call
+
+- [#541](https://github.com/marcalexiei/eslint-zod/pull/541) [`4667778`](https://github.com/marcalexiei/eslint-zod/commit/4667778005cf1d3ea928a5344a1754841055a480) - fix(consistent-object-schema-type): rename the factory in the suggestion
+
+- [#515](https://github.com/marcalexiei/eslint-zod/pull/515) [`e9b2bad`](https://github.com/marcalexiei/eslint-zod/commit/e9b2bad05274bcea4583c69f13d21ed0836f1061) - fix: recognise `.slugify()`, `.with()` and the `minimum` / `maximum` checks
+
+- [#550](https://github.com/marcalexiei/eslint-zod/pull/550) [`a6ccfa1`](https://github.com/marcalexiei/eslint-zod/commit/a6ccfa111abcc411fa2facd48d4bcb04396646e5) - fix: treat `toJSONSchema()`, `isOptional()`, `isNullable()` and `apply()` as ending a schema chain
+
+- [#518](https://github.com/marcalexiei/eslint-zod/pull/518) [`1d9095b`](https://github.com/marcalexiei/eslint-zod/commit/1d9095ba8f8e55c3f833a4dcd0f6947913b6c6f9) - fix(prefer-tuple-over-array-length): guard the fix against unsafe rewrites
+
+- [#516](https://github.com/marcalexiei/eslint-zod/pull/516) [`67ce5a3`](https://github.com/marcalexiei/eslint-zod/commit/67ce5a3c0ee1daf9a02901e65d41b71e438adfa6) - fix: stop the top-level factory fix dropping arguments or reordering
+
+- [#553](https://github.com/marcalexiei/eslint-zod/pull/553) [`ff227b1`](https://github.com/marcalexiei/eslint-zod/commit/ff227b105a0174903d3e394476799527b6984c7c) - fix(no-conflicting-checks): stop comparing across a callback check or past a mutated literal
+
+- [#528](https://github.com/marcalexiei/eslint-zod/pull/528) [`b9c6460`](https://github.com/marcalexiei/eslint-zod/commit/b9c6460cf55fa1b8ad5dd0192d4fbc924a70004e) - fix(schema-error-property-style): check the `refine()` / `custom()` call itself
+
+- [#532](https://github.com/marcalexiei/eslint-zod/pull/532) [`69844b9`](https://github.com/marcalexiei/eslint-zod/commit/69844b9951c4c96a3f24e37474f0bd9759e479e6) - fix(no-throw-in-refine): check every `.refine()` and more statement kinds
+
+- [#559](https://github.com/marcalexiei/eslint-zod/pull/559) [`0adfa55`](https://github.com/marcalexiei/eslint-zod/commit/0adfa55e87a33f75668f30d06770cadd561eebd3) - fix(consistent-import): drop the `named` syntax from `eslint-plugin-zod-core`, whose fix imported a `z` that `zod/v4/core` does not export
+
+- [#533](https://github.com/marcalexiei/eslint-zod/pull/533) [`20381b0`](https://github.com/marcalexiei/eslint-zod/commit/20381b078c52c2e2e12aca4f5f6d937f0a10892b) - fix(no-conflicting-checks): analyse negative bounds and `z.iso.*()` factories
+
+- [#517](https://github.com/marcalexiei/eslint-zod/pull/517) [`316715e`](https://github.com/marcalexiei/eslint-zod/commit/316715ed8948249eb2252df7eb5cc5342de96c21) - fix: stop collapsing bounds across a type-changing method or an opaque check
+
+- [#551](https://github.com/marcalexiei/eslint-zod/pull/551) [`59b045e`](https://github.com/marcalexiei/eslint-zod/commit/59b045ec458817f6f6f1789fc1ed9f6bf0e766ad) - fix: withhold the top-level factory fix for a second deprecated format or after a `.check()`
+
+- [#510](https://github.com/marcalexiei/eslint-zod/pull/510) [`97169bc`](https://github.com/marcalexiei/eslint-zod/commit/97169bc0c5b8d4f0121fdad13cb9ba11da75ff83) - fix: `resolveZodImport` ignores a re-declared import binding
+
+- [#542](https://github.com/marcalexiei/eslint-zod/pull/542) [`bbdfcf6`](https://github.com/marcalexiei/eslint-zod/commit/bbdfcf6c6f80aac6b353d3a2c6b6763cd9ea0446) - fix(no-any-schema): only suggest renaming the `any` factory itself
+
+- [#525](https://github.com/marcalexiei/eslint-zod/pull/525) [`a13491d`](https://github.com/marcalexiei/eslint-zod/commit/a13491d8b901b6a048b6e0f2de27df4cff7edf1b) - fix(require-brand-type-parameter): accept a brand named by a value argument
+
+- [#535](https://github.com/marcalexiei/eslint-zod/pull/535) [`b81695b`](https://github.com/marcalexiei/eslint-zod/commit/b81695bda77af47eb723085d00739c7d045c8665) - fix: cover record variants, transform factory keys and `.nonempty()`
+
+- [#544](https://github.com/marcalexiei/eslint-zod/pull/544) [`5d0b05c`](https://github.com/marcalexiei/eslint-zod/commit/5d0b05cf27f40eabc73564ed636f9229e81086fb) - fix: stop unwrapping an argument that needs parentheses or has a comment
+
+- [#547](https://github.com/marcalexiei/eslint-zod/pull/547) [`32006a3`](https://github.com/marcalexiei/eslint-zod/commit/32006a3843e533a2a1481f863fd47d84f438fcb0) - fix: stop judging a chain resumed after a property access by the factory before it
+
+- [#527](https://github.com/marcalexiei/eslint-zod/pull/527) [`0798a2b`](https://github.com/marcalexiei/eslint-zod/commit/0798a2bcc12b7b564558224dd7908b156c2984f4) - fix(no-transform-in-record-key): read the key of the `record()` call itself
+
+- [#520](https://github.com/marcalexiei/eslint-zod/pull/520) [`d353312`](https://github.com/marcalexiei/eslint-zod/commit/d3533124db19064d8718f9efd2b8dfec10248288) - fix: stop hoisting an object modifier over a method that overrides it
+
+- [#538](https://github.com/marcalexiei/eslint-zod/pull/538) [`8ee7aa6`](https://github.com/marcalexiei/eslint-zod/commit/8ee7aa6921952a5ba691feb4ff4321fda71d9091) - fix: keep `tsc -b` output out of the published packages
+
 ## 6.0.1
 
 ### Patch Changes
