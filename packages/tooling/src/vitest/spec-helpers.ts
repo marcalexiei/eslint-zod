@@ -1,8 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 
-import type { TSESLint } from '@typescript-eslint/utils';
-
 /**
  * Minimal structural view of a plugin used by the data helpers.
  * Matches the `satisfies ESLint.Plugin as CompatiblePlugin` shape each
@@ -20,8 +18,13 @@ interface ConfigLike {
   plugins?: object;
 }
 
-function getRules(plugin: PluginLike): Record<string, TSESLint.RuleModule<string>> {
-  return (plugin.rules ?? {}) as Record<string, TSESLint.RuleModule<string>>;
+/** The parts of a registered rule the helpers read. */
+interface RuleLike {
+  meta: { deprecated?: boolean | object; docs?: { url?: string } };
+}
+
+function getRules(plugin: PluginLike): Record<string, RuleLike> {
+  return (plugin.rules ?? {}) as Record<string, RuleLike>;
 }
 
 /** Returns the sorted rule names derived from the files inside `<srcDir>/rules`. */
@@ -82,7 +85,7 @@ export function getRuleDocReferences(
 export function getConfigRuleEntries(
   plugin: PluginLike,
   configName: string,
-): Array<{ configRuleName: string; rule: TSESLint.RuleModule<string> | undefined }> {
+): Array<{ configRuleName: string; rule: RuleLike | undefined }> {
   const rules = getRules(plugin);
 
   return Object.keys(plugin.configs[configName].rules ?? {}).map((configRuleName) => ({

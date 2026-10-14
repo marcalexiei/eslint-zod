@@ -20,9 +20,6 @@ catalogs:
     '@typescript-eslint/rule-tester':
       specifier: 8.70.0
       version: 8.70.0
-    '@typescript-eslint/utils':
-      specifier: 8.70.0
-      version: 8.70.0
     '@vitest/coverage-v8':
       specifier: 5.0.0
       version: 5.0.0
@@ -113,9 +110,6 @@ importers:
         specifier: catalog:dev
         version: 2.0.0(prettier@3.9.6)
       '@typescript-eslint/rule-tester':
-        specifier: catalog:dev
-        version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
-      '@typescript-eslint/utils':
         specifier: catalog:dev
         version: 8.70.0(eslint@10.10.0)(supports-color@7.2.0)(typescript@6.0.3)
       eslint-doc-generator:

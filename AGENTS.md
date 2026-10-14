@@ -174,7 +174,8 @@ Two rules for `rule-types.ts`:
 - **Declare members as properties, not methods.** Methods are compared bivariantly, which would hide a signature that does not match the linter's.
 
 A `no-restricted-imports` entry in `eslint.config.js` enforces all this.
-Beyond the types package, only the specs and `@eslint-zod/tooling` use typescript-eslint, for `RuleTester`.
+No workspace package depends on `@typescript-eslint/utils` directly.
+Beyond the types package, only `@typescript-eslint/rule-tester` is used, by the specs and `@eslint-zod/tooling`.
 
 ## zod vs zod/mini API differences
 

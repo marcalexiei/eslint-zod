@@ -1,5 +1,4 @@
 import type { InvalidTestCase } from '@typescript-eslint/rule-tester';
-import type { TSESLint } from '@typescript-eslint/utils';
 
 /** Which of the rule's messages a case asserts, and what to interpolate into them. */
 export interface SuggestionCaseOptions<TMessageIds extends string> {
@@ -44,7 +43,7 @@ export function createSuggestionCases<
   TOptions extends ReadonlyArray<unknown>,
 >(
   // only read for its types: both ids and the options tuple come from it
-  rule: TSESLint.RuleModule<TMessageIds, TOptions>,
+  rule: { meta: { messages: Record<TMessageIds, string> }; defaultOptions: TOptions },
   { messageId, suggestionMessageId, data }: SuggestionCaseOptions<TMessageIds>,
 ): SuggestionCaseBuilders<TMessageIds, TOptions> {
   return {
