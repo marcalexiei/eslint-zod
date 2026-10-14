@@ -9,14 +9,14 @@ catalogs:
 
   dev:
     # typescript-eslint ecosystem (keep versions aligned)
-    '@typescript-eslint/rule-tester': '8.70.0'
-    typescript-eslint: '8.70.0'
+    '@typescript-eslint/rule-tester': '8.71.2'
+    typescript-eslint: '8.71.2'
 
     # build & test toolchain
-    tsdown: '0.23.0'
+    tsdown: '0.23.1'
     # keep `@vitest/coverage-v8` aligned with `vitest`
-    '@vitest/coverage-v8': '5.0.0'
-    vitest: '5.0.0'
+    '@vitest/coverage-v8': '5.0.4'
+    vitest: '5.0.4'
 
     # published-artifact checks
     '@arethetypeswrong/cli': '0.18.5'
@@ -25,7 +25,7 @@ catalogs:
     '@marcalexiei/prettier-config': '2.0.0'
     dedent: '1.7.2'
     eslint-doc-generator: '3.7.1'
-    prettier: '3.9.6'
+    prettier: '3.9.10'
 
 overrides:
   # vitest declares an optional `@types/node` peer: without a version here the
