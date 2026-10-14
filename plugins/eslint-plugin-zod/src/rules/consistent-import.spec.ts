@@ -2,6 +2,7 @@ import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
 import type { Rule as ESLintRule } from 'eslint';
 import { RuleTester as ESLintRuleTester } from 'eslint';
+import { describe, expect, it } from 'vitest';
 
 import { consistentImport } from './consistent-import.js';
 
@@ -506,3 +507,11 @@ jsRuleTester.run(
     ],
   },
 );
+
+describe(`${consistentImport.name} options`, () => {
+  it('offers only the syntaxes this plugin supports', () => {
+    expect(consistentImport.meta.schema).toMatchObject([
+      { properties: { syntax: { enum: ['namespace', 'named'] } } },
+    ]);
+  });
+});
