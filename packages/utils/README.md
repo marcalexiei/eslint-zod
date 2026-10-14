@@ -84,7 +84,7 @@ Canonical names shared by both API styles, so rule logic compares `zod`'s `.min(
 
 Each rule shared between `eslint-plugin-zod` and `eslint-plugin-zod-mini` (some also `eslint-plugin-zod-core`) exposes its `create(...)` factory from a dedicated subpath. Plugins keep rule metadata local and reuse the runtime logic.
 
-- `buildConsistentImportCreate(scope)` — also exports `ConsistentImportOptions`
+- `buildConsistentImportCreate(scope)` — also exports `ConsistentImportOptions`; its optional type argument narrows `syntax` to the choices a plugin offers
 - `buildConsistentImportSourceCreate(scope)` — also exports `ConsistentImportSourceOptions`
 - `buildConsistentObjectSchemaTypeCreate(scope)` — also exports `ConsistentObjectSchemaTypeOptions` and `ZOD_OBJECT_METHODS`
 - `buildConsistentSchemaOutputTypeStyleCreate(scope)` — also exports `ConsistentSchemaOutputTypeStyleOptions` and `ZOD_SCHEMA_TYPE_STYLES`

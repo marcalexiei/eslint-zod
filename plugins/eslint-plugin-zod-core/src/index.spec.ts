@@ -101,6 +101,20 @@ describe('config usage', () => {
     ).toEqual([2]);
   });
 
+  // `named` would rewrite to `import { z }`, which `zod/v4/core` does not export.
+  it('rejects the `named` syntax of `consistent-import`', () => {
+    expect(() =>
+      new Linter().verify(
+        "import * as core from 'zod/v4/core';\n",
+        [
+          plugin.configs.recommended,
+          { rules: { 'zod-core/consistent-import': ['error', { syntax: 'named' }] } },
+        ],
+        'file.ts',
+      ),
+    ).toThrow(/Value "named" should be equal to one of the allowed values/);
+  });
+
   it('registers the plugin object that is exported', () => {
     expect(plugin.configs.recommended.plugins?.['zod-core']).toBe(plugin);
   });

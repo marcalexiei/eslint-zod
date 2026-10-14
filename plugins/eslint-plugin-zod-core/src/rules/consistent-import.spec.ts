@@ -47,31 +47,3 @@ ruleTester.run(`${consistentImport.name} (namespace)`, consistentImport, {
     },
   ],
 });
-
-ruleTester.run(`${consistentImport.name} (named)`, consistentImport, {
-  valid: [
-    {
-      name: 'named z import',
-      code: dedent`
-        import { z } from 'zod/v4/core';
-        const mySchema = new z.$ZodString({ type: 'string', checks: [] });
-      `,
-      options: [{ syntax: 'named' }],
-    },
-  ],
-  invalid: [
-    {
-      name: 'namespace import — converted to named',
-      code: dedent`
-        import * as core from 'zod/v4/core';
-        const mySchema = new core.$ZodString({ type: 'string', checks: [] });
-      `,
-      options: [{ syntax: 'named' }],
-      errors: [{ messageId: 'changeImportSyntax', data: { syntax: 'named' } }],
-      output: dedent`
-        import { z as core } from 'zod/v4/core';
-        const mySchema = new core.$ZodString({ type: 'string', checks: [] });
-      `,
-    },
-  ],
-});

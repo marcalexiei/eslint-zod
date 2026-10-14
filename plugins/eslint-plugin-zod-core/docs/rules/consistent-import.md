@@ -10,19 +10,21 @@
 
 ## Rule Details
 
-This rule enforces a single import style for `zod/v4/core`: either the namespace form (`import * as core from 'zod/v4/core'`) or named imports (`import { $ZodString } from 'zod/v4/core'`).
+This rule enforces the namespace form for `zod/v4/core` imports: `import * as core from 'zod/v4/core'`.
+Named imports such as `import { $ZodString } from 'zod/v4/core'` are rewritten to it, and their usages are qualified with the namespace.
 
 ## Options
 
 <!-- begin auto-generated rule options list -->
 
-| Name     | Description                                      | Type   | Choices              |
-| :------- | :----------------------------------------------- | :----- | :------------------- |
-| `syntax` | Specifies the import syntax to use for Zod core. | String | `namespace`, `named` |
+| Name     | Description                                      | Type   | Choices     |
+| :------- | :----------------------------------------------- | :----- | :---------- |
+| `syntax` | Specifies the import syntax to use for Zod core. | String | `namespace` |
 
 <!-- end auto-generated rule options list -->
 
-`namespace` is the default.
+`namespace` is the default and the only choice.
+The `named` syntax of `eslint-plugin-zod` imports `z`, and unlike `zod` and `zod/mini`, `zod/v4/core` has no `z` export.
 
 ## Examples
 

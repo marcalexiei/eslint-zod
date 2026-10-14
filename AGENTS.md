@@ -193,6 +193,7 @@ The exception is `prefer-meta` in `eslint-plugin-zod-mini`: since `z.describe()`
 A rule is shared when the same file name exists in both plugins' `src/rules/` (the list is derived from the filesystem, not maintained here). When updating any shared rule, its counterpart's docs, specs, and metadata must change in the same PR — follow the **`sync-zod-mini` skill** (`.agents/skills/sync-zod-mini/SKILL.md`), which has the zod → zod/mini translation table, the per-file sync checklist, and the cross-contamination greps.
 
 `eslint-plugin-zod-core` additionally shares `consistent-import` and `consistent-schema-output-type-style` (built from the same rule builders with `zodCoreImportScope`). When updating either of those rules, keep the core counterpart's docs and specs in sync too, adapting examples to `zod/v4/core` imports.
+Core's `consistent-import` offers only the `namespace` syntax: `named` means `import { z }`, and `zod/v4/core` has no `z` export.
 
 ## Quality expectations
 
