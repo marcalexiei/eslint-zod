@@ -2,6 +2,10 @@
 
 ## 6.1.0
 
+**Installing this package no longer pulls in `eslint`.**
+It no longer depends on `@typescript-eslint/utils` ([#560](https://github.com/marcalexiei/eslint-zod/pull/560)), whose required `eslint` and `typescript` peers were installed along with it.
+Its only typescript-eslint dependency is now `@typescript-eslint/types`, which has none.
+
 ### Minor Changes
 
 - [#504](https://github.com/marcalexiei/eslint-zod/pull/504) [`d479242`](https://github.com/marcalexiei/eslint-zod/commit/d4792420d74fc0392190d07e70bd7343d14c5031) - feat: export the options types of the shared rule builders

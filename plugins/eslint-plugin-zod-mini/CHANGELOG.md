@@ -2,6 +2,10 @@
 
 ## 2.1.0
 
+**`eslint` is no longer needed to use this plugin.**
+It loads without `eslint` ([#539](https://github.com/marcalexiei/eslint-zod/pull/539)), and it no longer depends on `@typescript-eslint/utils` ([#560](https://github.com/marcalexiei/eslint-zod/pull/560)), whose required `eslint` and `typescript` peers were installed along with it.
+With oxlint, nothing from ESLint has to be installed.
+
 ### Minor Changes
 
 - [#500](https://github.com/marcalexiei/eslint-zod/pull/500) [`5adf57a`](https://github.com/marcalexiei/eslint-zod/commit/5adf57aaf6dc3cdfd033d1e5ea1529e2a987ab6e) - fix: lint `.mts` and `.cts` files, and register the exported plugin in each config so it can be re-registered.

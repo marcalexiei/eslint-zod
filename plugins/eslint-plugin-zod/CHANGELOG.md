@@ -2,6 +2,10 @@
 
 ## 5.1.0
 
+**`eslint` is no longer needed to use this plugin.**
+It loads without `eslint` ([#539](https://github.com/marcalexiei/eslint-zod/pull/539)), and it no longer depends on `@typescript-eslint/utils` ([#560](https://github.com/marcalexiei/eslint-zod/pull/560)), whose required `eslint` and `typescript` peers were installed along with it.
+With oxlint, nothing from ESLint has to be installed.
+
 ### Minor Changes
 
 - [#537](https://github.com/marcalexiei/eslint-zod/pull/537) [`232da5b`](https://github.com/marcalexiei/eslint-zod/commit/232da5b8bb0ea8e976f3e02d6bce309a7b66fc41) - feat: drop `consistent-object-schema-type` from the `stylistic` config
