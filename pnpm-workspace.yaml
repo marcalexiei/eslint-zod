@@ -5,14 +5,14 @@ packages:
 catalogs:
   deps:
     # typescript-eslint ecosystem (keep versions aligned)
-    '@typescript-eslint/scope-manager': '^8.70.0'
-    '@typescript-eslint/types': '^8.70.0'
-    '@typescript-eslint/utils': '^8.70.0'
+    '@typescript-eslint/scope-manager': '^8.71.1'
+    '@typescript-eslint/types': '^8.71.1'
+    '@typescript-eslint/utils': '^8.71.1'
 
   dev:
     # typescript-eslint ecosystem (keep versions aligned)
-    '@typescript-eslint/rule-tester': '8.70.0'
-    typescript-eslint: '8.70.0'
+    '@typescript-eslint/rule-tester': '8.71.1'
+    typescript-eslint: '8.71.1'
 
     # build & test toolchain
     tsdown: '0.23.0'
