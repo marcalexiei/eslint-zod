@@ -194,8 +194,13 @@ When fixing is applied, the rule will:
 - Update all Zod usages to use the correct namespace or alias.
 - Preserve `import type` when the file only contains type imports.
 
-A re-exported named import (`export { string }`) is reported without a fix,
-since a qualified name such as `z.string` cannot be exported in place.
+The rule reports without fixing when the fix would break the code:
+
+- a named import is re-exported (`export { string }`): `z.string` cannot be exported in place.
+- the alias is shadowed where a usage is (`function get(z: number) { return string; }`).
+- a comment sits inside an import the fix rewrites or removes.
+
+Without an alias of its own, the import is named `z`, or `z1`, `z2`, … when `z` is already taken.
 
 ## Further Reading
 

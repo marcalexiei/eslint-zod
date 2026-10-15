@@ -1,6 +1,7 @@
 import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
+import { hasCommentInRange } from '../has-comment-in-range.js';
 import {
   bindsWholeModule,
   getImportSyntax,
@@ -8,7 +9,7 @@ import {
   getUsageText,
 } from '../import-syntax-helpers.js';
 import type { ImportSyntax } from '../import-syntax-helpers.js';
-import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
+import type { RuleContext, RuleFix, RuleListener, Scope } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 export interface ConsistentImportOptions<TSyntax extends ImportSyntax = ImportSyntax> {
@@ -45,8 +46,8 @@ export function buildConsistentImportCreate<TSyntax extends ImportSyntax = Impor
           }
         }
 
-        // Each source without an alias of its own gets a distinct one: `z`, `z1`, …
-        let fallbackAliasCount = 0;
+        // Fallback aliases already given to a source: `z`, `z1`, …
+        const fallbackAliases = new Set<string>();
 
         for (const imports of importsBySource.values()) {
           const [first, ...duplicates] = imports;
@@ -55,34 +56,63 @@ export function buildConsistentImportCreate<TSyntax extends ImportSyntax = Impor
           const isTypeOnly = imports.every((it) => it.importKind === 'type');
 
           const aliasSpecifier = specifiers.find(bindsWholeModule);
-          let alias = aliasSpecifier?.local.name;
-          if (alias === undefined) {
-            alias = fallbackAliasCount > 0 ? `z${fallbackAliasCount}` : 'z';
-            fallbackAliasCount += 1;
-          }
-
-          const usages = specifiers
+          const ownVariables = specifiers.flatMap((it) => sourceCode.getDeclaredVariables(it));
+          const references = specifiers
             .filter((it) => it !== aliasSpecifier)
-            .flatMap((specifier) => {
-              const text = getUsageText(specifier, alias);
-              return sourceCode
+            .flatMap((specifier) =>
+              sourceCode
                 .getDeclaredVariables(specifier)
                 .flatMap((variable) => variable.references)
-                .map(({ identifier }) => ({
-                  identifier,
-                  replacement:
-                    text === null
-                      ? null
-                      : getUsageReplacement(identifier as TSESTree.Identifier, text),
-                }));
+                .map(({ identifier }) => ({ specifier, identifier })),
+            );
+
+          // Whether `name` reaches this source's imports from every node the fix writes it at
+          const isNameFree = (name: string): boolean =>
+            [first, ...references.map((it) => it.identifier)].every((node) => {
+              for (let s: Scope | null = sourceCode.getScope(node); s; s = s.upper) {
+                const variable = s.set.get(name);
+                if (variable && !ownVariables.includes(variable)) {
+                  return false;
+                }
+              }
+              return true;
             });
-          const isFixable = usages.every((it) => it.replacement !== null);
+
+          let alias = aliasSpecifier?.local.name;
+          if (alias === undefined) {
+            let index = 0;
+            do {
+              alias = index > 0 ? `z${index}` : 'z';
+              index += 1;
+            } while (fallbackAliases.has(alias) || !isNameFree(alias));
+            fallbackAliases.add(alias);
+          }
+
+          const usages = references.map(({ specifier, identifier }) => {
+            const text = getUsageText(specifier, alias);
+            const replacement =
+              text === null ? null : getUsageReplacement(identifier as TSESTree.Identifier, text);
+            return {
+              identifier,
+              replacement:
+                replacement && !hasCommentInRange(sourceCode, replacement.node.range)
+                  ? replacement
+                  : null,
+            };
+          });
 
           const isFirstValid =
             first.specifiers.length === 1 &&
             getImportSyntax(first.specifiers[0]) === syntax &&
             // A source used as a value cannot keep a type-only first import
             (first.importKind === 'type') === isTypeOnly;
+          // A fix must neither drop a comment nor leave a usage bound to another variable
+          const isFixable =
+            usages.every((it) => it.replacement !== null) &&
+            isNameFree(alias) &&
+            !(isFirstValid ? duplicates : imports).some((it) =>
+              hasCommentInRange(sourceCode, it.range),
+            );
 
           if (!isFirstValid) {
             const specifierText = {

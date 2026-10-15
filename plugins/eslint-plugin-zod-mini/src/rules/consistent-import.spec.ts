@@ -36,6 +36,67 @@ ruleTester.run(`${consistentImport.name} namespace`, consistentImport, {
 
   invalid: [
     {
+      name: 'fallback alias skips a name already declared',
+      code: dedent`
+        import { string } from "zod/mini";
+        const z = 1;
+        export const value = [string, z];
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' } },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' } },
+      ],
+      output: dedent`
+        import * as z1 from "zod/mini";
+        const z = 1;
+        export const value = [z1.string, z];
+      `,
+    },
+    {
+      name: 'alias shadowed where a usage is — no fix',
+      code: dedent`
+        import * as z from "zod/mini";
+        import { string } from "zod/mini";
+        export function get(z: number) {
+          return string;
+        }
+      `,
+      errors: [
+        { messageId: 'removeDuplicate', line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 4 },
+      ],
+      output: null,
+    },
+    {
+      name: 'comment inside the import — no fix',
+      code: dedent`
+        import { /* keep */ string } from "zod/mini";
+        export const value = string;
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' } },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' } },
+      ],
+      output: null,
+    },
+    {
+      name: 'fallback alias skips the alias of another source',
+      code: dedent`
+        import * as z from "zod/mini";
+        import { number } from "zod/v4-mini";
+        export const value = number();
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' }, line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 3 },
+      ],
+      output: dedent`
+        import * as z from "zod/mini";
+        import * as z1 from "zod/v4-mini";
+        export const value = z1.number();
+      `,
+    },
+    {
       name: 'aliased named import — qualified by its export name',
       code: dedent`
         import { string as alias } from "zod/mini";

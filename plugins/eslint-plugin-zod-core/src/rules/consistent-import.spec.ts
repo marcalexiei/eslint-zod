@@ -32,6 +32,50 @@ ruleTester.run(`${consistentImport.name} (namespace)`, consistentImport, {
   ],
   invalid: [
     {
+      name: 'fallback alias skips a name already declared',
+      code: dedent`
+        import { $ZodString } from 'zod/v4/core';
+        const z = 1;
+        export const value = [$ZodString, z];
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' } },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' } },
+      ],
+      output: dedent`
+        import * as z1 from 'zod/v4/core';
+        const z = 1;
+        export const value = [z1.$ZodString, z];
+      `,
+    },
+    {
+      name: 'alias shadowed where a usage is — no fix',
+      code: dedent`
+        import * as z from 'zod/v4/core';
+        import { $ZodString } from 'zod/v4/core';
+        export function get(z: number) {
+          return $ZodString;
+        }
+      `,
+      errors: [
+        { messageId: 'removeDuplicate', line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 4 },
+      ],
+      output: null,
+    },
+    {
+      name: 'comment inside the import — no fix',
+      code: dedent`
+        import { /* keep */ $ZodString } from 'zod/v4/core';
+        export const value = $ZodString;
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' } },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' } },
+      ],
+      output: null,
+    },
+    {
       name: 'aliased named import — qualified by its export name',
       code: dedent`
         import { $ZodString as alias } from 'zod/v4/core';
