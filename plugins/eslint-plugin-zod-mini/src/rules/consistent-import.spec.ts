@@ -9,6 +9,10 @@ const ruleTester = new RuleTester();
 ruleTester.run(`${consistentImport.name} namespace`, consistentImport, {
   valid: [
     {
+      name: 'side-effect import',
+      code: 'import "zod/mini";',
+    },
+    {
       name: 'namespace import',
       code: 'import * as z from "zod/mini";',
     },

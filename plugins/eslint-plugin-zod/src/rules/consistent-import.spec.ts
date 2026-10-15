@@ -15,6 +15,10 @@ const jsRuleTester = new ESLintRuleTester();
 ruleTester.run(`${consistentImport.name} namespace`, consistentImport, {
   valid: [
     {
+      name: 'side-effect import',
+      code: 'import "zod";',
+    },
+    {
       name: 'valid usage',
       code: 'import * as z from "zod";',
     },

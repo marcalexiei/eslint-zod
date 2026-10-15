@@ -40,6 +40,10 @@ export function buildConsistentImportCreate<TSyntax extends ImportSyntax = Impor
       for (const imports of importsBySource.values()) {
         const [first, ...duplicates] = imports;
         const specifiers = imports.flatMap((it) => it.specifiers);
+        // A side-effect import (`import 'zod'`) has no syntax to enforce
+        if (specifiers.length === 0) {
+          continue;
+        }
         // `importKind` is not set by espree: https://github.com/marcalexiei/eslint-zod/issues/501
         const isTypeOnly = imports.every((it) => it.importKind === 'type');
 
