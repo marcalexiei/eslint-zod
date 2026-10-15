@@ -19,7 +19,7 @@ type MessageIds = 'changeImportSyntax' | 'removeDuplicate' | 'convertUsage';
 
 /**
  * Builds `consistent-import`: one import per source, written in `syntax`, every usage rewritten against it.
- * Fixes nothing in a source when one of its usages has no in-place rewrite.
+ * Fixes nothing in a source when a fix would break code or drop a comment.
  */
 export function buildConsistentImportCreate<TSyntax extends ImportSyntax = ImportSyntax>(
   scope: ZodImportScope,
