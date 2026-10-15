@@ -36,6 +36,25 @@ ruleTester.run(`${consistentImport.name} namespace`, consistentImport, {
 
   invalid: [
     {
+      name: 'import inside a declare module block',
+      code: dedent`
+        declare module "my-lib" {
+          import { ZodMiniType } from "zod/mini";
+          export type Schema = ZodMiniType;
+        }
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' }, line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 3 },
+      ],
+      output: dedent`
+        declare module "my-lib" {
+          import * as z from "zod/mini";
+          export type Schema = z.ZodMiniType;
+        }
+      `,
+    },
+    {
       name: 'fallback alias skips a name already declared',
       code: dedent`
         import { string } from "zod/mini";

@@ -5,4 +5,4 @@
 'eslint-plugin-zod-core': patch
 ---
 
-fix(consistent-import): the autofix no longer produces broken code from aliased, duplicate, type-only or re-exported imports
+fix(consistent-import): the autofix no longer breaks code nor drops comments, and imports inside `declare module` blocks are checked on their own
