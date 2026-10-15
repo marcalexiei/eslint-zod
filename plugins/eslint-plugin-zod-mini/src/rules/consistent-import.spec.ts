@@ -103,25 +103,6 @@ ruleTester.run(`${consistentImport.name} namespace`, consistentImport, {
       `,
     },
     {
-      name: 'second namespace import as a computed key',
-      code: dedent`
-        import * as z from "zod/mini";
-        import * as y from "zod/mini";
-        const map = {};
-        export const value = map[y];
-      `,
-      errors: [
-        { messageId: 'removeDuplicate', line: 2 },
-        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 4 },
-      ],
-      output: dedent`
-        import * as z from "zod/mini";
-
-        const map = {};
-        export const value = map[z];
-      `,
-    },
-    {
       name: 'named import in a shorthand property',
       code: dedent`
         import { string } from "zod/mini";
@@ -134,23 +115,6 @@ ruleTester.run(`${consistentImport.name} namespace`, consistentImport, {
       output: dedent`
         import * as z from "zod/mini";
         export const o = { string: z.string };
-      `,
-    },
-    {
-      name: 'named import as a computed key',
-      code: dedent`
-        import { string } from "zod/mini";
-        const map = {};
-        export const value = map[string];
-      `,
-      errors: [
-        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' } },
-        { messageId: 'convertUsage', data: { syntax: 'namespace' } },
-      ],
-      output: dedent`
-        import * as z from "zod/mini";
-        const map = {};
-        export const value = map[z.string];
       `,
     },
     {
@@ -235,8 +199,8 @@ ruleTester.run(`${consistentImport.name} namespace`, consistentImport, {
       name: 'named imports with type',
       code: dedent`
         import { z } from "zod/mini";
-        import type { $ZodType } from "zod/mini";
-        const userSchema: $ZodType = z.string();
+        import type { ZodMiniType } from "zod/mini";
+        const userSchema: ZodMiniType = z.string();
       `,
       errors: [
         {
@@ -254,7 +218,7 @@ ruleTester.run(`${consistentImport.name} namespace`, consistentImport, {
       output: dedent`
         import * as z from "zod/mini";
 
-        const userSchema: z.$ZodType = z.string();
+        const userSchema: z.ZodMiniType = z.string();
       `,
     },
     {

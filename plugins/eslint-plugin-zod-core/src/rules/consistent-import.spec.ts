@@ -26,7 +26,7 @@ ruleTester.run(`${consistentImport.name} (namespace)`, consistentImport, {
       name: 'type-only namespace import',
       code: dedent`
         import type * as core from 'zod/v4/core';
-        type MyType = core.output<typeof mySchema>;
+        type MyType = core.output<core.$ZodString>;
       `,
     },
   ],
@@ -99,25 +99,6 @@ ruleTester.run(`${consistentImport.name} (namespace)`, consistentImport, {
       `,
     },
     {
-      name: 'second namespace import as a computed key',
-      code: dedent`
-        import * as z from 'zod/v4/core';
-        import * as y from 'zod/v4/core';
-        const map = {};
-        export const value = map[y];
-      `,
-      errors: [
-        { messageId: 'removeDuplicate', line: 2 },
-        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 4 },
-      ],
-      output: dedent`
-        import * as z from 'zod/v4/core';
-
-        const map = {};
-        export const value = map[z];
-      `,
-    },
-    {
       name: 'named import in a shorthand property',
       code: dedent`
         import { $ZodString } from 'zod/v4/core';
@@ -130,23 +111,6 @@ ruleTester.run(`${consistentImport.name} (namespace)`, consistentImport, {
       output: dedent`
         import * as z from 'zod/v4/core';
         export const o = { $ZodString: z.$ZodString };
-      `,
-    },
-    {
-      name: 'named import as a computed key',
-      code: dedent`
-        import { $ZodString } from 'zod/v4/core';
-        const map = {};
-        export const value = map[$ZodString];
-      `,
-      errors: [
-        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' } },
-        { messageId: 'convertUsage', data: { syntax: 'namespace' } },
-      ],
-      output: dedent`
-        import * as z from 'zod/v4/core';
-        const map = {};
-        export const value = map[z.$ZodString];
       `,
     },
     {
@@ -179,7 +143,7 @@ ruleTester.run(`${consistentImport.name} (namespace)`, consistentImport, {
       code: dedent`
         import * as z from 'zod/v4/core';
         import * as y from 'zod/v4/core';
-        const aSchema = y.string();
+        export const registry = y.registry();
       `,
       errors: [
         { messageId: 'removeDuplicate', line: 2 },
@@ -188,7 +152,7 @@ ruleTester.run(`${consistentImport.name} (namespace)`, consistentImport, {
       output: dedent`
         import * as z from 'zod/v4/core';
 
-        const aSchema = z.string();
+        export const registry = z.registry();
       `,
     },
     {

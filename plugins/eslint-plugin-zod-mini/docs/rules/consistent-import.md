@@ -69,7 +69,7 @@ z.object({ name: z.string() });
 ```ts
 import type * as z from 'zod/mini';
 
-type Schema = z.$ZodString;
+type Schema = z.ZodMiniString;
 ```
 
 #### ❌ Invalid
@@ -82,7 +82,7 @@ z.string();
 
 ```ts
 import * as z from 'zod/mini';
-import { $ZodString } from 'zod/mini';
+import { ZodMiniString } from 'zod/mini';
 ```
 
 ### `named`
@@ -99,7 +99,7 @@ z.array(z.number());
 ```ts
 import type { z } from 'zod/mini';
 
-type Schema = z.$ZodArray<z.$ZodNumber>;
+type Schema = z.ZodMiniArray<z.ZodMiniNumber>;
 ```
 
 #### ❌ Invalid
@@ -112,7 +112,7 @@ z.string();
 
 ```ts
 import { z } from 'zod/mini';
-import { $ZodString } from 'zod/mini';
+import { ZodMiniString } from 'zod/mini';
 ```
 
 ## Autofix behavior
