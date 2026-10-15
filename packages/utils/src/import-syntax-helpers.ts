@@ -99,7 +99,8 @@ export function shouldIdentifierBeRenamed(node: TSESTree.Identifier): boolean {
 }
 
 /**
- * From a given specifiers retrieve the most significant to use when creating an alias import
+ * The local name of a specifier bound to the whole Zod module
+ * (`* as X`, `X`, `{ z as X }` or `{ default as X }`), or `null` for any other export.
  */
 export function getNamespaceAliasNameFrom(node: TSESTree.ImportClause): string | null {
   if (
@@ -109,14 +110,8 @@ export function getNamespaceAliasNameFrom(node: TSESTree.ImportClause): string |
     return node.local.name;
   }
 
-  if (
-    // node.type === AST_NODE_TYPES.ImportSpecifier &&
-    node.imported.type === AST_NODE_TYPES.Identifier &&
-    // Search named imports for 'z'
-    node.imported.name === 'z'
-  ) {
-    return node.local.name;
-  }
+  const importedName =
+    node.imported.type === AST_NODE_TYPES.Identifier ? node.imported.name : node.imported.value;
 
-  return null;
+  return importedName === 'z' || importedName === 'default' ? node.local.name : null;
 }

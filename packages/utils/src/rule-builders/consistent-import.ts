@@ -60,26 +60,22 @@ export function buildConsistentImportCreate<TSyntax extends ImportSyntax = Impor
           const { hasOnlyTypeImports, nodes } = importGroup;
           const [firstImportNode, ...othersImportNodes] = nodes;
 
-          /**
-           * Variable to track all specifiers that later are used by {@link getDeclaredVariables}
-           * to add the namespace prefix
-           */
-          const nodesWithVariablesToUpdate: Array<TSESTree.ImportClause> = [];
+          // Specifiers of a single export, whose references get the alias as prefix
+          const specifiersToQualify: Array<TSESTree.ImportClause> = [];
+          // Further whole-module specifiers, whose references get the alias as name
+          const specifiersToRename: Array<TSESTree.ImportClause> = [];
 
           let namespaceAliasName: string | null = null;
 
           for (const specifier of nodes.flatMap((it) => it.specifiers)) {
-            // Search for name to use in the namespace import
-            if (!namespaceAliasName) {
-              namespaceAliasName = getNamespaceAliasNameFrom(specifier);
-              if (namespaceAliasName) {
-                continue;
-              }
+            const aliasName = getNamespaceAliasNameFrom(specifier);
+            if (aliasName === null) {
+              specifiersToQualify.push(specifier);
+            } else if (namespaceAliasName === null) {
+              namespaceAliasName = aliasName;
+            } else {
+              specifiersToRename.push(specifier);
             }
-
-            // If a name isn't found or has already been found,
-            // this specifier must be processed later to add the namespace prefix
-            nodesWithVariablesToUpdate.push(specifier);
           }
 
           if (!namespaceAliasName) {
@@ -118,26 +114,30 @@ export function buildConsistentImportCreate<TSyntax extends ImportSyntax = Impor
             });
           }
 
-          // Setup fixer for all references of all previously specifiers references
-          const allVariables = nodesWithVariablesToUpdate.flatMap((it) =>
-            sourceCode.getDeclaredVariables(it),
-          );
-          const allReferences = allVariables.flatMap((it) => it.references);
-          for (const ref of allReferences) {
-            const { identifier } = ref;
-
-            if (shouldIdentifierBeRenamed(identifier as TSESTree.Identifier)) {
-              context.report({
-                node: identifier,
-                messageId: 'convertUsage',
-                data: { syntax },
-                fix(fixer) {
-                  const newId = `${namespaceAliasName}.${identifier.name}`;
-                  return fixer.replaceText(identifier, newId);
-                },
-              });
+          const reportUsages = (
+            specifiers: Array<TSESTree.ImportClause>,
+            getNewText: (name: string) => string,
+          ): void => {
+            const references = specifiers
+              .flatMap((it) => sourceCode.getDeclaredVariables(it))
+              .flatMap((it) => it.references);
+            for (const { identifier } of references) {
+              if (shouldIdentifierBeRenamed(identifier as TSESTree.Identifier)) {
+                context.report({
+                  node: identifier,
+                  messageId: 'convertUsage',
+                  data: { syntax },
+                  fix(fixer) {
+                    return fixer.replaceText(identifier, getNewText(identifier.name));
+                  },
+                });
+              }
             }
-          }
+          };
+
+          const aliasName = namespaceAliasName;
+          reportUsages(specifiersToQualify, (name) => `${aliasName}.${name}`);
+          reportUsages(specifiersToRename, () => aliasName);
 
           // Remove duplicate imports, if any
           for (const extraImport of othersImportNodes) {

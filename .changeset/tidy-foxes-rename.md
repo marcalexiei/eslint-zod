@@ -5,4 +5,4 @@
 'eslint-plugin-zod-core': patch
 ---
 
-refactor(consistent-import): each plugin declares the import syntaxes it offers
+fix(consistent-import): the autofix no longer writes `z.y.string()` when Zod is imported twice as a whole module

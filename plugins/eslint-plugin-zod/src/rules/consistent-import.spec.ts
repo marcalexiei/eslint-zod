@@ -54,6 +54,35 @@ ruleTester.run(`${consistentImport.name} namespace`, consistentImport, {
 
   invalid: [
     {
+      name: 'named default import',
+      code: dedent`
+        import { default as z } from "zod";
+        const aSchema = z.string();
+      `,
+      errors: [{ messageId: 'changeImportSyntax', data: { syntax: 'namespace' } }],
+      output: dedent`
+        import * as z from "zod";
+        const aSchema = z.string();
+      `,
+    },
+    {
+      name: 'two namespace imports',
+      code: dedent`
+        import * as z from "zod";
+        import * as y from "zod";
+        const aSchema = y.string();
+      `,
+      errors: [
+        { messageId: 'removeDuplicate', line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 3 },
+      ],
+      output: dedent`
+        import * as z from "zod";
+
+        const aSchema = z.string();
+      `,
+    },
+    {
       name: 'named import',
       code: dedent`
         import { z } from "zod";
@@ -521,6 +550,37 @@ ruleTester.run(`${consistentImport.name} default`, consistentImport, {
     },
   ],
   invalid: [
+    {
+      name: 'named default import',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import { default as zod } from 'zod';
+        const aSchema = zod.string();
+      `,
+      errors: [{ messageId: 'changeImportSyntax', data: { syntax: 'default' } }],
+      output: dedent`
+        import zod from 'zod';
+        const aSchema = zod.string();
+      `,
+    },
+    {
+      name: 'default and namespace imports',
+      options: [{ syntax: 'default' }],
+      code: dedent`
+        import z from 'zod';
+        import * as y from 'zod';
+        const aSchema = y.string();
+      `,
+      errors: [
+        { messageId: 'removeDuplicate', line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'default' }, line: 3 },
+      ],
+      output: dedent`
+        import z from 'zod';
+
+        const aSchema = z.string();
+      `,
+    },
     {
       name: 'namespace import',
       options: [{ syntax: 'default' }],

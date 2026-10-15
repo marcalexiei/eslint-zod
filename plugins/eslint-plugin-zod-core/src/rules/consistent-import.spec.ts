@@ -32,6 +32,23 @@ ruleTester.run(`${consistentImport.name} (namespace)`, consistentImport, {
   ],
   invalid: [
     {
+      name: 'two namespace imports',
+      code: dedent`
+        import * as z from 'zod/v4/core';
+        import * as y from 'zod/v4/core';
+        const aSchema = y.string();
+      `,
+      errors: [
+        { messageId: 'removeDuplicate', line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 3 },
+      ],
+      output: dedent`
+        import * as z from 'zod/v4/core';
+
+        const aSchema = z.string();
+      `,
+    },
+    {
       name: 'named import — converted to namespace',
       code: dedent`
         import { $ZodString } from 'zod/v4/core';
