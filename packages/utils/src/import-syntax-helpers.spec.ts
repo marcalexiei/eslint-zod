@@ -98,6 +98,10 @@ describe('getUsageReplacement', () => {
 
     expect(getUsageReplacement(makeIdent('string', parent), 'z.string')).toBeNull();
   });
+
+  it('gives up when the usage has no text', () => {
+    expect(getUsageReplacement(makeIdent('x'), null)).toBeNull();
+  });
 });
 
 describe('getImportSyntax', () => {

@@ -55,9 +55,13 @@ export interface UsageReplacement {
  */
 export function getUsageReplacement(
   node: TSESTree.Identifier,
-  newText: string,
+  newText: string | null,
 ): UsageReplacement | null {
   const { parent } = node;
+
+  if (newText === null) {
+    return null;
+  }
 
   // `{ y }` keeps its key: `{ y: z }`
   if (parent.type === AST_NODE_TYPES.Property && parent.shorthand) {
