@@ -32,6 +32,39 @@ ruleTester.run(`${consistentImport.name} (namespace)`, consistentImport, {
   ],
   invalid: [
     {
+      name: 'aliased named import — qualified by its export name',
+      code: dedent`
+        import { $ZodString as alias } from 'zod/v4/core';
+        export const value = alias;
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' } },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' } },
+      ],
+      output: dedent`
+        import * as z from 'zod/v4/core';
+        export const value = z.$ZodString;
+      `,
+    },
+    {
+      name: 'type-only namespace import followed by a value import',
+      code: dedent`
+        import type * as z from 'zod/v4/core';
+        import { $ZodString } from 'zod/v4/core';
+        export const value = $ZodString;
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' }, line: 1 },
+        { messageId: 'removeDuplicate', line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 3 },
+      ],
+      output: dedent`
+        import * as z from 'zod/v4/core';
+
+        export const value = z.$ZodString;
+      `,
+    },
+    {
       name: 'second namespace import in a shorthand property',
       code: dedent`
         import * as z from 'zod/v4/core';

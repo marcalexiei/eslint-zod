@@ -10,68 +10,38 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 export const IMPORT_SYNTAXES = ['namespace', 'named', 'default'] as const;
 export type ImportSyntax = (typeof IMPORT_SYNTAXES)[number];
 
-export interface ImportGroupData {
-  hasOnlyTypeImports: boolean;
-  nodes: Array<TSESTree.ImportDeclaration>;
+/** The syntax a specifier is written in, or `null` when it is not one of them. */
+export function getImportSyntax(specifier: TSESTree.ImportClause): ImportSyntax | null {
+  if (specifier.type === AST_NODE_TYPES.ImportNamespaceSpecifier) {
+    return 'namespace';
+  }
+  if (specifier.type === AST_NODE_TYPES.ImportDefaultSpecifier) {
+    return 'default';
+  }
+  const { imported } = specifier;
+  return imported.type === AST_NODE_TYPES.Identifier && imported.name === 'z' ? 'named' : null;
+}
+
+/** Whether a specifier binds the whole module: `* as X`, `X`, `{ z as X }` or `{ default as X }`. */
+export function bindsWholeModule(specifier: TSESTree.ImportClause): boolean {
+  if (specifier.type !== AST_NODE_TYPES.ImportSpecifier) {
+    return true;
+  }
+  const { imported } = specifier;
+  const name = imported.type === AST_NODE_TYPES.Identifier ? imported.name : imported.value;
+  return name === 'z' || name === 'default';
 }
 
 /**
- * Determines whether the first import in a group is valid for a given import
- * syntax (`namespace`, `named` or `default`), taking into account whether the group
- * contains only type imports.
- *
- * Rules enforced:
- * - For `named` syntax:
- *   - The first import must have exactly one specifier
- *   - That specifier must be a named import of identifier `z`
- * - For `namespace` syntax:
- *   - The first import must have exactly one namespace specifier
- * - For `default` syntax:
- *   - The first import must have exactly one default specifier
- * - If the group contains only type imports, the first import must explicitly
- *   be declared as `import type`
- *
- * @param group - Metadata describing the import group
- * @param syntax - Expected import syntax for the group
- * @returns `true` if the first import matches the expected syntax and type rules
+ * What a usage of `specifier` becomes once the module is imported as `alias`.
+ * `null` for a string-literal export name, which has no member expression.
  */
-export function isGroupFirstImportKindValidForSyntax(
-  group: ImportGroupData,
-  syntax: ImportSyntax,
-): boolean {
-  const { hasOnlyTypeImports, nodes } = group;
-  const [firstImportNode] = nodes;
-  const { specifiers, importKind } = firstImportNode;
-
-  // All supported syntaxes require exactly one specifier
-  if (specifiers.length !== 1) {
-    return false;
+export function getUsageText(specifier: TSESTree.ImportClause, alias: string): string | null {
+  if (bindsWholeModule(specifier)) {
+    return alias;
   }
-
-  const [specifier] = specifiers;
-
-  // Validate syntax-specific constraints
-  const isValidForSyntax =
-    syntax === 'named'
-      ? specifier.type === AST_NODE_TYPES.ImportSpecifier &&
-        specifier.imported.type === AST_NODE_TYPES.Identifier &&
-        specifier.imported.name === 'z'
-      : specifier.type ===
-        (syntax === 'default'
-          ? AST_NODE_TYPES.ImportDefaultSpecifier
-          : AST_NODE_TYPES.ImportNamespaceSpecifier);
-
-  if (!isValidForSyntax) {
-    return false;
-  }
-
-  // If the group consists only of type imports, the first import
-  // must explicitly use `import type`
-  if (hasOnlyTypeImports) {
-    return importKind === 'type';
-  }
-
-  return true;
+  const { imported } = specifier as TSESTree.ImportSpecifier;
+  return imported.type === AST_NODE_TYPES.Identifier ? `${alias}.${imported.name}` : null;
 }
 
 export interface UsageReplacement {
@@ -107,22 +77,4 @@ export function getUsageReplacement(
   }
 
   return { node, text: newText };
-}
-
-/**
- * The local name of a specifier bound to the whole Zod module
- * (`* as X`, `X`, `{ z as X }` or `{ default as X }`), or `null` for any other export.
- */
-export function getNamespaceAliasNameFrom(node: TSESTree.ImportClause): string | null {
-  if (
-    node.type === AST_NODE_TYPES.ImportDefaultSpecifier ||
-    node.type === AST_NODE_TYPES.ImportNamespaceSpecifier
-  ) {
-    return node.local.name;
-  }
-
-  const importedName =
-    node.imported.type === AST_NODE_TYPES.Identifier ? node.imported.name : node.imported.value;
-
-  return importedName === 'z' || importedName === 'default' ? node.local.name : null;
 }

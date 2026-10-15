@@ -3,8 +3,10 @@ import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import {
+  bindsWholeModule,
+  getImportSyntax,
   getUsageReplacement,
-  isGroupFirstImportKindValidForSyntax,
+  getUsageText,
 } from './import-syntax-helpers.js';
 
 // Internal helpers of the `consistent-import` builder, asserted directly for shapes its fixtures cannot reach.
@@ -17,21 +19,10 @@ function makeIdent(name: string, parent?: TSESTree.Node): TSESTree.Identifier {
   } as unknown as TSESTree.Identifier;
 }
 
-function makeImportDecl(
-  specifiers: Array<TSESTree.ImportClause>,
-  importKind: 'value' | 'type' = 'value',
-): TSESTree.ImportDeclaration {
-  return {
-    type: AST_NODE_TYPES.ImportDeclaration,
-    specifiers,
-    importKind,
-  } as unknown as TSESTree.ImportDeclaration;
-}
-
-function makeNamedSpec(importedName: string): TSESTree.ImportSpecifier {
+function makeNamedSpec(importedName: string, localName = importedName): TSESTree.ImportSpecifier {
   return {
     type: AST_NODE_TYPES.ImportSpecifier,
-    local: makeIdent(importedName),
+    local: makeIdent(localName),
     imported: makeIdent(importedName),
   } as unknown as TSESTree.ImportSpecifier;
 }
@@ -109,68 +100,45 @@ describe('getUsageReplacement', () => {
   });
 });
 
-describe('isGroupFirstImportKindValidForSyntax', () => {
-  it('accepts a lone namespace specifier for `namespace` syntax', () => {
-    const group = { hasOnlyTypeImports: false, nodes: [makeImportDecl([makeNamespaceSpec('z')])] };
-
-    expect(isGroupFirstImportKindValidForSyntax(group, 'namespace')).toBe(true);
+describe('getImportSyntax', () => {
+  it('reads the syntax of each whole-module form', () => {
+    expect(getImportSyntax(makeNamespaceSpec('z'))).toBe('namespace');
+    expect(getImportSyntax(makeDefaultSpec('z'))).toBe('default');
+    expect(getImportSyntax(makeNamedSpec('z', 'zod'))).toBe('named');
   });
 
-  it('accepts a lone default specifier for `default` syntax', () => {
-    const group = { hasOnlyTypeImports: false, nodes: [makeImportDecl([makeDefaultSpec('z')])] };
+  it('gives `null` for any other named import', () => {
+    expect(getImportSyntax(makeNamedSpec('string'))).toBeNull();
+    expect(getImportSyntax(makeNamedSpec('default', 'z'))).toBeNull();
+    // `import { 'z' as z } from 'zod'`
+    expect(getImportSyntax(makeStringLiteralNamedSpec('z'))).toBeNull();
+  });
+});
 
-    expect(isGroupFirstImportKindValidForSyntax(group, 'default')).toBe(true);
-    expect(isGroupFirstImportKindValidForSyntax(group, 'namespace')).toBe(false);
+describe('bindsWholeModule', () => {
+  it('accepts every whole-module form', () => {
+    expect(bindsWholeModule(makeNamespaceSpec('y'))).toBe(true);
+    expect(bindsWholeModule(makeDefaultSpec('y'))).toBe(true);
+    expect(bindsWholeModule(makeNamedSpec('z', 'y'))).toBe(true);
+    expect(bindsWholeModule(makeNamedSpec('default', 'y'))).toBe(true);
+    expect(bindsWholeModule(makeStringLiteralNamedSpec('z'))).toBe(true);
   });
 
-  it('rejects a namespace specifier for `default` syntax', () => {
-    const group = { hasOnlyTypeImports: false, nodes: [makeImportDecl([makeNamespaceSpec('z')])] };
+  it('rejects a single export', () => {
+    expect(bindsWholeModule(makeNamedSpec('string'))).toBe(false);
+  });
+});
 
-    expect(isGroupFirstImportKindValidForSyntax(group, 'default')).toBe(false);
+describe('getUsageText', () => {
+  it('uses the alias for a whole-module import', () => {
+    expect(getUsageText(makeNamespaceSpec('y'), 'z')).toBe('z');
   });
 
-  it('rejects a group whose first import has more than one specifier', () => {
-    const group = {
-      hasOnlyTypeImports: false,
-      nodes: [makeImportDecl([makeNamedSpec('z'), makeNamedSpec('string')])],
-    };
-
-    expect(isGroupFirstImportKindValidForSyntax(group, 'named')).toBe(false);
+  it('qualifies the export name, not the local one', () => {
+    expect(getUsageText(makeNamedSpec('string', 'str'), 'z')).toBe('z.string');
   });
 
-  it('accepts a lone named `z` specifier for `named` syntax', () => {
-    const group = { hasOnlyTypeImports: false, nodes: [makeImportDecl([makeNamedSpec('z')])] };
-
-    expect(isGroupFirstImportKindValidForSyntax(group, 'named')).toBe(true);
-  });
-
-  it('rejects a named specifier that is not `z`', () => {
-    const group = { hasOnlyTypeImports: false, nodes: [makeImportDecl([makeNamedSpec('string')])] };
-
-    expect(isGroupFirstImportKindValidForSyntax(group, 'named')).toBe(false);
-  });
-
-  it('rejects a string-literal import name', () => {
-    // `import { 'z' as z } from 'zod'` — the imported name is not an identifier.
-    const group = {
-      hasOnlyTypeImports: false,
-      nodes: [makeImportDecl([makeStringLiteralNamedSpec('z')])],
-    };
-
-    expect(isGroupFirstImportKindValidForSyntax(group, 'named')).toBe(false);
-  });
-
-  it('requires `import type` when the group has only type imports', () => {
-    const valueImport = {
-      hasOnlyTypeImports: true,
-      nodes: [makeImportDecl([makeNamespaceSpec('z')], 'value')],
-    };
-    const typeImport = {
-      hasOnlyTypeImports: true,
-      nodes: [makeImportDecl([makeNamespaceSpec('z')], 'type')],
-    };
-
-    expect(isGroupFirstImportKindValidForSyntax(valueImport, 'namespace')).toBe(false);
-    expect(isGroupFirstImportKindValidForSyntax(typeImport, 'namespace')).toBe(true);
+  it('gives `null` for a string-literal export name', () => {
+    expect(getUsageText(makeStringLiteralNamedSpec('a-b'), 'z')).toBeNull();
   });
 });

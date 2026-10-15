@@ -1,11 +1,13 @@
 import type { TSESTree } from '@typescript-eslint/types';
+import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import {
-  getNamespaceAliasNameFrom,
+  bindsWholeModule,
+  getImportSyntax,
   getUsageReplacement,
-  isGroupFirstImportKindValidForSyntax,
+  getUsageText,
 } from '../import-syntax-helpers.js';
-import type { ImportGroupData, ImportSyntax, UsageReplacement } from '../import-syntax-helpers.js';
+import type { ImportSyntax } from '../import-syntax-helpers.js';
 import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
@@ -15,126 +17,85 @@ export interface ConsistentImportOptions<TSyntax extends ImportSyntax = ImportSy
 
 type MessageIds = 'changeImportSyntax' | 'removeDuplicate' | 'convertUsage';
 
+/**
+ * Builds `consistent-import`: one import per source, written in `syntax`, every usage rewritten against it.
+ * Fixes nothing in a source when one of its usages has no in-place rewrite.
+ */
 export function buildConsistentImportCreate<TSyntax extends ImportSyntax = ImportSyntax>(
   scope: ZodImportScope,
 ): (
   context: Readonly<RuleContext<MessageIds, [ConsistentImportOptions<TSyntax>]>>,
   options: readonly [ConsistentImportOptions<TSyntax>],
 ) => RuleListener {
-  return function create(context, [options]) {
-    const { syntax } = options;
-
+  return function create(context, [{ syntax }]) {
     const { sourceCode } = context;
 
-    const importGroups: Record<string, ImportGroupData> = {};
-
     return {
-      ImportDeclaration(node): void {
-        const { source, importKind } = node;
-
-        if (!scope.isAllowed(source.value)) {
-          return;
+      Program(program): void {
+        const importsBySource = new Map<string, Array<TSESTree.ImportDeclaration>>();
+        for (const node of program.body) {
+          if (
+            node.type === AST_NODE_TYPES.ImportDeclaration &&
+            scope.isAllowed(node.source.value)
+          ) {
+            importsBySource.set(node.source.value, [
+              ...(importsBySource.get(node.source.value) ?? []),
+              node,
+            ]);
+          }
         }
 
-        importGroups[source.value] ??= {
-          hasOnlyTypeImports: true,
-          nodes: [],
-        };
+        // Each source without an alias of its own gets a distinct one: `z`, `z1`, …
+        let fallbackAliasCount = 0;
 
-        /**
-         * `importKind` is not set by espree
-         * @see https://github.com/marcalexiei/eslint-zod/issues/501
-         */
-        if (importGroups[source.value].hasOnlyTypeImports && importKind !== 'type') {
-          importGroups[source.value].hasOnlyTypeImports = false;
-        }
+        for (const imports of importsBySource.values()) {
+          const [first, ...duplicates] = imports;
+          const specifiers = imports.flatMap((it) => it.specifiers);
+          // `importKind` is not set by espree: https://github.com/marcalexiei/eslint-zod/issues/501
+          const isTypeOnly = imports.every((it) => it.importKind === 'type');
 
-        importGroups[source.value].nodes.push(node);
-      },
-
-      // eslint-disable-next-line @typescript-eslint/naming-convention
-      'Program:exit': function (): void {
-        let namespaceAliasNameIndex = 0;
-
-        for (const importGroup of Object.values(importGroups)) {
-          const { hasOnlyTypeImports, nodes } = importGroup;
-          const [firstImportNode, ...othersImportNodes] = nodes;
-
-          // Specifiers of a single export, whose references get the alias as prefix
-          const specifiersToQualify: Array<TSESTree.ImportClause> = [];
-          // Further whole-module specifiers, whose references get the alias as name
-          const specifiersToRename: Array<TSESTree.ImportClause> = [];
-
-          let namespaceAliasName: string | null = null;
-
-          for (const specifier of nodes.flatMap((it) => it.specifiers)) {
-            const aliasName = getNamespaceAliasNameFrom(specifier);
-            if (aliasName === null) {
-              specifiersToQualify.push(specifier);
-            } else if (namespaceAliasName === null) {
-              namespaceAliasName = aliasName;
-            } else {
-              specifiersToRename.push(specifier);
-            }
+          const aliasSpecifier = specifiers.find(bindsWholeModule);
+          let alias = aliasSpecifier?.local.name;
+          if (alias === undefined) {
+            alias = fallbackAliasCount > 0 ? `z${fallbackAliasCount}` : 'z';
+            fallbackAliasCount += 1;
           }
 
-          if (!namespaceAliasName) {
-            // Each group that needs the fallback gets a distinct name, so two
-            // sources rewritten in the same file don't both become `z`.
-            namespaceAliasName = namespaceAliasNameIndex > 0 ? `z${namespaceAliasNameIndex}` : 'z';
-            namespaceAliasNameIndex += 1;
-          }
-
-          const aliasName = namespaceAliasName;
-          const collectUsages = (
-            specifiers: Array<TSESTree.ImportClause>,
-            getNewText: (name: string) => string,
-          ): Array<{ identifier: TSESTree.Node; replacement: UsageReplacement | null }> =>
-            specifiers
-              .flatMap((it) => sourceCode.getDeclaredVariables(it))
-              .flatMap((it) => it.references)
-              .map(({ identifier }) => ({
-                identifier,
-                replacement: getUsageReplacement(
-                  identifier as TSESTree.Identifier,
-                  getNewText(identifier.name),
-                ),
-              }));
-          const usages = [
-            ...collectUsages(specifiersToQualify, (name) => `${aliasName}.${name}`),
-            ...collectUsages(specifiersToRename, () => aliasName),
-          ];
-          // A usage with no rewrite would lose its binding, so the whole group goes unfixed
+          const usages = specifiers
+            .filter((it) => it !== aliasSpecifier)
+            .flatMap((specifier) => {
+              const text = getUsageText(specifier, alias);
+              return sourceCode
+                .getDeclaredVariables(specifier)
+                .flatMap((variable) => variable.references)
+                .map(({ identifier }) => ({
+                  identifier,
+                  replacement:
+                    text === null
+                      ? null
+                      : getUsageReplacement(identifier as TSESTree.Identifier, text),
+                }));
+            });
           const isFixable = usages.every((it) => it.replacement !== null);
 
-          // Check if first import node is a namespace import
-          const isFirstImportValid = isGroupFirstImportKindValidForSyntax(importGroup, syntax);
+          const isFirstValid =
+            first.specifiers.length === 1 &&
+            getImportSyntax(first.specifiers[0]) === syntax &&
+            // A source used as a value cannot keep a type-only first import
+            (first.importKind === 'type') === isTypeOnly;
 
-          // if first node is invalid turn it into a namespace import
-          if (!isFirstImportValid) {
+          if (!isFirstValid) {
+            const specifierText = {
+              namespace: `* as ${alias}`,
+              named: alias === 'z' ? '{ z }' : `{ z as ${alias} }`,
+              default: alias,
+            }[syntax];
+            const text = `import ${isTypeOnly ? 'type ' : ''}${specifierText} from ${first.source.raw};`;
             context.report({
-              node: firstImportNode,
+              node: first,
               messageId: 'changeImportSyntax',
               data: { syntax },
-              fix: isFixable
-                ? (fixer): RuleFix => {
-                    const importTypeKeyword = hasOnlyTypeImports ? 'type ' : '';
-                    let importSpecifier: string | undefined;
-                    if (syntax === 'named') {
-                      if (aliasName === 'z') {
-                        importSpecifier = '{ z }';
-                      } else {
-                        importSpecifier = `{ z as ${aliasName} }`;
-                      }
-                    } else if (syntax === 'default') {
-                      importSpecifier = aliasName;
-                    } else {
-                      importSpecifier = `* as ${aliasName}`;
-                    }
-                    const newImportText = `import ${importTypeKeyword}${importSpecifier} from ${firstImportNode.source.raw};`;
-                    return fixer.replaceText(firstImportNode, newImportText);
-                  }
-                : null,
+              fix: isFixable ? (fixer): RuleFix => fixer.replaceText(first, text) : null,
             });
           }
 
@@ -150,12 +111,11 @@ export function buildConsistentImportCreate<TSyntax extends ImportSyntax = Impor
             });
           }
 
-          // Remove duplicate imports, if any
-          for (const extraImport of othersImportNodes) {
+          for (const duplicate of duplicates) {
             context.report({
-              node: extraImport,
+              node: duplicate,
               messageId: 'removeDuplicate',
-              fix: isFixable ? (fixer): RuleFix => fixer.removeRange(extraImport.range) : null,
+              fix: isFixable ? (fixer): RuleFix => fixer.removeRange(duplicate.range) : null,
             });
           }
         }
