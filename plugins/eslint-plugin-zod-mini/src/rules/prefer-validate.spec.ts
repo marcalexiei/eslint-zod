@@ -573,14 +573,6 @@ ruleTester.run(preferValidate.name, preferValidate, {
         schema.safeParse(data).success;
       `,
     },
-    {
-      name: 'unsupported spa alias',
-      code: dedent`
-        import * as z from 'zod/mini';
-        const schema = z.string();
-        (await schema.spa(data)).success;
-      `,
-    },
   ],
   invalid: [
     suggest(

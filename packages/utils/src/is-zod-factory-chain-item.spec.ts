@@ -28,7 +28,7 @@ describe('isZodFactoryChainItem', () => {
     expect(isZodFactoryChainItem({ member: memberOf(call) })).toBe(false);
   });
 
-  it('is false after a property access: z.object({}).shape.a.optional()', () => {
+  it('is false after a property access: z.object({ a: z.string() }).shape.a.optional()', () => {
     expect(isZodFactoryChainItem({ member: memberOf(memberOf(memberOf(call))) })).toBe(false);
   });
 });

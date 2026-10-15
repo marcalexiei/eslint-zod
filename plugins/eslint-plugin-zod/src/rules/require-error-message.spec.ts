@@ -166,7 +166,7 @@ ruleTester.run(`${requireErrorMessage.name} (custom)`, requireErrorMessage, {
       name: 'chained method after refine with error message',
       code: `
         import * as z from 'zod';
-        z.custom(() => true, { error: "error msg 2" }).trim();
+        z.custom(() => true, { error: "error msg 2" }).optional();
       `,
     },
   ],

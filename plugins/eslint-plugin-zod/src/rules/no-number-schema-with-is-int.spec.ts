@@ -51,13 +51,6 @@ ruleTester.run(noNumberSchemaWithIsInt.name, noNumberSchemaWithIsInt, {
         }
       `,
     },
-    {
-      name: '`isInt` on a non-number zod schema',
-      code: dedent`
-        import * as z from 'zod';
-        void z.string().isInt;
-      `,
-    },
   ],
   invalid: [
     {

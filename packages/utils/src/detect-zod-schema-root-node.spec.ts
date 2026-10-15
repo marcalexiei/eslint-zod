@@ -97,13 +97,13 @@ describe('detectZodSchemaRootNode', () => {
     expect(detectZodSchemaRootNode(numberCall, imports)).toBeNull();
   });
 
-  it('detects a call followed only by a property access: z.string().shape', () => {
-    const stringCall = makeCall(makeME(makeIdent('z'), 'string'));
-    const shapeME = makeME(stringCall, 'shape');
-    (stringCall as unknown as Record<string, unknown>).parent = shapeME;
+  it('detects a call followed only by a property access: z.object({}).shape', () => {
+    const objectCall = makeCall(makeME(makeIdent('z'), 'object'));
+    const shapeME = makeME(objectCall, 'shape');
+    (objectCall as unknown as Record<string, unknown>).parent = shapeME;
     (shapeME as unknown as Record<string, unknown>).parent = { type: 'ExpressionStatement' };
 
-    expect(detectZodSchemaRootNode(stringCall, imports)?.schemaType).toBe('string');
+    expect(detectZodSchemaRootNode(objectCall, imports)?.schemaType).toBe('object');
   });
 
   it('returns null for calls not in namespaces or named imports', () => {
@@ -173,12 +173,13 @@ describe('detectZodSchemaRootNode', () => {
     expect(result?.methods).toStrictEqual([]);
   });
 
-  it('returns null when the call is the callee of another call: z.custom()()', () => {
-    const customCall = makeCall(makeME(makeIdent('z'), 'custom'));
-    const outerCall = makeCall(customCall);
-    (customCall as unknown as Record<string, unknown>).parent = outerCall;
+  it('returns null when the call is the callee of another call: z.function().implement(fn)(input)', () => {
+    const functionCall = makeCall(makeME(makeIdent('z'), 'function'));
+    const implementCall = makeCall(makeME(functionCall, 'implement'), [makeIdent('fn')]);
+    const outerCall = makeCall(implementCall, [makeIdent('input')]);
+    (implementCall as unknown as Record<string, unknown>).parent = outerCall;
 
-    expect(detectZodSchemaRootNode(customCall, imports)).toBeNull();
+    expect(detectZodSchemaRootNode(implementCall, imports)).toBeNull();
   });
 
   describe('computed property access', () => {

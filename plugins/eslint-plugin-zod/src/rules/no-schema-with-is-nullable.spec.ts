@@ -39,7 +39,8 @@ ruleTester.run(noSchemaWithIsNullable.name, noSchemaWithIsNullable, {
       name: 'non-schema producing zod method in chain',
       code: dedent`
         import * as z from 'zod';
-        void z.unknown().safeParse(null).some.isNullable();
+        interface Column { isNullable(): boolean }
+        void z.custom<Column>().parse(column).isNullable();
       `,
     },
     {

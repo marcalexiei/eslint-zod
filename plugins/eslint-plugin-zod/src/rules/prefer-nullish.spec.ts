@@ -142,8 +142,8 @@ ruleTester.run(preferNullish.name, preferNullish, {
     {
       name: 'named import used as an object — reported, but renaming the callee would delete the member call',
       code: dedent`
-        import { optional, nullable, nullish } from 'zod';
-        optional.foo(nullable(1));
+        import { optional, nullable, nullish, string } from 'zod';
+        optional.call(nullable(string()));
       `,
       errors: [{ messageId: 'preferNullish' }],
       output: null,

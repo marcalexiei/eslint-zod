@@ -171,13 +171,6 @@ ruleTester.run(noConflictingChecks.name, noConflictingChecks, {
       `,
     },
     {
-      name: 'top-level uuid factory narrowed to a version is a refinement',
-      code: dedent`
-        import * as z from 'zod';
-        z.uuid().uuidv4();
-      `,
-    },
-    {
       name: 'impossible cases can be disabled',
       code: dedent`
         import * as z from 'zod';

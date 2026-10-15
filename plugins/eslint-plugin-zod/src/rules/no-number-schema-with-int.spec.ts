@@ -17,7 +17,7 @@ ruleTester.run(noNumberSchemaWithInt.name, noNumberSchemaWithInt, {
     {
       name: 'named import',
       code: dedent`
-        import int from 'zod';
+        import { int } from 'zod';
         int();
       `,
     },

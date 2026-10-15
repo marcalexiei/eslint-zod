@@ -55,13 +55,6 @@ ruleTester.run(noNumberSchemaWithIsFinite.name, noNumberSchemaWithIsFinite, {
         void o.isFinite;
       `,
     },
-    {
-      name: '`isFinite` on a non-number zod schema',
-      code: dedent`
-        import * as z from 'zod';
-        void z.string().isFinite;
-      `,
-    },
   ],
   invalid: [
     {

@@ -158,11 +158,11 @@ ruleTester.run(consistentSchemaVarName.name, consistentSchemaVarName, {
       code: dedent`
         import * as z from 'zod';
         const data1 = z.array(z.string()).parse([]).filter(() => true)
-        const data2 = z.array(z.string()).safeParse([]).filter(() => true)
+        const data2 = z.array(z.string()).safeParse([]).data?.filter(() => true)
         const data3 = z.array(z.string()).encode([]).filter(() => true)
         const data4 = z.array(z.string()).decode([]).filter(() => true)
-        const data5 = z.array(z.string()).safeEncode([]).filter(() => true)
-        const data6 = z.array(z.string()).safeDecode([]).filter(() => true)
+        const data5 = z.array(z.string()).safeEncode([]).data?.filter(() => true)
+        const data6 = z.array(z.string()).safeDecode([]).data?.filter(() => true)
       `,
     },
     {

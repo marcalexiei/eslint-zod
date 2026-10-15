@@ -248,7 +248,7 @@ ruleTester.run(noOptionalAndDefaultTogether.name, noOptionalAndDefaultTogether, 
       name: 'with other methods in between - preferredMethod: default',
       code: dedent`
           import * as z from 'zod';
-          z.string().optional().trim().default("Hello World");
+          z.string().optional().describe("Greeting").default("Hello World");
         `,
       options: [{ preferredMethod: 'default' }],
       errors: [
@@ -259,14 +259,14 @@ ruleTester.run(noOptionalAndDefaultTogether.name, noOptionalAndDefaultTogether, 
       ],
       output: dedent`
           import * as z from 'zod';
-          z.string().trim().default("Hello World");
+          z.string().describe("Greeting").default("Hello World");
         `,
     },
     {
       name: 'with other methods in between - preferredMethod: optional',
       code: dedent`
           import * as z from 'zod';
-          z.string().default("Hello World").trim().optional();
+          z.string().default("Hello World").describe("Greeting").optional();
         `,
       options: [{ preferredMethod: 'optional' }],
       errors: [
@@ -277,7 +277,7 @@ ruleTester.run(noOptionalAndDefaultTogether.name, noOptionalAndDefaultTogether, 
       ],
       output: dedent`
           import * as z from 'zod';
-          z.string().trim().optional();
+          z.string().describe("Greeting").optional();
         `,
     },
     {

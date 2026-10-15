@@ -267,14 +267,6 @@ ruleTester.run(noTransformInRecordKey.name, noTransformInRecordKey, {
       errors: [{ messageId: 'noTransformInRecordKey' }],
     },
     {
-      name: 'named import with map method',
-      code: dedent`
-        import { record, string } from 'zod';
-        const config = record(string().map((v) => v.trim()), string());
-      `,
-      errors: [{ messageId: 'noTransformInRecordKey' }],
-    },
-    {
       name: 'named import with normalize',
       code: dedent`
         import { record, string } from 'zod';
@@ -321,14 +313,6 @@ ruleTester.run(noTransformInRecordKey.name, noTransformInRecordKey, {
         const schema = z.record(z.string().trim(), z.unknown());
         const input = { " id ": "abc-123", "id": "def-456" };
         const result = schema.parse(input);
-      `,
-      errors: [{ messageId: 'noTransformInRecordKey' }],
-    },
-    {
-      name: 'map method on key schema',
-      code: dedent`
-        import * as z from 'zod';
-        const config = z.record(z.string().map((v) => v.trim()), z.unknown());
       `,
       errors: [{ messageId: 'noTransformInRecordKey' }],
     },

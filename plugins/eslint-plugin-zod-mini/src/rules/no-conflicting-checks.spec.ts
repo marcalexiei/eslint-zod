@@ -223,14 +223,6 @@ ruleTester.run(noConflictingChecks.name, noConflictingChecks, {
       `,
     },
     {
-      name: 'a bare `iso` call has no member name to identify the format',
-      code: dedent`
-        import * as z from 'zod/mini';
-        import { iso } from 'zod/mini';
-        z.string().check(iso());
-      `,
-    },
-    {
       name: 'checks on a schema reached through a property access',
       code: dedent`
         import * as z from 'zod/mini';

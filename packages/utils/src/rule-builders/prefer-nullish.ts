@@ -55,7 +55,7 @@ export function buildPreferNullishCreate(
       }
 
       // A named-import schema is normally called bare (`optional(…)`),
-      // but the import can also be used as an object (`optional.foo(…)`),
+      // but the import can also be used as an object (`optional.call(…)`),
       // and that still parses as a `named` schema.
       // Replacing the whole callee there would delete the member call, so decline the fix instead.
       if (callee.type !== AST_NODE_TYPES.Identifier) {

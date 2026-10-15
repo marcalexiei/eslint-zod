@@ -201,19 +201,19 @@ describe('buildZodChainReplacementFix', () => {
     expect(calls.replaceTextRange?.range).toStrictEqual([0, 24]);
   });
 
-  it('preserves args on the replacement method: z.number().min(0) → z.min(0)', () => {
+  it("preserves args on the replacement method: z.string().email('Invalid email') → z.email('Invalid email')", () => {
     const zIdent = makeIdent('z');
-    const numberCall = makeCall(makeME(zIdent, 'number'), [], [0, 10]);
-    const minArg = {
+    const stringCall = makeCall(makeME(zIdent, 'string'), [], [0, 10]);
+    const emailArg = {
       type: AST_NODE_TYPES.Literal,
-      value: 0,
-      raw: '0',
+      value: 'Invalid email',
+      raw: "'Invalid email'",
     } as unknown as TSESTree.Literal;
-    const minCall = makeCall(makeME(numberCall, 'min'), [minArg], [0, 18]);
+    const emailCall = makeCall(makeME(stringCall, 'email'), [emailArg], [0, 34]);
 
     const textMap = new Map<TSESTree.Node, string>([
       [zIdent, 'z'],
-      [minArg, '0'],
+      [emailArg, "'Invalid email'"],
     ]);
     const { fixer, calls } = makeFixer();
 
@@ -221,14 +221,14 @@ describe('buildZodChainReplacementFix', () => {
       sourceCode: makeSourceCode(textMap),
       fixer,
       methods: [
-        { name: 'number', node: numberCall },
-        { name: 'min', node: minCall },
+        { name: 'string', node: stringCall },
+        { name: 'email', node: emailCall },
       ],
       fromIndex: 0,
       toIndex: 1,
-      toMethodName: 'min',
+      toMethodName: 'email',
     });
 
-    expect(calls.replaceTextRange?.text).toBe('z.min(0)');
+    expect(calls.replaceTextRange?.text).toBe("z.email('Invalid email')");
   });
 });

@@ -260,7 +260,7 @@ export function trackZodSchemaImports(
     while (current.type === AST_NODE_TYPES.CallExpression) {
       const { callee } = current as { callee: TSESTree.Expression };
 
-      // Match: z.number(), z.int(), z.min(), etc.
+      // Match: z.number(), z.int(), z.minLength(), etc.
       if (isZodChainMember(callee)) {
         methods.unshift({
           name: callee.property.name,
