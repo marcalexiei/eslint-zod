@@ -3,16 +3,11 @@ import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import {
+  getUsageReplacement,
   isGroupFirstImportKindValidForSyntax,
-  shouldIdentifierBeRenamed,
 } from './import-syntax-helpers.js';
 
-/**
- * Unit spec for the helpers `consistent-import` shares with its fixers. They
- * are part of the package's public surface (re-exported from the
- * `rule-builders/consistent-import` subpath) and cover shapes the rule's own
- * fixtures cannot reach, so they are asserted directly here.
- */
+// Internal helpers of the `consistent-import` builder, asserted directly for shapes its fixtures cannot reach.
 
 function makeIdent(name: string, parent?: TSESTree.Node): TSESTree.Identifier {
   return {
@@ -63,42 +58,54 @@ function makeNamespaceSpec(localName: string): TSESTree.ImportNamespaceSpecifier
   } as unknown as TSESTree.ImportNamespaceSpecifier;
 }
 
-describe('shouldIdentifierBeRenamed', () => {
-  it('renames a plain reference', () => {
+describe('getUsageReplacement', () => {
+  it('replaces a plain reference', () => {
     const node = makeIdent('string', {
       type: AST_NODE_TYPES.CallExpression,
     } as unknown as TSESTree.Node);
 
-    expect(shouldIdentifierBeRenamed(node)).toBe(true);
+    expect(getUsageReplacement(node, 'z.string')).toStrictEqual({ node, text: 'z.string' });
   });
 
-  it('skips the import specifier identifier itself', () => {
-    const node = makeIdent('string', {
-      type: AST_NODE_TYPES.ImportSpecifier,
-    } as unknown as TSESTree.Node);
-
-    expect(shouldIdentifierBeRenamed(node)).toBe(false);
-  });
-
-  it('skips an identifier already qualified by another namespace', () => {
-    // The `array` of `other[array]` — reached through a different object.
-    const parent = {
+  it('replaces a computed key', () => {
+    // The `array` of `other[array]` is still the import binding.
+    const node = makeIdent('array', {
       type: AST_NODE_TYPES.MemberExpression,
       object: makeIdent('other'),
-    } as unknown as TSESTree.Node;
+      computed: true,
+    } as unknown as TSESTree.Node);
 
-    expect(shouldIdentifierBeRenamed(makeIdent('array', parent))).toBe(false);
+    expect(getUsageReplacement(node, 'z.array')).toStrictEqual({ node, text: 'z.array' });
   });
 
-  it('renames an identifier that is the object of a member expression', () => {
-    const objectIdentifier = makeIdent('string');
-    const parent = {
-      type: AST_NODE_TYPES.MemberExpression,
-      object: objectIdentifier,
-    } as unknown as TSESTree.Node;
-    (objectIdentifier as unknown as Record<string, unknown>).parent = parent;
+  it('keeps the key of a shorthand property', () => {
+    const node = makeIdent('y', {
+      type: AST_NODE_TYPES.Property,
+      shorthand: true,
+    } as unknown as TSESTree.Node);
 
-    expect(shouldIdentifierBeRenamed(objectIdentifier)).toBe(true);
+    expect(getUsageReplacement(node, 'z')).toStrictEqual({ node, text: 'y: z' });
+  });
+
+  it('keeps the exported name of an export specifier', () => {
+    const parent = {
+      type: AST_NODE_TYPES.ExportSpecifier,
+      exported: { type: AST_NODE_TYPES.Literal, raw: "'y-y'" },
+    } as unknown as TSESTree.Node;
+
+    expect(getUsageReplacement(makeIdent('y', parent), 'z')).toStrictEqual({
+      node: parent,
+      text: "z as 'y-y'",
+    });
+  });
+
+  it('gives up on exporting a qualified name', () => {
+    const parent = {
+      type: AST_NODE_TYPES.ExportSpecifier,
+      exported: makeIdent('string'),
+    } as unknown as TSESTree.Node;
+
+    expect(getUsageReplacement(makeIdent('string', parent), 'z.string')).toBeNull();
   });
 });
 

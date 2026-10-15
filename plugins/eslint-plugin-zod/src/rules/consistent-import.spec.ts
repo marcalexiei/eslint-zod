@@ -54,6 +54,116 @@ ruleTester.run(`${consistentImport.name} namespace`, consistentImport, {
 
   invalid: [
     {
+      name: 'second namespace import in a shorthand property',
+      code: dedent`
+        import * as z from "zod";
+        import * as y from "zod";
+        export const o = { y };
+      `,
+      errors: [
+        { messageId: 'removeDuplicate', line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 3 },
+      ],
+      output: dedent`
+        import * as z from "zod";
+
+        export const o = { y: z };
+      `,
+    },
+    {
+      name: 'second namespace import in an export specifier',
+      code: dedent`
+        import * as z from "zod";
+        import * as y from "zod";
+        export { y };
+      `,
+      errors: [
+        { messageId: 'removeDuplicate', line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 3 },
+      ],
+      output: dedent`
+        import * as z from "zod";
+
+        export { z as y };
+      `,
+    },
+    {
+      name: 'second namespace import as a computed key',
+      code: dedent`
+        import * as z from "zod";
+        import * as y from "zod";
+        const map = {};
+        export const value = map[y];
+      `,
+      errors: [
+        { messageId: 'removeDuplicate', line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 4 },
+      ],
+      output: dedent`
+        import * as z from "zod";
+
+        const map = {};
+        export const value = map[z];
+      `,
+    },
+    {
+      name: 'named import in a shorthand property',
+      code: dedent`
+        import { string } from "zod";
+        export const o = { string };
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' } },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' } },
+      ],
+      output: dedent`
+        import * as z from "zod";
+        export const o = { string: z.string };
+      `,
+    },
+    {
+      name: 'named import as a computed key',
+      code: dedent`
+        import { string } from "zod";
+        const map = {};
+        export const value = map[string];
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' } },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' } },
+      ],
+      output: dedent`
+        import * as z from "zod";
+        const map = {};
+        export const value = map[z.string];
+      `,
+    },
+    {
+      name: 'named import re-exported — no fix, it cannot export a qualified name',
+      code: dedent`
+        import { string } from "zod";
+        export { string };
+      `,
+      errors: [
+        { messageId: 'changeImportSyntax', data: { syntax: 'namespace' } },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' } },
+      ],
+      output: null,
+    },
+    {
+      name: 'duplicate import re-exported — no fix, it cannot export a qualified name',
+      code: dedent`
+        import * as z from "zod";
+        import { string } from "zod";
+        export { string };
+      `,
+      errors: [
+        { messageId: 'removeDuplicate', line: 2 },
+        { messageId: 'convertUsage', data: { syntax: 'namespace' }, line: 3 },
+      ],
+      output: null,
+    },
+    {
       name: 'named default import',
       code: dedent`
         import { default as z } from "zod";

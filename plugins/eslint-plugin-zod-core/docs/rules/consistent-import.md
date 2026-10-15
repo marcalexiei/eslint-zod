@@ -43,3 +43,8 @@ const mySchema = new $ZodString({ type: 'string', checks: [] });
 import * as core from 'zod/v4/core';
 const mySchema = new core.$ZodString({ type: 'string', checks: [] });
 ```
+
+## Autofix behavior
+
+A re-exported named import (`export { $ZodString }`) is reported without a fix,
+since a qualified name such as `z.$ZodString` cannot be exported in place.

@@ -74,28 +74,39 @@ export function isGroupFirstImportKindValidForSyntax(
   return true;
 }
 
+export interface UsageReplacement {
+  node: TSESTree.Node;
+  text: string;
+}
+
 /**
- * Returns `true` if an identifier node should be renamed by a `consistent-import`
- * fixer. Skips specifier nodes themselves and identifiers already qualified
- * through a different namespace (e.g. the `z` in `z.array`, when the rename
- * target is not `z`).
+ * How a `consistent-import` fixer rewrites a usage of an import binding as `newText`.
+ * `null` when there is no in-place rewrite: `export { string }` cannot export `z.string`.
  */
-export function shouldIdentifierBeRenamed(node: TSESTree.Identifier): boolean {
-  // Skip import specifier nodes themselves
-  if (node.parent.type === AST_NODE_TYPES.ImportSpecifier) {
-    return false;
+export function getUsageReplacement(
+  node: TSESTree.Identifier,
+  newText: string,
+): UsageReplacement | null {
+  const { parent } = node;
+
+  // `{ y }` keeps its key: `{ y: z }`
+  if (parent.type === AST_NODE_TYPES.Property && parent.shorthand) {
+    return { node, text: `${node.name}: ${newText}` };
   }
 
-  // Skip if already qualified, e.g. z.array
-  if (
-    node.parent.type === AST_NODE_TYPES.MemberExpression &&
-    node.parent.object.type === AST_NODE_TYPES.Identifier &&
-    node.parent.object.name !== node.name
-  ) {
-    return false;
+  // `export { y }` keeps its exported name: `export { z as y }`
+  if (parent.type === AST_NODE_TYPES.ExportSpecifier) {
+    if (newText.includes('.')) {
+      return null;
+    }
+    const exportedName =
+      parent.exported.type === AST_NODE_TYPES.Identifier
+        ? parent.exported.name
+        : parent.exported.raw;
+    return { node: parent, text: `${newText} as ${exportedName}` };
   }
 
-  return true;
+  return { node, text: newText };
 }
 
 /**

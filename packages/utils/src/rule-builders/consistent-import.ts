@@ -2,11 +2,11 @@ import type { TSESTree } from '@typescript-eslint/types';
 
 import {
   getNamespaceAliasNameFrom,
+  getUsageReplacement,
   isGroupFirstImportKindValidForSyntax,
-  shouldIdentifierBeRenamed,
 } from '../import-syntax-helpers.js';
-import type { ImportGroupData, ImportSyntax } from '../import-syntax-helpers.js';
-import type { RuleContext, RuleListener } from '../rule-types.js';
+import type { ImportGroupData, ImportSyntax, UsageReplacement } from '../import-syntax-helpers.js';
+import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 export interface ConsistentImportOptions<TSyntax extends ImportSyntax = ImportSyntax> {
@@ -85,6 +85,28 @@ export function buildConsistentImportCreate<TSyntax extends ImportSyntax = Impor
             namespaceAliasNameIndex += 1;
           }
 
+          const aliasName = namespaceAliasName;
+          const collectUsages = (
+            specifiers: Array<TSESTree.ImportClause>,
+            getNewText: (name: string) => string,
+          ): Array<{ identifier: TSESTree.Node; replacement: UsageReplacement | null }> =>
+            specifiers
+              .flatMap((it) => sourceCode.getDeclaredVariables(it))
+              .flatMap((it) => it.references)
+              .map(({ identifier }) => ({
+                identifier,
+                replacement: getUsageReplacement(
+                  identifier as TSESTree.Identifier,
+                  getNewText(identifier.name),
+                ),
+              }));
+          const usages = [
+            ...collectUsages(specifiersToQualify, (name) => `${aliasName}.${name}`),
+            ...collectUsages(specifiersToRename, () => aliasName),
+          ];
+          // A usage with no rewrite would lose its binding, so the whole group goes unfixed
+          const isFixable = usages.every((it) => it.replacement !== null);
+
           // Check if first import node is a namespace import
           const isFirstImportValid = isGroupFirstImportKindValidForSyntax(importGroup, syntax);
 
@@ -94,59 +116,46 @@ export function buildConsistentImportCreate<TSyntax extends ImportSyntax = Impor
               node: firstImportNode,
               messageId: 'changeImportSyntax',
               data: { syntax },
-              fix(fixer) {
-                const importTypeKeyword = hasOnlyTypeImports ? 'type ' : '';
-                let importSpecifier: string | undefined;
-                if (syntax === 'named') {
-                  if (namespaceAliasName === 'z') {
-                    importSpecifier = '{ z }';
-                  } else {
-                    importSpecifier = `{ z as ${namespaceAliasName} }`;
+              fix: isFixable
+                ? (fixer): RuleFix => {
+                    const importTypeKeyword = hasOnlyTypeImports ? 'type ' : '';
+                    let importSpecifier: string | undefined;
+                    if (syntax === 'named') {
+                      if (aliasName === 'z') {
+                        importSpecifier = '{ z }';
+                      } else {
+                        importSpecifier = `{ z as ${aliasName} }`;
+                      }
+                    } else if (syntax === 'default') {
+                      importSpecifier = aliasName;
+                    } else {
+                      importSpecifier = `* as ${aliasName}`;
+                    }
+                    const newImportText = `import ${importTypeKeyword}${importSpecifier} from ${firstImportNode.source.raw};`;
+                    return fixer.replaceText(firstImportNode, newImportText);
                   }
-                } else if (syntax === 'default') {
-                  importSpecifier = namespaceAliasName;
-                } else {
-                  importSpecifier = `* as ${namespaceAliasName}`;
-                }
-                const newImportText = `import ${importTypeKeyword}${importSpecifier} from ${firstImportNode.source.raw};`;
-                return fixer.replaceText(firstImportNode, newImportText);
-              },
+                : null,
             });
           }
 
-          const reportUsages = (
-            specifiers: Array<TSESTree.ImportClause>,
-            getNewText: (name: string) => string,
-          ): void => {
-            const references = specifiers
-              .flatMap((it) => sourceCode.getDeclaredVariables(it))
-              .flatMap((it) => it.references);
-            for (const { identifier } of references) {
-              if (shouldIdentifierBeRenamed(identifier as TSESTree.Identifier)) {
-                context.report({
-                  node: identifier,
-                  messageId: 'convertUsage',
-                  data: { syntax },
-                  fix(fixer) {
-                    return fixer.replaceText(identifier, getNewText(identifier.name));
-                  },
-                });
-              }
-            }
-          };
-
-          const aliasName = namespaceAliasName;
-          reportUsages(specifiersToQualify, (name) => `${aliasName}.${name}`);
-          reportUsages(specifiersToRename, () => aliasName);
+          for (const { identifier, replacement } of usages) {
+            context.report({
+              node: identifier,
+              messageId: 'convertUsage',
+              data: { syntax },
+              fix:
+                isFixable && replacement
+                  ? (fixer): RuleFix => fixer.replaceText(replacement.node, replacement.text)
+                  : null,
+            });
+          }
 
           // Remove duplicate imports, if any
           for (const extraImport of othersImportNodes) {
             context.report({
               node: extraImport,
               messageId: 'removeDuplicate',
-              fix(fixer) {
-                return fixer.removeRange(extraImport.range);
-              },
+              fix: isFixable ? (fixer): RuleFix => fixer.removeRange(extraImport.range) : null,
             });
           }
         }

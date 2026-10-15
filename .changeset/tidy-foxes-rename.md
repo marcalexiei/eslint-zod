@@ -5,4 +5,4 @@
 'eslint-plugin-zod-core': patch
 ---
 
-fix(consistent-import): the autofix no longer writes `z.y.string()` when Zod is imported twice as a whole module
+fix(consistent-import): the autofix no longer breaks a second whole-module import, a shorthand property, a computed key or a re-export

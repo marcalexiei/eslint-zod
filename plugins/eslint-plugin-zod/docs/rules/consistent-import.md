@@ -194,6 +194,9 @@ When fixing is applied, the rule will:
 - Update all Zod usages to use the correct namespace or alias.
 - Preserve `import type` when the file only contains type imports.
 
+A re-exported named import (`export { string }`) is reported without a fix,
+since a qualified name such as `z.string` cannot be exported in place.
+
 ## Further Reading
 
 - [Zod - Installation](https://zod.dev/?id=installation)
