@@ -1,5 +1,15 @@
 # @eslint-zod/utils
 
+## 6.2.0
+
+### Minor Changes
+
+- [#566](https://github.com/marcalexiei/eslint-zod/pull/566) [`020a144`](https://github.com/marcalexiei/eslint-zod/commit/020a144e135ed51dae52edc3074963c518a1082f) - feat(consistent-import): add the `default` syntax (`import z from 'zod'`)
+
+### Patch Changes
+
+- [#566](https://github.com/marcalexiei/eslint-zod/pull/566) [`020a144`](https://github.com/marcalexiei/eslint-zod/commit/020a144e135ed51dae52edc3074963c518a1082f) - fix(consistent-import): the autofix no longer breaks code nor drops comments, and imports inside `declare module` blocks are checked on their own
+
 ## 6.1.0
 
 **Installing this package no longer pulls in `eslint`.**
