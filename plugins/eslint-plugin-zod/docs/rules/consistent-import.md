@@ -58,8 +58,8 @@ it avoids named import collisions and makes usage explicit (`z.string()`, `z.obj
 
 Only `import * as z` is tree-shaken by every bundler
 ([zod#4433](https://github.com/colinhacks/zod/issues/4433#issuecomment-2921500831)).
-`named` and `default` are tree-shaken by Rollup and Webpack, and by neither under esbuild
-([evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)).
+`named` and `default` (from Zod 4.5.0) are tree-shaken by Rollup and Webpack,
+and by neither under esbuild ([evanw/esbuild#1420](https://github.com/evanw/esbuild/issues/1420)).
 
 If you pick `default`, use Zod ≥ 4.5.0:
 
