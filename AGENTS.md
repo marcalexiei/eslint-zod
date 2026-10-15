@@ -112,7 +112,7 @@ AST helpers exported from `@eslint-zod/utils`:
 - `zodImportScope` / `zodMiniImportScope` / `zodCoreImportScope` — pre-built `ZodImportScope` instances; use `scope.isAllowed(source)` to check whether a source belongs to the plugin's scope
 - `ZOD_NON_SCHEMA_PRODUCING_METHODS` — array of method names that do not return a schema (parse, codec, error formatters)
 - `isZodSchemaFactoryName(name)` / `isZodSchemaFactoryCall(meta)` — whether a factory, or a detected chain, builds a schema.
-  Detection accepts any `z.foo()`, so a rule acting on "this is a schema" must gate on the call form —
+  Detection accepts any `z.<name>()`, so a rule acting on "this is a schema" must gate on the call form —
   otherwise it reports `z.toJSONSchema(schema)` and `z.prettifyError(err)` too
 - `isZodNonSchemaHelperCall(meta)` — the weaker gate for the same problem: it skips the top-level helpers
   but keeps standalone checks (`z.minLength(1)`), which are part of a schema expression without being factories.
