@@ -1,11 +1,25 @@
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
+import type { ZodTypeChangingMethod } from '../zod-type-changing-methods.js';
 import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
 
-export function buildNoDuplicateSchemaMethodsCreate(
+/**
+ * `TExcluded` with every entry the rule can never reach replaced by the reason,
+ * so listing one is a type error that says why.
+ * A list typed as plain `string` passes unchecked: declare it `as const`.
+ */
+export type NoDuplicateSchemaMethodsExclusions<TExcluded extends ReadonlyArray<string>> = {
+  readonly [K in keyof TExcluded]: TExcluded[K] extends ZodTypeChangingMethod
+    ? `'${TExcluded[K]}' starts a new chain segment, so excluding it is dead code`
+    : TExcluded[K];
+};
+
+export function buildNoDuplicateSchemaMethodsCreate<const TExcluded extends ReadonlyArray<string>>(
   scope: ZodImportScope,
-  excludedMethods: ReadonlyArray<string>,
+  excludedMethods: NoDuplicateSchemaMethodsExclusions<TExcluded>,
 ): (context: Readonly<RuleContext<'noDuplicateSchemaMethod'>>) => RuleListener {
+  const excluded: ReadonlyArray<string> = excludedMethods;
+
   return function create(context) {
     const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
 
@@ -21,7 +35,7 @@ export function buildNoDuplicateSchemaMethodsCreate(
             continue;
           }
 
-          if (excludedMethods.includes(method.name)) {
+          if (excluded.includes(method.name)) {
             continue;
           }
 

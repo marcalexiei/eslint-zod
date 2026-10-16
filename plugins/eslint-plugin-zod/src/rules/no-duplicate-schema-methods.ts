@@ -1,3 +1,4 @@
+import type { ZodMethodName } from '@eslint-zod/tooling/zod-api';
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildNoDuplicateSchemaMethodsCreate } from '@eslint-zod/utils/rule-builders/no-duplicate-schema-methods';
 
@@ -7,8 +8,6 @@ import { createZodPluginRule } from '../meta.js';
  * Methods excluded from duplicate-call detection because they are intentionally
  * called more than once in a single schema chain in the `zod` (full) API.
  *
- * - `and` / `or` — each call adds an intersection / union branch
- * - `array` — each call wraps the previous schema in another array layer
  * - `check` / `with` — each call registers additional `$ZodCheck` validators
  * - `endsWith` / `includes` / `startsWith` / `regex` — each call adds an
  *   independent string constraint; calling one twice with different values
@@ -17,14 +16,13 @@ import { createZodPluginRule } from '../meta.js';
  * - `meta` — each call merges more metadata
  * - `multipleOf` — two divisors constrain independently
  * - `overwrite` — each call applies an independent transformation
- * - `pipe` — each call pipes the output through another schema
  * - `refine` / `superRefine` — each call adds an independent refinement
  * - `register` — each call registers the schema in a different registry
- * - `transform` — each call adds a transformation step
+ *
+ * Type-changing methods (`and`, `array`, `or`, `pipe`, `transform`) need no entry:
+ * each starts a new chain segment, so the builder rejects them here.
  */
 const EXCLUDED_METHODS = [
-  'and',
-  'array',
   'check',
   'endsWith',
   'extend',
@@ -33,19 +31,16 @@ const EXCLUDED_METHODS = [
   'meta',
   'multipleOf',
   'omit',
-  'or',
   'overwrite',
   'pick',
-  'pipe',
   'refine',
   'regex',
   'register',
   'safeExtend',
   'startsWith',
   'superRefine',
-  'transform',
   'with',
-] as const;
+] as const satisfies ReadonlyArray<ZodMethodName>;
 
 export const noDuplicateSchemaMethods = createZodPluginRule({
   name: 'no-duplicate-schema-methods',

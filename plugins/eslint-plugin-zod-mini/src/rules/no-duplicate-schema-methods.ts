@@ -1,3 +1,4 @@
+import type { ZodMiniMethodName } from '@eslint-zod/tooling/zod-api';
 import { zodMiniImportScope } from '@eslint-zod/utils';
 import { buildNoDuplicateSchemaMethodsCreate } from '@eslint-zod/utils/rule-builders/no-duplicate-schema-methods';
 
@@ -15,7 +16,11 @@ import { createZodMiniPluginRule } from '../meta.js';
  * functions in `zod/mini`, not chain methods, so they never appear as
  * duplicates in a method chain.
  */
-const EXCLUDED_METHODS = ['check', 'register', 'with'] as const;
+const EXCLUDED_METHODS = [
+  'check',
+  'register',
+  'with',
+] as const satisfies ReadonlyArray<ZodMiniMethodName>;
 
 export const noDuplicateSchemaMethods = createZodMiniPluginRule({
   name: 'no-duplicate-schema-methods',

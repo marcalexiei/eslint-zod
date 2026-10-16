@@ -1,3 +1,4 @@
+import type { ZodExportName, ZodIsoMemberName, ZodMethodName } from '@eslint-zod/tooling/zod-api';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import type { ZodSchemaConstraint } from './collect-zod-schema-constraints.js';
@@ -51,12 +52,11 @@ const ISO_FORMAT_NAMES = ZOD_STRING_FORMAT_METHODS.map(
   ({ replacementMethodName }) => replacementMethodName,
 ).filter((name) => name.startsWith('iso.'));
 
-/**
- * Every known check by canonical name — the standalone `$ZodCheck` vocabulary
- * (`minLength`, `gte`, …) plus the string formats, which behave like checks
- * whether they are written as a factory (`z.uuid()`) or chained on a string.
- */
-const CHECK_DESCRIPTORS = new Map<string, ZodCheckDescriptor>([
+/** A canonical check name: a standalone check, a chained-only spelling (`nonempty`) or an `iso.*` member. */
+type CanonicalCheckName = ZodExportName | ZodIsoMemberName | ZodMethodName;
+
+/** The checks with a meaning of their own; the string formats are added below. */
+const CHECK_DESCRIPTOR_ENTRIES: ReadonlyArray<readonly [CanonicalCheckName, ZodCheckDescriptor]> = [
   // length
   [
     'minLength',
@@ -121,6 +121,15 @@ const CHECK_DESCRIPTORS = new Map<string, ZodCheckDescriptor>([
   ['lowercase', { appliesTo: STRING, casing: 'lowercase' }],
   ['uppercase', { appliesTo: STRING, casing: 'uppercase' }],
   ['regex', { appliesTo: STRING }],
+];
+
+/**
+ * Every known check by canonical name — the standalone `$ZodCheck` vocabulary
+ * (`minLength`, `gte`, …) plus the string formats, which behave like checks
+ * whether they are written as a factory (`z.uuid()`) or chained on a string.
+ */
+const CHECK_DESCRIPTORS = new Map<string, ZodCheckDescriptor>([
+  ...CHECK_DESCRIPTOR_ENTRIES,
   // string formats — the top-level factories plus the dotted `iso.*` members
   ...[...ZOD_STRING_FORMAT_NAMES, ...ISO_FORMAT_NAMES].map((name): [string, ZodCheckDescriptor] => [
     name,
@@ -133,26 +142,28 @@ const CHECK_DESCRIPTORS = new Map<string, ZodCheckDescriptor>([
  * type. `step` is the deprecated spelling of `multipleOf`; the rest are spelled
  * the same either way.
  */
-const CHAINED_COMMON: ReadonlyArray<[string, string]> = [
-  ...[
-    'gt',
-    'gte',
-    'lt',
-    'lte',
-    'positive',
-    'negative',
-    'nonnegative',
-    'nonpositive',
-    'multipleOf',
-    'int',
-    'includes',
-    'startsWith',
-    'endsWith',
-    'lowercase',
-    'uppercase',
-    'regex',
-    'nonempty',
-  ].map((name): [string, string] => [name, name]),
+const CHAINED_COMMON: ReadonlyArray<readonly [ZodMethodName, CanonicalCheckName]> = [
+  ...(
+    [
+      'gt',
+      'gte',
+      'lt',
+      'lte',
+      'positive',
+      'negative',
+      'nonnegative',
+      'nonpositive',
+      'multipleOf',
+      'int',
+      'includes',
+      'startsWith',
+      'endsWith',
+      'lowercase',
+      'uppercase',
+      'regex',
+      'nonempty',
+    ] as const
+  ).map((name): [ZodMethodName, CanonicalCheckName] => [name, name]),
   ['step', 'multipleOf'],
 ];
 
@@ -161,42 +172,50 @@ const CHAINED_COMMON: ReadonlyArray<[string, string]> = [
  * factory that replaced them, so a chained format and a top-level one compare
  * as the same check.
  */
-const CHAINED_STRING_FORMATS: ReadonlyArray<[string, string]> = ZOD_STRING_FORMAT_METHODS.map(
-  ({ sourceMethodName, replacementMethodName }): [string, string] => [
-    sourceMethodName,
-    replacementMethodName,
-  ],
-);
+const CHAINED_STRING_FORMATS: ReadonlyArray<readonly [ZodMethodName, CanonicalCheckName]> =
+  ZOD_STRING_FORMAT_METHODS.map(
+    ({ sourceMethodName, replacementMethodName }): [ZodMethodName, CanonicalCheckName] => [
+      sourceMethodName,
+      replacementMethodName,
+    ],
+  );
+
+/** `.min()` / `.max()` bound a length, a value or a size, and `.length()` / `.size()` pin one. */
+const LENGTH_BOUNDS: ReadonlyArray<readonly [ZodMethodName, CanonicalCheckName]> = [
+  ['min', 'minLength'],
+  ['max', 'maxLength'],
+  ['length', 'length'],
+];
+const VALUE_BOUNDS: ReadonlyArray<readonly [ZodMethodName, CanonicalCheckName]> = [
+  ['min', 'gte'],
+  ['max', 'lte'],
+];
+const SIZE_BOUNDS: ReadonlyArray<readonly [ZodMethodName, CanonicalCheckName]> = [
+  ['min', 'minSize'],
+  ['max', 'maxSize'],
+  ['size', 'size'],
+];
 
 /**
  * Chained spellings → canonical check names, per base type. `.min()`/`.max()`
  * are type-dependent: length bounds on strings/arrays, value bounds on
  * numbers/bigints/dates, size bounds on sets/maps.
  */
-const CHAINED_CANONICAL = new Map<ZodSchemaBaseType, Map<string, string>>([
-  [
-    'string',
-    new Map([
-      ...CHAINED_COMMON,
-      ...CHAINED_STRING_FORMATS,
-      ['min', 'minLength'],
-      ['max', 'maxLength'],
-      ['length', 'length'],
-    ]),
-  ],
-  [
-    'array',
-    new Map([...CHAINED_COMMON, ['min', 'minLength'], ['max', 'maxLength'], ['length', 'length']]),
-  ],
-  ['number', new Map([...CHAINED_COMMON, ['min', 'gte'], ['max', 'lte']])],
-  ['bigint', new Map([...CHAINED_COMMON, ['min', 'gte'], ['max', 'lte']])],
-  ['date', new Map([...CHAINED_COMMON, ['min', 'gte'], ['max', 'lte']])],
-  ['set', new Map([...CHAINED_COMMON, ['min', 'minSize'], ['max', 'maxSize'], ['size', 'size']])],
-  ['map', new Map([...CHAINED_COMMON, ['min', 'minSize'], ['max', 'maxSize'], ['size', 'size']])],
+const CHAINED_CANONICAL = new Map<ZodSchemaBaseType, ReadonlyMap<string, string>>([
+  ['string', new Map([...CHAINED_COMMON, ...CHAINED_STRING_FORMATS, ...LENGTH_BOUNDS])],
+  ['array', new Map([...CHAINED_COMMON, ...LENGTH_BOUNDS])],
+  ['number', new Map([...CHAINED_COMMON, ...VALUE_BOUNDS])],
+  ['bigint', new Map([...CHAINED_COMMON, ...VALUE_BOUNDS])],
+  ['date', new Map([...CHAINED_COMMON, ...VALUE_BOUNDS])],
+  ['set', new Map([...CHAINED_COMMON, ...SIZE_BOUNDS])],
+  ['map', new Map([...CHAINED_COMMON, ...SIZE_BOUNDS])],
 ]);
 
 /** `zod/mini` exports these as second names for `gte` and `lte`. */
-const CHECK_ARGUMENT_ALIASES = new Map([
+const CHECK_ARGUMENT_ALIASES: ReadonlyMap<string, string> = new Map<
+  ZodExportName,
+  CanonicalCheckName
+>([
   ['minimum', 'gte'],
   ['maximum', 'lte'],
 ]);

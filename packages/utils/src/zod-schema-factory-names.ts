@@ -1,16 +1,11 @@
+import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
+
 import type { ZodSchemaMeta } from './detect-zod-schema-root-node.js';
 import { getZodChainedMethodNames } from './get-zod-chained-method-names.js';
 import { ZOD_BASE_TYPE_NAMES } from './get-zod-schema-base-type.js';
 
-/**
- * Every top-level Zod export whose call evaluates to a schema, across API styles.
- * `iso` and `coerce` are absent: only their members are called.
- * Builds on {@link ZOD_BASE_TYPE_NAMES} rather than restating it.
- */
-export const ZOD_SCHEMA_FACTORY_NAMES = Object.freeze([
-  // every factory with a base type; `iso` is a namespace, never called itself
-  ...ZOD_BASE_TYPE_NAMES.filter((name) => name !== 'iso'),
-
+/** The factories {@link ZOD_BASE_TYPE_NAMES} does not map. */
+const FACTORIES_WITHOUT_BASE_TYPE: ReadonlyArray<ZodExportName> = [
   // scalars with no base-type mapping
   'nan',
   'null',
@@ -77,6 +72,17 @@ export const ZOD_SCHEMA_FACTORY_NAMES = Object.freeze([
   'function',
   'instanceof',
   'json',
+];
+
+/**
+ * Every top-level Zod export whose call evaluates to a schema, across API styles.
+ * `iso` and `coerce` are absent: only their members are called.
+ * Builds on {@link ZOD_BASE_TYPE_NAMES} rather than restating it.
+ */
+export const ZOD_SCHEMA_FACTORY_NAMES: ReadonlyArray<string> = Object.freeze([
+  // every factory with a base type; `iso` is a namespace, never called itself
+  ...ZOD_BASE_TYPE_NAMES.filter((name) => name !== 'iso'),
+  ...FACTORIES_WITHOUT_BASE_TYPE,
 ]);
 
 const FACTORY_NAMES = new Set<string>(ZOD_SCHEMA_FACTORY_NAMES);
@@ -87,7 +93,7 @@ export function isZodSchemaFactoryName(name: string): boolean {
 }
 
 /** Namespaces on `z` that are never called themselves — their members are the factories. */
-const FACTORY_NAMESPACES: ReadonlySet<string> = new Set(['iso', 'coerce']);
+const FACTORY_NAMESPACES: ReadonlySet<string> = new Set<ZodExportName>(['iso', 'coerce']);
 
 /**
  * True when a detected chain evaluates to a schema, i.e. its factory builds one.

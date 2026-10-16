@@ -26,6 +26,7 @@ pnpm monorepo containing three ESLint plugins and a shared utilities package for
 | `@eslint-zod/tooling/vitest/rule-tester-cases` | `src/vitest/rule-tester-cases.ts`   | `createSuggestionCases(rule, { messageId, suggestionMessageId, data? })` |
 | `@eslint-zod/tooling/tsdown`                   | `src/tsdown/index.ts`               | `definePluginTsdownConfig(overrides?)`                                   |
 | `@eslint-zod/tooling/eslint-doc-generator`     | `src/eslint-doc-generator/index.ts` | `eslintDocGeneratorConfig`                                               |
+| `@eslint-zod/tooling/zod-api`                  | `src/zod-api/index.ts`              | types derived from zod's declarations: method, export and `iso` names    |
 
 Every one of those tools is invoked per package, so each package keeps its own config file — reduced to a call or a re-export. Two constraints shape the package, both learned from CI:
 
@@ -123,10 +124,17 @@ AST helpers exported from `@eslint-zod/utils`:
 
 `canonicalizeZodConstraintName(constraint, baseType)` / `getZodCheckDescriptor(name)` (`zod-check-vocabulary.ts`) — **the single source of truth for what a check is called and what it means.** Chained spellings are type-dependent (`.min()` is `minLength` on a string, `gte` on a number, `minSize` on a set) and deprecated chained formats reduce to their top-level replacement (`.datetime()` → `iso.datetime`). Rules must canonicalize through this rather than keeping a private spelling table — that duplication is what the module exists to prevent.
 
-Three conventions the utils package holds to:
+Four conventions the utils package holds to:
 
 - **Lookup misses return `null`**, not `undefined` — `getZodSchemaBaseType`, `getZodCheckDescriptor`, `canonicalizeZodConstraintName`. Chosen for explicitness over matching `Map.get`; `?? null` the map lookup.
 - **The `ZOD_*` tables are `Object.freeze`d** at runtime, not just typed `readonly`, and a spec asserts it. Do not deep-freeze entries with a module-level loop — a bare statement conflicts with `sideEffects: false` and a bundler may drop it.
+- **A table of zod names is checked against zod's own declarations**, so a name zod does not have is a type error.
+  The types come from `@eslint-zod/tooling/zod-api` (`ZodMethodName`, `ZodMiniMethodName`, `ZodExportName`, `ZodIsoMemberName`), in utils and in the plugins alike.
+  They must never reach published declarations, so an exported table keeps `ReadonlyArray<string>` and checks its entries with a type argument: `Object.freeze<ReadonlyArray<ZodMethodName>>([…])`.
+  A lookup does the same, since it is queried with any string: `const X: ReadonlySet<string> = new Set<ZodExportName>([…])`, or `ReadonlyMap` and `new Map<…>`.
+  A module-local list that is only iterated or spread takes the annotation directly (`ReadonlyArray<ZodExportName>`); name the literal part of a mixed table that way and spread it.
+  `as const satisfies` is for a list whose literal types are read elsewhere (a derived type, the builder's reachability check), and `'name' satisfies ZodMethodName` for one inline name.
+  It caught `preprocess` in `ZOD_TYPE_CHANGING_METHODS`, which no zod schema chains.
 - **The root barrel is a public toolkit, not the plugins' internal surface.** Several root exports have no consumer outside `packages/utils/src/`; they stay exported because they are coherent primitives an external rule author would need, and they are documented in `packages/utils/README.md`. The bar for adding a root export is therefore that it makes sense to someone writing their own Zod rule — not merely that a second file in this repo needs it. Helpers that fail that bar stay module-local (see `ZodImports`, `getPropertyName`).
 
 `ZOD_STRING_FORMAT_METHODS` — deprecated `z.string().<format>()` methods paired with the top-level factory replacing each. Read two ways: as a migration (`prefer-top-level-string-formats`) and as canonicalization (`no-conflicting-checks`). Related but distinct from `ZOD_STRING_FORMAT_NAMES`, which lists top-level factory names including formats that never had a chained spelling.

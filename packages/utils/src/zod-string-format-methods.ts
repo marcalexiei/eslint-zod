@@ -1,3 +1,5 @@
+import type { ZodExportName, ZodIsoMemberName, ZodMethodName } from '@eslint-zod/tooling/zod-api';
+
 /**
  * Deprecated `z.string().<format>()` methods and the top-level factory that
  * replaces each of them.
@@ -42,7 +44,10 @@ export const ZOD_STRING_FORMAT_METHODS = Object.freeze([
   { sourceMethodName: 'uuidv6', replacementMethodName: 'uuidv6' },
   { sourceMethodName: 'uuidv7', replacementMethodName: 'uuidv7' },
   { sourceMethodName: 'xid', replacementMethodName: 'xid' },
-] as const);
+] as const satisfies ReadonlyArray<{
+  sourceMethodName: ZodMethodName;
+  replacementMethodName: ZodExportName | ZodIsoMemberName;
+}>);
 
 /** Name of a deprecated `z.string().<format>()` method. */
 export type ZodStringFormatMethodName =

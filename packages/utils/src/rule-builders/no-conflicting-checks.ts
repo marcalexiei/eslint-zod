@@ -1,3 +1,4 @@
+import type { ZodExportName, ZodIsoMemberName, ZodMethodName } from '@eslint-zod/tooling/zod-api';
 import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
@@ -13,7 +14,10 @@ import { ZOD_MUTATING_CHECK_NAMES } from '../zod-mutating-check-names.js';
 import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
 
 /** Checks whose callback may rewrite the value. */
-const CALLBACK_CHECK_NAMES: ReadonlyArray<string> = ['check', 'superRefine'];
+const CALLBACK_CHECK_NAMES: ReadonlySet<string> = new Set<ZodExportName | ZodMethodName>([
+  'check',
+  'superRefine',
+]);
 
 /** Options contract implemented by each plugin's rule. */
 export interface NoConflictingChecksOptions {
@@ -34,7 +38,10 @@ export type NoConflictingChecksMessageIds =
   | 'inapplicableCheck';
 
 /** Length range `[min, max]` of well-known fixed-shape formats. */
-const FORMAT_LENGTH_RANGES = new Map<string, [number, number]>([
+const FORMAT_LENGTH_RANGES: ReadonlyMap<string, [number, number]> = new Map<
+  ZodExportName | ZodIsoMemberName,
+  [number, number]
+>([
   ['uuid', [36, 36]],
   ['uuidv4', [36, 36]],
   ['uuidv6', [36, 36]],
@@ -66,7 +73,10 @@ const FORMAT_LENGTH_RANGES = new Map<string, [number, number]>([
  * and `uuidv4`/`uuidv6`/`uuidv7` pin that version.
  * Every other format pair is mutually exclusive.
  */
-const FORMAT_SUPERSETS = new Map<string, ReadonlyArray<string>>([
+const FORMAT_SUPERSETS: ReadonlyMap<string, ReadonlyArray<string>> = new Map<
+  ZodExportName,
+  ReadonlyArray<ZodExportName>
+>([
   ['uuid', ['guid']],
   ['uuidv4', ['uuid', 'guid']],
   ['uuidv6', ['uuid', 'guid']],
@@ -688,7 +698,7 @@ export function buildNoConflictingChecksCreate(
           if (
             crossesOpaqueCheck ||
             ZOD_MUTATING_CHECK_NAMES.includes(constraint.name) ||
-            CALLBACK_CHECK_NAMES.includes(constraint.name)
+            CALLBACK_CHECK_NAMES.has(constraint.name)
           ) {
             segmentStarts.push(checks.length);
           }

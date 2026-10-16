@@ -1,3 +1,5 @@
+import type { ZodMethodName } from '@eslint-zod/tooling/zod-api';
+
 import { buildZodChainReplacementFix } from '../build-zod-chain-replacement-fix.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
@@ -5,12 +7,13 @@ import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_MUTATING_CHECK_NAMES } from '../zod-mutating-check-names.js';
 import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
 
+/** A `.check(fn)` callback may rewrite the value. */
+const CALLBACK_CHECK_METHODS: ReadonlyArray<ZodMethodName> = ['check', 'with'];
+
 const REORDER_BARRIERS: ReadonlyArray<string> = [
   ...ZOD_MUTATING_CHECK_NAMES,
   ...ZOD_TYPE_CHANGING_METHODS,
-  // a `.check(fn)` callback may rewrite the value
-  'check',
-  'with',
+  ...CALLBACK_CHECK_METHODS,
 ];
 
 /** A deprecated chained method paired with the top-level factory replacing it. */

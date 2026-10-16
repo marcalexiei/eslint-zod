@@ -43,14 +43,14 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
     },
     {
-      name: 'namespace - or called multiple times (excluded)',
+      name: 'namespace - or called multiple times (each starts a new segment)',
       code: dedent`
         import * as z from 'zod';
         z.string().or(z.number()).or(z.boolean());
       `,
     },
     {
-      name: 'namespace - and called multiple times (excluded)',
+      name: 'namespace - and called multiple times (each starts a new segment)',
       code: dedent`
         import * as z from 'zod';
         z.object({ a: z.string() }).and(z.object({ b: z.number() })).and(z.object({ c: z.boolean() }));
@@ -71,14 +71,14 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
     },
     {
-      name: 'namespace - transform called multiple times (excluded)',
+      name: 'namespace - transform called multiple times (each starts a new segment)',
       code: dedent`
         import * as z from 'zod';
         z.string().transform((s) => s.trim()).transform((s) => s.toLowerCase());
       `,
     },
     {
-      name: 'namespace - pipe called multiple times (excluded)',
+      name: 'namespace - pipe called multiple times (each starts a new segment)',
       code: dedent`
         import * as z from 'zod';
         z.string().pipe(z.string().min(1)).pipe(z.string().max(10));
@@ -92,7 +92,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
     },
     {
-      name: 'namespace - array called multiple times for nested arrays (excluded)',
+      name: 'namespace - array called multiple times for nested arrays (each starts a new segment)',
       code: dedent`
         import * as z from 'zod';
         z.string().nonempty().array().array();

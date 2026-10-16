@@ -1,3 +1,4 @@
+import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
 import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
@@ -28,7 +29,10 @@ type LengthConstraintKind = 'length' | 'min' | 'max';
  * and standalone checks (`z.length()` / `z.minLength()` / `z.maxLength()`, `zod/mini`)
  * are matched by the same three entries.
  */
-const LENGTH_CONSTRAINT_KINDS = new Map<string, LengthConstraintKind>([
+const LENGTH_CONSTRAINT_KINDS: ReadonlyMap<string, LengthConstraintKind> = new Map<
+  ZodExportName,
+  LengthConstraintKind
+>([
   ['length', 'length'],
   ['minLength', 'min'],
   ['maxLength', 'max'],

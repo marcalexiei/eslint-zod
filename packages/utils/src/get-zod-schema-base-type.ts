@@ -1,3 +1,5 @@
+import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
+
 import { ZOD_BIGINT_SUBTYPE_NAMES, ZOD_NUMBER_SUBTYPE_NAMES } from './zod-numeric-subtype-names.js';
 import { ZOD_STRING_FORMAT_NAMES } from './zod-string-format-names.js';
 
@@ -20,20 +22,13 @@ export type ZodSchemaBaseType =
   | 'unknown'
   | 'never';
 
-const BASE_TYPES = new Map<string, ZodSchemaBaseType>([
-  // strings — `string` itself, the `iso` namespace (member factories such as `z.iso.date()`),
-  // and every top-level format factory, which all parse to `string`.
+/** The factories mapped one by one; the format and numeric sub-type tables are spread below. */
+const FACTORY_BASE_TYPES: ReadonlyArray<readonly [ZodExportName, ZodSchemaBaseType]> = [
   ['string', 'string'],
+  // the `iso` namespace stands for its member factories (`z.iso.date()`)
   ['iso', 'string'],
-  ...ZOD_STRING_FORMAT_NAMES.map((name): [string, ZodSchemaBaseType] => [name, 'string']),
-
-  // numbers
   ['number', 'number'],
-  ...ZOD_NUMBER_SUBTYPE_NAMES.map((name): [string, ZodSchemaBaseType] => [name, 'number']),
-
-  // bigints
   ['bigint', 'bigint'],
-  ...ZOD_BIGINT_SUBTYPE_NAMES.map((name): [string, ZodSchemaBaseType] => [name, 'bigint']),
 
   // booleans — `stringbool` parses a string INPUT but outputs a boolean,
   // and checks run against the output
@@ -51,6 +46,14 @@ const BASE_TYPES = new Map<string, ZodSchemaBaseType>([
   ['any', 'any'],
   ['unknown', 'unknown'],
   ['never', 'never'],
+];
+
+const BASE_TYPES = new Map<string, ZodSchemaBaseType>([
+  ...FACTORY_BASE_TYPES,
+  // every top-level format factory parses to `string`, every numeric sub-type to its family
+  ...ZOD_STRING_FORMAT_NAMES.map((name): [string, ZodSchemaBaseType] => [name, 'string']),
+  ...ZOD_NUMBER_SUBTYPE_NAMES.map((name): [string, ZodSchemaBaseType] => [name, 'number']),
+  ...ZOD_BIGINT_SUBTYPE_NAMES.map((name): [string, ZodSchemaBaseType] => [name, 'bigint']),
 ]);
 
 /** Every name {@link getZodSchemaBaseType} maps, including the `iso` namespace. */

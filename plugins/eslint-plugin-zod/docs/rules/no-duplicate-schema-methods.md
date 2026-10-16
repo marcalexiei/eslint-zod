@@ -10,10 +10,10 @@
 
 This rule disallows calling the same Zod schema method more than once within a single method chain. Duplicate calls are almost always a mistake — they are either redundant (e.g. calling `.trim()` twice) or create conflicting constraints (e.g. setting `.min()` twice with different values).
 
-Methods that are designed to be chained multiple times, such as `.or()`, `.and()`, and `.array()`, are excluded from this check. This also includes `.regex()`, `.includes()`, `.startsWith()`, `.endsWith()`, and `.overwrite()`, since each call applies an independent constraint or transformation — matching a string against two different patterns is common, unlike calling `.min()` twice with different values.
+Methods that are designed to be chained multiple times are excluded from this check: `.regex()`, `.includes()`, `.startsWith()`, `.endsWith()`, and `.overwrite()`, since each call applies an independent constraint or transformation — matching a string against two different patterns is common, unlike calling `.min()` twice with different values.
 The object reshaping methods (`.extend()`, `.safeExtend()`, `.merge()`, `.omit()`, `.pick()`), `.meta()`, `.multipleOf()` and `.check()` / `.with()` are excluded for the same reason.
 
-A method that changes the schema's type starts a new chain segment:
+A method that changes the schema's type (`.or()`, `.and()`, `.array()`, `.pipe()`, `.transform()`) starts a new chain segment, so repeating it is never reported:
 the methods after it constrain the new schema, not the one before.
 `z.string().min(1).array().min(1)` bounds the string's length and then the array's, so it is not a duplicate.
 `.array()` is the only such method whose result takes further constraints —
@@ -48,7 +48,7 @@ const aSchema = z.string().trim().min(1);
 
 const bSchema = z.string().min(1).max(10);
 
-// .or() and .and() are excluded — chaining them is intentional
+// .or() and .and() each start a new segment — chaining them is intentional
 const cSchema = z.string().or(z.number()).or(z.boolean());
 
 // .array() can be chained to create nested arrays

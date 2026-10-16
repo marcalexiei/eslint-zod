@@ -1,9 +1,13 @@
+import type { ZodExportName, ZodMethodName } from '@eslint-zod/tooling/zod-api';
 import type { TSESTree } from '@typescript-eslint/types';
 
 import type { ZodSchemaConstraint } from './collect-zod-schema-constraints.js';
 
 /** Checks whose callback may rewrite the value. */
-const CALLBACK_CHECK_NAMES: ReadonlyArray<string> = ['check', 'superRefine'];
+const CALLBACK_CHECK_NAMES: ReadonlySet<string> = new Set<ZodExportName | ZodMethodName>([
+  'check',
+  'superRefine',
+]);
 
 /**
  * Whether a check between two chain positions may rewrite the value without its name saying so:
@@ -27,7 +31,6 @@ export function hasOpaqueZodCheck(opts: {
         isInRange(chainIndex) &&
         method.node.arguments.length !==
           constraints.filter((it) => it.chainIndex === chainIndex).length,
-    ) ||
-    constraints.some((it) => isInRange(it.chainIndex) && CALLBACK_CHECK_NAMES.includes(it.name))
+    ) || constraints.some((it) => isInRange(it.chainIndex) && CALLBACK_CHECK_NAMES.has(it.name))
   );
 }

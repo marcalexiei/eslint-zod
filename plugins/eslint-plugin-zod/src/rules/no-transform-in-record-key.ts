@@ -1,9 +1,10 @@
+import type { ZodMethodName } from '@eslint-zod/tooling/zod-api';
 import { ZOD_MUTATING_CHECK_NAMES, zodImportScope } from '@eslint-zod/utils';
 import { buildNoTransformInRecordKeyCreate } from '@eslint-zod/utils/rule-builders/no-transform-in-record-key';
 
 import { createZodPluginRule } from '../meta.js';
 
-const TRANSFORM_METHODS = [...ZOD_MUTATING_CHECK_NAMES, 'transform'];
+const TRANSFORM_METHODS = [...ZOD_MUTATING_CHECK_NAMES, 'transform' satisfies ZodMethodName];
 
 export const noTransformInRecordKey = createZodPluginRule({
   name: 'no-transform-in-record-key',

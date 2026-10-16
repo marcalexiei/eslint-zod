@@ -27,6 +27,9 @@ catalogs:
     eslint-doc-generator: '3.7.1'
     prettier: '3.9.10'
 
+    # its declarations are the reference for every zod name the rules match
+    zod: '4.6.7'
+
 overrides:
   # vitest declares an optional `@types/node` peer: without a version here the
   # projects that don't depend on `@types/node` themselves resolve a second copy
