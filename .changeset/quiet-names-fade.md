@@ -1,5 +1,6 @@
 ---
 '@eslint-zod/utils': patch
+'eslint-plugin-zod': patch
 ---
 
-fix: drop `preprocess`, which no zod schema chains, from `ZOD_TYPE_CHANGING_METHODS`
+fix: drop unreachable type-changing method entries; no rule's behavior changes
