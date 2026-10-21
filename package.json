@@ -17,7 +17,7 @@
     "lint:docs": "pnpm -r lint:docs",
     "lint:knip": "knip",
     "lint:publish": "pnpm -r lint:publish && pnpm run lint:dts",
-    "lint:dts": "node scripts/lint-dts.js",
+    "lint:dts": "node scripts/lint-dts.ts",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "test": "vitest run",
