@@ -17,7 +17,7 @@
     "lint:docs": "pnpm -r lint:docs",
     "lint:knip": "knip",
     "lint:publish": "pnpm -r lint:publish && pnpm run lint:dts",
-    "lint:dts": "grep -rnE \"@eslint-zod/tooling|(^|[^-'_a-zA-Z])any([^-'_a-zA-Z]|$)\" packages/utils/dist plugins/*/dist --include=\"*.d.mts\"; test $? -eq 1",
+    "lint:dts": "node scripts/lint-dts.js",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "test": "vitest run",

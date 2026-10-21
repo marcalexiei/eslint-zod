@@ -317,7 +317,7 @@ Every `docs/rules/<rule-name>.md` follows the same section order after the auto-
 
 `pnpm lint:publish` runs `attw --pack . --profile esm-only` in each of the four published packages, checking that the `exports` map resolves types correctly under node16 (ESM) and bundler. The packages are ESM-only (#289): CJS consumers load them through Node's `require(esm)`, which is why `engines` starts at 20.19 / 22.12. It inspects the `pnpm pack` tarball, so it needs `dist` — that is why the script is separate from `pnpm lint` and why CI runs it after the build step.
 
-It then runs `pnpm lint:dts`, which fails if a published `.d.mts` names `@eslint-zod/tooling` or contains an `any` type.
+It then runs `pnpm lint:dts` (`scripts/lint-dts.js`), which fails if a published `.d.mts` imports from the tooling package or contains an `any` type.
 A `zod-api` type reaching an exported declaration fails the build when it is written out, but becomes `any` when it is inferred.
 
 `tsc -b` emits its declarations into `dist/ts`, which every `files` field excludes (`!dist/ts`),
