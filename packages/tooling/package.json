@@ -11,8 +11,7 @@
     "./tsdown": "./src/tsdown/index.ts",
     "./vitest": "./src/vitest/index.js",
     "./vitest/rule-tester-cases": "./src/vitest/rule-tester-cases.ts",
-    "./vitest/spec-helpers": "./src/vitest/spec-helpers.ts",
-    "./zod-api": "./src/zod-api/index.ts"
+    "./vitest/spec-helpers": "./src/vitest/spec-helpers.ts"
   },
   "dependencies": {
     "@marcalexiei/prettier-config": "catalog:dev",
@@ -20,8 +19,7 @@
     "eslint-doc-generator": "catalog:dev",
     "prettier": "catalog:dev",
     "tsdown": "catalog:dev",
-    "vitest": "catalog:dev",
-    "zod": "catalog:dev"
+    "vitest": "catalog:dev"
   },
   "engines": {
     "node": "^20 || ^22 || >=24"

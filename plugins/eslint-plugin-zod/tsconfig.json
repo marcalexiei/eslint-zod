@@ -12,6 +12,9 @@
       "path": "../../packages/tooling"
     },
     {
+      "path": "../../packages/zod-api"
+    },
+    {
       "path": "../../packages/utils"
     }
   ]

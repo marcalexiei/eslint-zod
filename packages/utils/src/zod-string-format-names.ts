@@ -1,4 +1,4 @@
-import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
+import type { ZodExportName } from '@eslint-zod/zod-api';
 
 /**
  * Top-level Zod string-format factory names — the checks/factories that all

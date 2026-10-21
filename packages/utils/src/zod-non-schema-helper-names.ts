@@ -1,4 +1,4 @@
-import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
+import type { ZodExportName } from '@eslint-zod/zod-api';
 
 import type { ZodSchemaMeta } from './detect-zod-schema-root-node.js';
 import { ZOD_NON_SCHEMA_PRODUCING_METHODS } from './zod-non-schema-producing-methods.js';

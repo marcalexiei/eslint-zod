@@ -1,6 +1,6 @@
-import type { ZodMiniMethodName } from '@eslint-zod/tooling/zod-api';
 import { zodMiniImportScope } from '@eslint-zod/utils';
 import { buildNoDuplicateSchemaMethodsCreate } from '@eslint-zod/utils/rule-builders/no-duplicate-schema-methods';
+import type { ZodMiniMethodName } from '@eslint-zod/zod-api';
 
 import { createZodMiniPluginRule } from '../meta.js';
 

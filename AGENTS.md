@@ -14,6 +14,7 @@ pnpm monorepo containing three ESLint plugins and a shared utilities package for
 | `eslint-plugin-zod-core` | `plugins/eslint-plugin-zod-core/` | yes       |
 | `@eslint-zod/utils`      | `packages/utils/`                 | yes       |
 | `@eslint-zod/tooling`    | `packages/tooling/`               | no        |
+| `@eslint-zod/zod-api`    | `packages/zod-api/`               | no        |
 
 `eslint-plugin-zod-core` targets `zod/v4/core` (the low-level package used by library authors). It is intentionally small — most schema-authoring rules do not apply to it.
 
@@ -26,9 +27,8 @@ pnpm monorepo containing three ESLint plugins and a shared utilities package for
 | `@eslint-zod/tooling/vitest/rule-tester-cases` | `src/vitest/rule-tester-cases.ts`   | `createSuggestionCases(rule, { messageId, suggestionMessageId, data? })` |
 | `@eslint-zod/tooling/tsdown`                   | `src/tsdown/index.ts`               | `definePluginTsdownConfig(overrides?)`                                   |
 | `@eslint-zod/tooling/eslint-doc-generator`     | `src/eslint-doc-generator/index.ts` | `eslintDocGeneratorConfig`                                               |
-| `@eslint-zod/tooling/zod-api`                  | `src/zod-api/index.ts`              | types derived from zod's declarations: method, export and `iso` names    |
 
-Every entry but `zod-api`, which holds types only, is a tool invoked per package, so each package keeps its own config file — reduced to a call or a re-export. Two constraints shape the package, both learned from CI:
+Every one of those tools is invoked per package, so each package keeps its own config file — reduced to a call or a re-export. Two constraints shape the package, both learned from CI:
 
 - **A tool entry has no relative imports.** Each tool loads the per-package config file, sees a bare import, externalizes it and hands the file to Node — which resolves neither a `.js` specifier pointing at a `.ts` file nor a directory sibling. Keep an entry's whole implementation in its own file; a file that is only referenced, never imported (`rule-tester-setup.ts`, loaded by Vitest as a setup file), may sit beside it.
 - **The Vitest entry is plain JavaScript.** The test matrix includes Node 20, which cannot strip types, so `vitest.config.ts` loading a `.ts` entry fails with `ERR_UNKNOWN_FILE_EXTENSION`. `src/vitest/index.d.ts` gives it types and `index.js` annotates its implementation against that declaration (`@type {typeof import('./index.js').…}`), so drift between the two is a type error. `allowJs`/`checkJs` are set in this package only. The other tools never run on Node 20 — tsdown's own `engines` require `^22.18 || >=24.11`, and pnpm needs ≥22.13 — so their entries stay TypeScript. Anything that is not tool config (the spec helpers) belongs in its own `.ts` file with its own export.
@@ -129,7 +129,7 @@ Four conventions the utils package holds to:
 - **Lookup misses return `null`**, not `undefined` — `getZodSchemaBaseType`, `getZodCheckDescriptor`, `canonicalizeZodConstraintName`. Chosen for explicitness over matching `Map.get`; `?? null` the map lookup.
 - **The `ZOD_*` tables are `Object.freeze`d** at runtime, not just typed `readonly`, and a spec asserts it. Do not deep-freeze entries with a module-level loop — a bare statement conflicts with `sideEffects: false` and a bundler may drop it.
 - **A table of zod names is checked against zod's own declarations**, so a name zod does not have is a type error.
-  The types come from `@eslint-zod/tooling/zod-api` (`ZodMethodName`, `ZodMiniMethodName`, `ZodExportName`, `ZodIsoMemberName`), in utils and in the plugins alike.
+  The types (`ZodMethodName`, `ZodMiniMethodName`, `ZodExportName`, `ZodIsoMemberName`) come from `@eslint-zod/zod-api`, a private types-only package, and are used in utils and the plugins alike.
   They must never reach published declarations, so an exported table keeps `ReadonlyArray<string>` and checks its entries with a type argument: `Object.freeze<ReadonlyArray<ZodMethodName>>([…])`.
   A lookup does the same, since it is queried with any string: `const X: ReadonlySet<string> = new Set<ZodExportName>([…])`, or `ReadonlyMap` and `new Map<…>`.
   A module-local list that is only iterated or spread takes the annotation directly (`ReadonlyArray<ZodExportName>`); name the literal part of a mixed table that way and spread it.
@@ -317,7 +317,7 @@ Every `docs/rules/<rule-name>.md` follows the same section order after the auto-
 
 `pnpm lint:publish` runs `attw --pack . --profile esm-only` in each of the four published packages, checking that the `exports` map resolves types correctly under node16 (ESM) and bundler. The packages are ESM-only (#289): CJS consumers load them through Node's `require(esm)`, which is why `engines` starts at 20.19 / 22.12. It inspects the `pnpm pack` tarball, so it needs `dist` — that is why the script is separate from `pnpm lint` and why CI runs it after the build step.
 
-It then runs `pnpm lint:dts` (`scripts/lint-dts.ts`), which fails if a published `.d.mts` imports from `@eslint-zod/tooling/zod-api` or contains an `any` type.
+It then runs `pnpm lint:dts` (`scripts/lint-dts.ts`), which fails if a published `.d.mts` imports from `@eslint-zod/zod-api` or contains an `any` type.
 A `zod-api` type reaching an exported declaration fails the build when it is written out, but becomes `any` when it is inferred.
 
 `tsc -b` emits its declarations into `dist/ts`, which every `files` field excludes (`!dist/ts`),
