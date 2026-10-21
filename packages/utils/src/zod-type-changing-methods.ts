@@ -1,4 +1,12 @@
-const TYPE_CHANGING_METHODS = ['and', 'array', 'or', 'pipe', 'transform'] as const;
+import type { ZodMethodName } from '@eslint-zod/tooling/zod-api';
+
+const TYPE_CHANGING_METHODS = [
+  'and',
+  'array',
+  'or',
+  'pipe',
+  'transform',
+] as const satisfies ReadonlyArray<ZodMethodName>;
 
 /** One of {@link ZOD_TYPE_CHANGING_METHODS}. */
 export type ZodTypeChangingMethod = (typeof TYPE_CHANGING_METHODS)[number];

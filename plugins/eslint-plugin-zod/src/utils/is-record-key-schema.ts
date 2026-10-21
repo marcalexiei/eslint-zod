@@ -1,8 +1,9 @@
+import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
 import type { ZodSchemaImportTracker } from '@eslint-zod/utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 
-const RECORD_FACTORIES = ['record', 'partialRecord', 'looseRecord'];
+const RECORD_FACTORIES: ReadonlyArray<ZodExportName> = ['record', 'partialRecord', 'looseRecord'];
 
 /**
  * Whether `node` is the key schema of a `z.record()`, `z.partialRecord()` or `z.looseRecord()`.

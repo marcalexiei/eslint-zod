@@ -1,3 +1,4 @@
+import type { ZodMethodName } from '@eslint-zod/tooling/zod-api';
 import { zodImportScope } from '@eslint-zod/utils';
 import { buildNoDuplicateSchemaMethodsCreate } from '@eslint-zod/utils/rule-builders/no-duplicate-schema-methods';
 
@@ -39,7 +40,7 @@ const EXCLUDED_METHODS = [
   'startsWith',
   'superRefine',
   'with',
-] as const;
+] as const satisfies ReadonlyArray<ZodMethodName>;
 
 export const noDuplicateSchemaMethods = createZodPluginRule({
   name: 'no-duplicate-schema-methods',

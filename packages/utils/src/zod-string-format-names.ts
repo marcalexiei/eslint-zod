@@ -1,3 +1,5 @@
+import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
+
 /**
  * Top-level Zod string-format factory names — the checks/factories that all
  * parse to `string` (`z.email()`, `z.uuid()`, `z.ipv4()`, …).
@@ -8,7 +10,9 @@
  * (`z.iso.date()`, …) are intentionally NOT here — their factory resolves to
  * the `iso` namespace, and their check names are dotted.
  */
-export const ZOD_STRING_FORMAT_NAMES = Object.freeze([
+export const ZOD_STRING_FORMAT_NAMES: ReadonlyArray<string> = Object.freeze<
+  ReadonlyArray<ZodExportName>
+>([
   'base64',
   'base64url',
   'cidrv4',

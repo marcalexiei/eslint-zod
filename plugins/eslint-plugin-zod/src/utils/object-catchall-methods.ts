@@ -1,3 +1,5 @@
+import type { ZodMethodName } from '@eslint-zod/tooling/zod-api';
+
 /** Object methods that set how unknown keys are handled, each overriding the previous one. */
 export const OBJECT_CATCHALL_METHODS = [
   'catchall',
@@ -6,4 +8,4 @@ export const OBJECT_CATCHALL_METHODS = [
   'passthrough',
   'strict',
   'strip',
-] as const;
+] as const satisfies ReadonlyArray<ZodMethodName>;

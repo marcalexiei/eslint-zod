@@ -1,18 +1,9 @@
+import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
+
 import { ZOD_BIGINT_SUBTYPE_NAMES, ZOD_NUMBER_SUBTYPE_NAMES } from './zod-numeric-subtype-names.js';
 import { ZOD_STRING_FORMAT_NAMES } from './zod-string-format-names.js';
 
-/**
- * Zod schema factories whose parsed output is already immutable, so wrapping
- * them in `readonly` has no effect on the inferred type (and no runtime
- * effect: freezing a primitive is a no-op).
- *
- * Covers primitives/scalars, number sub-types, and the top-level string
- * formats (they all parse to `string`). Container factories (`object`,
- * `array`, `record`, `map`, `set`, `tuple`, …) are intentionally absent —
- * `readonly` is meaningful there.
- */
-export const ZOD_IMMUTABLE_SCHEMA_TYPES = Object.freeze([
-  // primitives / scalars
+const SCALAR_FACTORY_NAMES: ReadonlyArray<ZodExportName> = [
   'bigint',
   'boolean',
   'date',
@@ -28,6 +19,21 @@ export const ZOD_IMMUTABLE_SCHEMA_TYPES = Object.freeze([
   'templateLiteral',
   'undefined',
   'void',
+];
+
+/**
+ * Zod schema factories whose parsed output is already immutable, so wrapping
+ * them in `readonly` has no effect on the inferred type (and no runtime
+ * effect: freezing a primitive is a no-op).
+ *
+ * Covers primitives/scalars, number sub-types, and the top-level string
+ * formats (they all parse to `string`). Container factories (`object`,
+ * `array`, `record`, `map`, `set`, `tuple`, …) are intentionally absent —
+ * `readonly` is meaningful there.
+ */
+export const ZOD_IMMUTABLE_SCHEMA_TYPES: ReadonlyArray<string> = Object.freeze([
+  // primitives / scalars
+  ...SCALAR_FACTORY_NAMES,
 
   // number and bigint sub-types — spread for the same reason as the string formats below
   ...ZOD_NUMBER_SUBTYPE_NAMES,
@@ -39,5 +45,5 @@ export const ZOD_IMMUTABLE_SCHEMA_TYPES = Object.freeze([
   ...ZOD_STRING_FORMAT_NAMES,
 
   // `iso` covers member factories such as `z.iso.date()`
-  'iso',
+  'iso' satisfies ZodExportName,
 ]);

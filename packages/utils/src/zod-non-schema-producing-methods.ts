@@ -1,10 +1,14 @@
+import type { ZodExportName, ZodMethodName, ZodMiniMethodName } from '@eslint-zod/tooling/zod-api';
+
 /**
  * Zod method names that consume a schema rather than return a new one — parse
  * methods, validation predicates, codec helpers, and error formatters. Useful
  * for filtering out terminal calls when traversing a chain (e.g. to detect the
  * last "schema-shaped" node in `z.string().parse(input)`).
  */
-export const ZOD_NON_SCHEMA_PRODUCING_METHODS = Object.freeze([
+export const ZOD_NON_SCHEMA_PRODUCING_METHODS: ReadonlyArray<string> = Object.freeze<
+  ReadonlyArray<ZodExportName | ZodMethodName | ZodMiniMethodName>
+>([
   // parse methods
   'parse',
   'parseAsync',

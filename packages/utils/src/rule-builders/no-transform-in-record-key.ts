@@ -1,3 +1,4 @@
+import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
 import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
@@ -6,6 +7,12 @@ import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 type MessageIds = 'noTransformInRecordKey';
+
+const RECORD_FACTORY_NAMES: ReadonlyArray<ZodExportName> = [
+  'record',
+  'partialRecord',
+  'looseRecord',
+];
 
 /**
  * Builds the `create` function for the `no-transform-in-record-key` rule.
@@ -55,7 +62,7 @@ export function buildNoTransformInRecordKeyCreate(
     }
 
     return createSchemaVisitor({
-      schemaType: ['record', 'partialRecord', 'looseRecord'],
+      schemaType: RECORD_FACTORY_NAMES,
       onSchema(node): void {
         // `node` is the outermost call, which is not the `record()` one once something is chained on it.
         const head = collectZodChainMethods(node).at(0);

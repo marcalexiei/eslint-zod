@@ -1,10 +1,16 @@
+import type { ZodMethodName } from '@eslint-zod/tooling/zod-api';
 import { hasCommentInRange, hasParenthesizedReceiver, zodImportScope } from '@eslint-zod/utils';
 import type { TSESTree } from '@typescript-eslint/types';
 
 import { createZodPluginRule } from '../meta.js';
 import { isRecordKeySchema } from '../utils/is-record-key-schema.js';
 
-const LENGTH_CHECK_METHODS = ['min', 'max', 'length', 'nonempty'];
+const LENGTH_CHECK_METHODS: ReadonlySet<string> = new Set<ZodMethodName>([
+  'min',
+  'max',
+  'length',
+  'nonempty',
+]);
 
 export const preferTrimBeforeStringLengthChecks = createZodPluginRule({
   name: 'prefer-trim-before-string-length-checks',
@@ -42,9 +48,7 @@ export const preferTrimBeforeStringLengthChecks = createZodPluginRule({
           return;
         }
 
-        const firstLengthCheckIndex = methods.findIndex((m) =>
-          LENGTH_CHECK_METHODS.includes(m.name),
-        );
+        const firstLengthCheckIndex = methods.findIndex((m) => LENGTH_CHECK_METHODS.has(m.name));
         if (firstLengthCheckIndex === -1) {
           return;
         }

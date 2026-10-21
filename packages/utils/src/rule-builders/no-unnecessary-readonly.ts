@@ -1,3 +1,4 @@
+import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
 import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
@@ -16,7 +17,7 @@ type MessageIds = 'unnecessaryReadonly';
 /**
  * Wrapper factories whose output immutability equals their first argument's (e.g. `z.optional(z.string())` is as immutable as `z.string()`).
  */
-const PASSTHROUGH_WRAPPERS = [
+const PASSTHROUGH_WRAPPERS: ReadonlySet<string> = new Set<ZodExportName>([
   '_default',
   'catch',
   'default',
@@ -24,7 +25,7 @@ const PASSTHROUGH_WRAPPERS = [
   'nullable',
   'nullish',
   'optional',
-];
+]);
 
 type Immutability = 'immutable' | 'readonly' | 'unknown';
 
@@ -69,7 +70,7 @@ export function buildNoUnnecessaryReadonlyCreate(
       if (ZOD_IMMUTABLE_SCHEMA_TYPES.includes(schemaType)) {
         return 'immutable';
       }
-      if (PASSTHROUGH_WRAPPERS.includes(schemaType)) {
+      if (PASSTHROUGH_WRAPPERS.has(schemaType)) {
         // A passthrough wrapper is as immutable as its first argument.
         const argument = chain.at(0)?.node.arguments.at(0);
         if (argument?.type !== AST_NODE_TYPES.CallExpression) {
