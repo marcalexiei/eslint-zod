@@ -105,6 +105,7 @@ jobs:
       - name: Install Dependencies
         uses: marcalexiei/github-actions/setup-node-and-pnpm@92c64c084d3479cff756151cb8163d03608f2acd # v2.4.2
 
+      # Before Typecheck: without `tsc -b` output a leaked `zod-api` type builds as `any`, which `lint:dts` catches.
       - name: Build
         run: pnpm run build
 
@@ -117,7 +118,7 @@ jobs:
       - name: Lint
         run: pnpm run lint
 
-      # attw over `pnpm pack` tarballs of the four published packages.
+      # attw over `pnpm pack` tarballs of the four published packages, then `lint:dts`.
       # Runs after Build because it inspects `dist`, not `src`.
       - name: Lint published artifacts
         run: pnpm run lint:publish
