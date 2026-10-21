@@ -1,4 +1,4 @@
-import type { ZodMethodName } from '@eslint-zod/tooling/zod-api';
+import type { ZodMethodName } from '@eslint-zod/zod-api';
 
 const TYPE_CHANGING_METHODS = [
   'and',

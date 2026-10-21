@@ -1,4 +1,4 @@
-import type { ZodExportName, ZodMethodName, ZodMiniMethodName } from '@eslint-zod/tooling/zod-api';
+import type { ZodExportName, ZodMethodName, ZodMiniMethodName } from '@eslint-zod/zod-api';
 
 /**
  * Zod method names that consume a schema rather than return a new one — parse

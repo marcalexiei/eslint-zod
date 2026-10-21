@@ -127,9 +127,6 @@ importers:
       vitest:
         specifier: catalog:dev
         version: 5.0.4(@types/node@24.13.2)(@vitest/coverage-v8@5.0.4)(vite@8.2.2)
-      zod:
-        specifier: catalog:dev
-        version: 4.6.7
 
   packages/utils:
     dependencies:
@@ -146,6 +143,9 @@ importers:
       '@eslint-zod/tooling':
         specifier: workspace:*
         version: link:../tooling
+      '@eslint-zod/zod-api':
+        specifier: workspace:*
+        version: link:../zod-api
       '@types/esquery':
         specifier: 1.5.4
         version: 1.5.4
@@ -155,6 +155,12 @@ importers:
       vitest:
         specifier: catalog:dev
         version: 5.0.4(@types/node@24.13.2)(@vitest/coverage-v8@5.0.4)(vite@8.2.2)
+
+  packages/zod-api:
+    devDependencies:
+      zod:
+        specifier: catalog:dev
+        version: 4.6.7
 
   plugins/eslint-plugin-zod:
     dependencies:
@@ -180,6 +186,9 @@ importers:
       '@eslint-zod/tooling':
         specifier: workspace:*
         version: link:../../packages/tooling
+      '@eslint-zod/zod-api':
+        specifier: workspace:*
+        version: link:../../packages/zod-api
       '@typescript-eslint/rule-tester':
         specifier: catalog:dev
         version: 8.71.2(eslint@10.12.0)(supports-color@7.2.0)(typescript@6.0.3)
@@ -257,6 +266,9 @@ importers:
       '@eslint-zod/tooling':
         specifier: workspace:*
         version: link:../../packages/tooling
+      '@eslint-zod/zod-api':
+        specifier: workspace:*
+        version: link:../../packages/zod-api
       '@typescript-eslint/rule-tester':
         specifier: catalog:dev
         version: 8.71.2(eslint@10.12.0)(supports-color@7.2.0)(typescript@6.0.3)

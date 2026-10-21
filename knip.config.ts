@@ -26,5 +26,6 @@ export default {
     },
     'packages/tooling': {},
     'packages/utils': {},
+    'packages/zod-api': {},
   },
 } satisfies KnipConfig;

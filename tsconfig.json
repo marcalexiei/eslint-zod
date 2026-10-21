@@ -1,10 +1,23 @@
 {
   "files": [],
   "references": [
-    { "path": "packages/tooling" },
-    { "path": "packages/utils" },
-    { "path": "plugins/eslint-plugin-zod" },
-    { "path": "plugins/eslint-plugin-zod-mini" },
-    { "path": "plugins/eslint-plugin-zod-core" }
+    {
+      "path": "packages/tooling"
+    },
+    {
+      "path": "packages/utils"
+    },
+    {
+      "path": "packages/zod-api"
+    },
+    {
+      "path": "plugins/eslint-plugin-zod"
+    },
+    {
+      "path": "plugins/eslint-plugin-zod-mini"
+    },
+    {
+      "path": "plugins/eslint-plugin-zod-core"
+    }
   ]
 }

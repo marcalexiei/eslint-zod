@@ -1,5 +1,5 @@
-import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
 import type { ZodSchemaImportTracker } from '@eslint-zod/utils';
+import type { ZodExportName } from '@eslint-zod/zod-api';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 

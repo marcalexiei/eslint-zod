@@ -65,6 +65,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "catalog:dev",
     "@eslint-zod/tooling": "workspace:*",
+    "@eslint-zod/zod-api": "workspace:*",
     "@types/esquery": "1.5.4",
     "tsdown": "catalog:dev",
     "vitest": "catalog:dev"

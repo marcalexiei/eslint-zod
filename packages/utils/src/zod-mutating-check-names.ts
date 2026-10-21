@@ -1,4 +1,4 @@
-import type { ZodMethodName } from '@eslint-zod/tooling/zod-api';
+import type { ZodMethodName } from '@eslint-zod/zod-api';
 
 /**
  * Zod check names that mutate the validated value instead of just asserting on it.

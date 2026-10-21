@@ -1,4 +1,4 @@
-// Fails when a published declaration leaks a `zod-api` type (see AGENTS.md).
+// Fails when a published declaration leaks a `@eslint-zod/zod-api` type (see AGENTS.md).
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 

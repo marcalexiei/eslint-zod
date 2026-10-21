@@ -1,4 +1,4 @@
-import type { ZodExportName, ZodIsoMemberName, ZodMethodName } from '@eslint-zod/tooling/zod-api';
+import type { ZodExportName, ZodIsoMemberName, ZodMethodName } from '@eslint-zod/zod-api';
 
 /**
  * Deprecated `z.string().<format>()` methods and the top-level factory that

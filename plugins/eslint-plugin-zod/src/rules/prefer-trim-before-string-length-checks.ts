@@ -1,5 +1,5 @@
-import type { ZodMethodName } from '@eslint-zod/tooling/zod-api';
 import { hasCommentInRange, hasParenthesizedReceiver, zodImportScope } from '@eslint-zod/utils';
+import type { ZodMethodName } from '@eslint-zod/zod-api';
 import type { TSESTree } from '@typescript-eslint/types';
 
 import { createZodPluginRule } from '../meta.js';

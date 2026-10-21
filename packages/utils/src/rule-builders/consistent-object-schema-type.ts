@@ -1,4 +1,4 @@
-import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
+import type { ZodExportName } from '@eslint-zod/zod-api';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import type { ReportSuggestionArray, RuleContext, RuleFix, RuleListener } from '../rule-types.js';

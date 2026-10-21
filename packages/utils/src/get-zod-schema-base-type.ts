@@ -1,4 +1,4 @@
-import type { ZodExportName } from '@eslint-zod/tooling/zod-api';
+import type { ZodExportName } from '@eslint-zod/zod-api';
 
 import { ZOD_BIGINT_SUBTYPE_NAMES, ZOD_NUMBER_SUBTYPE_NAMES } from './zod-numeric-subtype-names.js';
 import { ZOD_STRING_FORMAT_NAMES } from './zod-string-format-names.js';

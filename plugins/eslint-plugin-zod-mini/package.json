@@ -52,6 +52,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "catalog:dev",
     "@eslint-zod/tooling": "workspace:*",
+    "@eslint-zod/zod-api": "workspace:*",
     "@typescript-eslint/rule-tester": "catalog:dev",
     "dedent": "catalog:dev",
     "eslint-doc-generator": "catalog:dev",

@@ -1,4 +1,4 @@
-import type { ZodExportName, ZodMethodName } from '@eslint-zod/tooling/zod-api';
+import type { ZodExportName, ZodMethodName } from '@eslint-zod/zod-api';
 import type { TSESTree } from '@typescript-eslint/types';
 
 import type { ZodSchemaConstraint } from './collect-zod-schema-constraints.js';

@@ -1,0 +1,18 @@
+{
+  "name": "@eslint-zod/zod-api",
+  "version": "0.0.0",
+  "description": "Internal (unpublished) types derived from zod's declarations, for checking zod name tables",
+  "private": true,
+  "license": "MIT",
+  "author": "Marco Pasqualetti @marcalexiei",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "zod": "catalog:dev"
+  },
+  "engines": {
+    "node": "^20 || ^22 || >=24"
+  }
+}

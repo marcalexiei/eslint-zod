@@ -1,4 +1,4 @@
-import type { ZodMethodName } from '@eslint-zod/tooling/zod-api';
+import type { ZodMethodName } from '@eslint-zod/zod-api';
 
 import { buildZodChainReplacementFix } from '../build-zod-chain-replacement-fix.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
