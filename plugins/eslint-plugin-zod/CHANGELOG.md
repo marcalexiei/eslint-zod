@@ -1,5 +1,15 @@
 # eslint-plugin-zod
 
+## 5.2.1
+
+### Patch Changes
+
+- [#570](https://github.com/marcalexiei/eslint-zod/pull/570) [`d5f877f`](https://github.com/marcalexiei/eslint-zod/commit/d5f877fa11f06d90730480c0758158fcb5bb6b0f) - refactor: check zod name tables against zod's own declarations; no rule's behavior changes
+
+- [#571](https://github.com/marcalexiei/eslint-zod/pull/571) [`2908981`](https://github.com/marcalexiei/eslint-zod/commit/2908981415f34086cb84c2921c74012b7e2a789a) - fix: drop unreachable type-changing method entries; no rule's behavior changes
+- Updated dependencies [[`d5f877f`](https://github.com/marcalexiei/eslint-zod/commit/d5f877fa11f06d90730480c0758158fcb5bb6b0f), [`2908981`](https://github.com/marcalexiei/eslint-zod/commit/2908981415f34086cb84c2921c74012b7e2a789a), [`13234f6`](https://github.com/marcalexiei/eslint-zod/commit/13234f62c7aad1ccaafffe83b7cd92ea6ffb18db)]:
+  - @eslint-zod/utils@6.3.0
+
 ## 5.2.0
 
 ### Minor Changes
