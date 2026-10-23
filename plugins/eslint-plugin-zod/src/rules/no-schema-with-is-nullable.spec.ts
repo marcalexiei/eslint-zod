@@ -15,11 +15,13 @@ ruleTester.run(noSchemaWithIsNullable.name, noSchemaWithIsNullable, {
       `,
     },
     {
-      name: 'schema variable is not modeled',
+      name: 'schema bound to a binding that can change',
       code: dedent`
         import * as z from 'zod';
-        const schema = z.string().nullable();
+        import { userSchema } from './schemas.js';
+        let schema = z.string().nullable();
         void schema.isNullable();
+        void userSchema.isNullable();
       `,
     },
     {
@@ -52,6 +54,20 @@ ruleTester.run(noSchemaWithIsNullable.name, noSchemaWithIsNullable, {
     },
   ],
   invalid: [
+    {
+      name: 'schema bound to a const',
+      code: dedent`
+        import * as z from 'zod';
+        const schema = z.string().nullable();
+        const nested = schema.array();
+        void schema.isNullable();
+        void nested.nullable().isNullable();
+      `,
+      errors: [
+        { messageId: 'useSafeParse', line: 4 },
+        { messageId: 'useSafeParse', line: 5 },
+      ],
+    },
     {
       name: 'z.string().isNullable()',
       code: dedent`

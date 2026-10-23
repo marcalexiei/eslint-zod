@@ -14,7 +14,7 @@ export interface DeprecatedSchemaMethodOptions<TMessageIds extends string> {
 }
 
 /**
- * Flags a deprecated method anywhere in a schema chain (`.isOptional()`).
+ * Flags a deprecated method anywhere in a schema chain (`.isOptional()`), including one on a local schema.
  * Skipped when a non-schema-producing method comes first — the call then belongs to that result,
  * not to zod.
  * Report-only: the `safeParse(…)` replacement would duplicate the schema expression.
@@ -25,9 +25,14 @@ export function buildDeprecatedSchemaMethodCreate<TMessageIds extends string>(
   const { scope, methodName, messageId } = options;
 
   return function create(context) {
-    const { createSchemaVisitor } = scope.createTracker({ kind: 'value' });
+    const { createSchemaVisitor } = scope.createTracker({
+      kind: 'value',
+      sourceCode: context.sourceCode,
+    });
 
     return createSchemaVisitor({
+      // `userSchema.isOptional()` is the usual form, so a schema bound to a `const` counts.
+      localSchemas: true,
       onSchema(node, zodSchemaMeta): void {
         const { methods } = zodSchemaMeta;
 

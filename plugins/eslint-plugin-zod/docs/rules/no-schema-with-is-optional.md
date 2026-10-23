@@ -8,7 +8,9 @@
 
 ## Rule Details
 
-This rule flags direct `.isOptional()` calls on expressions the plugin recognizes as Zod schema chains, such as `z.string().isOptional()` or `z.string().optional().isOptional()`.
+This rule flags `.isOptional()` calls on expressions the plugin recognizes as Zod schema chains, such as `z.string().isOptional()` or `z.string().optional().isOptional()`.
+A schema bound to a `const` counts too, so `schema.isOptional()` is reported when `const schema = z.string().optional()`.
+A `let`, a parameter or an imported schema is not followed.
 
 ## Examples
 
@@ -19,6 +21,9 @@ import { z } from 'zod';
 
 z.string().isOptional();
 z.string().optional().isOptional();
+
+const schema = z.string().optional();
+schema.isOptional();
 ```
 
 ### Valid
@@ -33,7 +38,7 @@ schema.safeParse(undefined).success;
 
 ## When Not To Use It
 
-If you intentionally rely on `.isOptional()` or call it on schema variables this rule does not model, you may need to disable the rule for that line or file.
+If you intentionally rely on `.isOptional()`, you may need to disable the rule for that line or file.
 
 ## Further Reading
 

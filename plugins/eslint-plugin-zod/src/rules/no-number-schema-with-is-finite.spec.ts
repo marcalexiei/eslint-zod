@@ -55,8 +55,34 @@ ruleTester.run(noNumberSchemaWithIsFinite.name, noNumberSchemaWithIsFinite, {
         void o.isFinite;
       `,
     },
+    {
+      name: 'isFinite on a schema that is not a number, or not provably one',
+      code: dedent`
+        import * as z from 'zod';
+        import { amount } from './schemas.js';
+        const name = z.string();
+        let count = z.number();
+        void name.isFinite;
+        void count.isFinite;
+        void amount.isFinite;
+      `,
+    },
   ],
   invalid: [
+    {
+      name: 'number schema bound to a const',
+      code: dedent`
+        import * as z from 'zod';
+        const amount = z.number();
+        const positive = amount.min(0);
+        void amount.isFinite;
+        void positive.isFinite;
+      `,
+      errors: [
+        { messageId: 'deprecated', line: 4 },
+        { messageId: 'deprecated', line: 5 },
+      ],
+    },
     {
       name: 'z.number().isFinite',
       code: dedent`

@@ -96,7 +96,8 @@ AST helpers exported from `@eslint-zod/utils`:
 - `resolveZodSchema(node)` (tracker method) — the `ZodSchemaMeta` of the schema an expression evaluates to, followed through `const` bindings: with `const base = z.string()`, `base.optional()` gives `methods: ['string', 'optional']`.
   Detection only sees chains rooted at a zod import, so this is how a rule reaches a schema built from a local `const`.
   `null` unless every step is provably a schema: a non-zod import, a parse result, a helper call or a destructured binding is not one.
-  `createSchemaVisitor({ localSchemas: true })` builds detection on it; `no-dynamic-schema-value` opts in, and the other rules still miss `base.optional()`.
+  `createSchemaVisitor({ localSchemas: true })` builds detection on it. `no-dynamic-schema-value` opts in, and so do four report-only rules: `no-schema-with-is-optional`, `no-schema-with-is-nullable` and the two `deprecated-schema-property` rules.
+  The other rules still miss `base.optional()`.
   Opt one in only after checking its fixer: `node` is the local call, so a fix cannot reach the methods behind the binding.
   It requires a tracker built with `sourceCode` and throws otherwise.
 - `createTracker({ kind })` — **required**: which specifiers the tracker records.
