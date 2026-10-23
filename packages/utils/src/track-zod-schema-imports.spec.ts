@@ -366,6 +366,13 @@ describe('createSchemaVisitor', () => {
     }
   }
 
+  it('throws for localSchemas when the tracker was built without a sourceCode', () => {
+    const tracker = zodImportScope.createTracker({ kind: 'value' });
+    expect(() => tracker.createSchemaVisitor({ localSchemas: true, onSchema: () => {} })).toThrow(
+      /sourceCode/,
+    );
+  });
+
   it('wires the import listener itself, so detection works without extra setup', () => {
     const seen: Array<string> = [];
     const visitor = zodImportScope.createTracker({ kind: 'value' }).createSchemaVisitor({
@@ -567,5 +574,120 @@ describe('resolveZodImport', () => {
   it('returns null when the binding is declared again', () => {
     const { resolve } = trackerWithDefinitions(1);
     expect(resolve()).toBeNull();
+  });
+});
+
+describe('resolveZodSchema', () => {
+  interface MockDefinition {
+    kind?: 'const' | 'let';
+    init: TSESTree.Node | null;
+    destructured?: boolean;
+    redeclared?: boolean;
+  }
+
+  /** A tracker importing `z` as a namespace, whose scope declares the given bindings. */
+  function trackerWith(definitions: Record<string, MockDefinition>): {
+    resolve: (node: TSESTree.Node) => ZodSchemaMeta | null;
+    getScopeCalls: () => number;
+  } {
+    const set = new Map(
+      Object.entries(definitions).map(
+        ([name, { kind = 'const', init, destructured, redeclared }]) => {
+          const definition = {
+            type: 'Variable',
+            node: {
+              id: destructured ? { type: AST_NODE_TYPES.ObjectPattern } : makeIdent(name),
+              init,
+            },
+            parent: { kind },
+          };
+          return [name, { defs: redeclared ? [definition, definition] : [definition] }];
+        },
+      ),
+    );
+    let calls = 0;
+    const sourceCode = {
+      getScope: () => {
+        calls += 1;
+        return { set, upper: null };
+      },
+    } as unknown as SourceCode;
+    const tracker = zodImportScope.createTracker({ kind: 'value', sourceCode });
+    tracker.importDeclarationListener(mockImportDecl('zod', [mockNamespaceSpec('z')]));
+    return { resolve: (node) => tracker.resolveZodSchema(node), getScopeCalls: () => calls };
+  }
+
+  const zString = (): TSESTree.CallExpression => makeCall(makeME(makeIdent('z'), 'string'));
+
+  it('throws when the tracker was built without a sourceCode', () => {
+    const tracker = zodImportScope.createTracker({ kind: 'value' });
+    expect(() => tracker.resolveZodSchema(zString())).toThrow(/sourceCode/);
+  });
+
+  it('resolves an import-rooted chain, outermost or not', () => {
+    const { resolve } = trackerWith({});
+    const inner = zString();
+    resolve(makeCall(makeME(inner, 'optional')));
+    expect(resolve(inner)).toMatchObject({ schemaType: 'string', methods: ['string'] });
+  });
+
+  it('follows a const and appends the methods called on it', () => {
+    const { resolve } = trackerWith({ base: { init: zString() } });
+    const call = makeCall(makeME(makeCall(makeME(makeIdent('base'), 'nullable')), 'optional'));
+    expect(resolve(call)).toMatchObject({
+      schemaDecl: 'namespace',
+      schemaType: 'string',
+      methods: ['string', 'nullable', 'optional'],
+    });
+  });
+
+  it('reads a literal method key and unwraps TS assertions', () => {
+    const asserted = {
+      type: AST_NODE_TYPES.TSSatisfiesExpression,
+      expression: makeIdent('base'),
+    } as unknown as TSESTree.Expression;
+    const computed = {
+      type: AST_NODE_TYPES.MemberExpression,
+      object: asserted,
+      property: { type: AST_NODE_TYPES.Literal, value: 'optional' },
+      computed: true,
+    } as unknown as TSESTree.MemberExpression;
+    const { resolve } = trackerWith({ base: { init: zString() } });
+    expect(resolve(makeCall(computed))?.methods).toStrictEqual(['string', 'optional']);
+  });
+
+  it('returns null for a parse result, a helper call or a non-schema method', () => {
+    const parsed = makeCall(makeME(zString(), 'parse'), [makeIdent('input')]);
+    const { resolve } = trackerWith({ parsed: { init: parsed }, base: { init: zString() } });
+    expect(resolve(parsed)).toBeNull();
+    expect(resolve(makeCall(makeME(makeIdent('parsed'), 'trim')))).toBeNull();
+    expect(resolve(makeCall(makeME(makeIdent('z'), 'prettifyError')))).toBeNull();
+    expect(resolve(makeCall(makeME(makeIdent('base'), 'safeParse')))).toBeNull();
+  });
+
+  it('returns null for a binding it cannot settle', () => {
+    const { resolve } = trackerWith({
+      mutable: { kind: 'let', init: zString() },
+      declared: { init: null },
+      destructured: { init: zString(), destructured: true },
+      redeclared: { init: zString(), redeclared: true },
+    });
+    for (const name of ['mutable', 'declared', 'destructured', 'redeclared', 'unknown']) {
+      expect(resolve(makeIdent(name))).toBeNull();
+    }
+  });
+
+  it('returns null for a const cycle', () => {
+    const cycle = makeCall(makeME(makeIdent('self'), 'optional'));
+    const { resolve } = trackerWith({ self: { init: cycle } });
+    expect(resolve(makeIdent('self'))).toBeNull();
+  });
+
+  it('resolves each node once', () => {
+    const { resolve, getScopeCalls } = trackerWith({ base: { init: zString() } });
+    const identifier = makeIdent('base');
+    resolve(identifier);
+    resolve(identifier);
+    expect(getScopeCalls()).toBe(1);
   });
 });

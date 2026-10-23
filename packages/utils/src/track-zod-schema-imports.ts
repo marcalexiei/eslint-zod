@@ -8,6 +8,7 @@ import type { ZodImports, ZodSchemaMeta } from './detect-zod-schema-root-node.js
 import { findVariable } from './find-variable.js';
 import { getStaticPropertyName } from './get-static-property-name.js';
 import { getZodChainedMethodNames } from './get-zod-chained-method-names.js';
+import { createZodSchemaResolver } from './resolve-zod-schema.js';
 import type { RuleListener, SourceCode } from './rule-types.js';
 import type { ZodImportScope } from './zod-import-scope.js';
 
@@ -36,7 +37,7 @@ export interface ZodTrackerOptions {
    * A call-site rule wants `'value'`; see {@link ZodImportKind}.
    */
   kind: ZodImportKind;
-  /** Enables the scope-aware `resolveZodImport` / `resolveZodExport`. */
+  /** Enables the scope-aware `resolveZodImport` / `resolveZodExport` / `resolveZodSchema`. */
   sourceCode?: SourceCode;
 }
 
@@ -84,6 +85,15 @@ export interface ZodSchemaVisitorOptions<TSchemaType extends string> {
    * Omit to receive every zod schema.
    */
   schemaType?: TSchemaType | ReadonlyArray<TSchemaType>;
+
+  /**
+   * Also visit a chain rooted at a local `const` schema (`base.optional()`),
+   * with `meta` describing the whole schema across the binding.
+   * `node` is the local call, so `collectZodChainMethods(node)` and a fix only reach that part:
+   * check the rule's fixer before opting in.
+   * Needs a tracker built with a `sourceCode`.
+   */
+  localSchemas?: boolean;
 
   /** Called with each matching schema root and its detection metadata. */
   onSchema: (
@@ -133,6 +143,9 @@ export interface ZodSchemaImportTracker {
    * Must be called after `importDeclarationListener` has processed the file's imports.
    */
   isZodNamespace: (name: string) => boolean;
+
+  /** True if the name is bound to a zod import, as the namespace or a named export. */
+  isZodImportName: (name: string) => boolean;
 
   /**
    * Given a local name used in code, returns the original zod export name,
@@ -225,6 +238,16 @@ export interface ZodSchemaImportTracker {
    * Needs a tracker built with a `sourceCode`.
    */
   resolveZodExport: (node: TSESTree.Node) => ZodImportBinding | null;
+
+  /**
+   * The schema an expression evaluates to, followed through `const` bindings:
+   * with `const base = z.string()`, `base.optional()` gives the meta of `z.string().optional()`.
+   * Unlike detection, the call need not be outermost.
+   * `null` unless every step is provably a schema:
+   * a non-zod import, a parse result, a helper call or a destructured binding is not one.
+   * Needs a tracker built with a `sourceCode`.
+   */
+  resolveZodSchema: (node: TSESTree.Node) => ZodSchemaMeta | null;
 }
 
 /**
@@ -404,20 +427,41 @@ export function trackZodSchemaImports(
     return found?.name === '*' && name ? { ...found, name } : null;
   }
 
+  function isZodImportName(name: string): boolean {
+    return imports.namespaces.has(name) || imports.named.has(name);
+  }
+
+  let schemaResolver: ((node: TSESTree.Node) => ZodSchemaMeta | null) | undefined;
+
+  function resolveZodSchema(node: TSESTree.Node): ZodSchemaMeta | null {
+    if (!sourceCode) {
+      throw new Error('resolveZodSchema needs a tracker created with a `sourceCode`.');
+    }
+    schemaResolver ??= createZodSchemaResolver(imports, sourceCode);
+    return schemaResolver(node);
+  }
+
   const result: ZodSchemaImportTracker = {
     importDeclarationListener,
 
     createSchemaVisitor<TSchemaType extends string>({
       schemaType,
+      localSchemas = false,
       onSchema,
     }: ZodSchemaVisitorOptions<TSchemaType>): RuleListener {
       const allowed: ReadonlyArray<string> | undefined =
         typeof schemaType === 'string' ? [schemaType] : schemaType;
+      if (localSchemas && !sourceCode) {
+        throw new Error(
+          'createSchemaVisitor({ localSchemas }) needs a tracker created with a `sourceCode`.',
+        );
+      }
+      const resolveRoot = localSchemas ? resolveZodSchema : undefined;
 
       return {
         ImportDeclaration: importDeclarationListener,
         CallExpression(node): void {
-          const meta = detectZodSchemaRootNode(node, imports);
+          const meta = detectZodSchemaRootNode(node, imports, resolveRoot);
           if (!meta) {
             return;
           }
@@ -431,6 +475,8 @@ export function trackZodSchemaImports(
     },
 
     isZodNamespace: (name) => imports.namespaces.has(name),
+
+    isZodImportName,
 
     getNamedImportOriginal: (localName) => imports.named.get(localName),
 
@@ -446,6 +492,7 @@ export function trackZodSchemaImports(
       collectZodSchemaConstraints({
         methods: collectZodChainMethods(node),
         detectZodSchemaRootNode: (argument) => detectZodSchemaRootNode(argument, imports),
+        isZodImportName,
       }),
 
     isZodSchemaOfType: (node, schemaType) => isZodSchemaOfType(node, schemaType, imports),
@@ -455,6 +502,8 @@ export function trackZodSchemaImports(
     resolveZodImport,
 
     resolveZodExport,
+
+    resolveZodSchema,
   };
 
   return result;

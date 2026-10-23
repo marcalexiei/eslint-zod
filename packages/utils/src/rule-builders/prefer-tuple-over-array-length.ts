@@ -58,8 +58,12 @@ export function buildPreferTupleOverArrayLengthCreate(
   scope: ZodImportScope,
 ): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods, collectZodSchemaConstraints } =
-      scope.createTracker({ kind: 'value' });
+    const {
+      createSchemaVisitor,
+      collectZodChainMethods,
+      collectZodSchemaConstraints,
+      isZodImportName,
+    } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: 'array',
@@ -67,7 +71,7 @@ export function buildPreferTupleOverArrayLengthCreate(
         const methods = collectZodChainMethods(node);
         // After a property access (`z.array(x).element.length(2)`) the checks are another schema's.
         const head = methods.at(0);
-        if (head && !isZodFactoryChainItem(head)) {
+        if (head && !isZodFactoryChainItem(head, isZodImportName)) {
           return;
         }
 

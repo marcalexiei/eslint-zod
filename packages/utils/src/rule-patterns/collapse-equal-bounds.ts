@@ -150,6 +150,7 @@ export function buildCollapseEqualBoundsCreate<TMessageIds extends string>(
       collectZodChainMethods,
       collectZodSchemaConstraints,
       getNamedImportLocal,
+      isZodImportName,
     } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
@@ -161,7 +162,7 @@ export function buildCollapseEqualBoundsCreate<TMessageIds extends string>(
 
         // After a property access (`z.set(x).def.valueType.min(3).max(3)`) the bounds are another schema's.
         const head = collectZodChainMethods(node).at(0);
-        if (head && !isZodFactoryChainItem(head)) {
+        if (head && !isZodFactoryChainItem(head, isZodImportName)) {
           return;
         }
 

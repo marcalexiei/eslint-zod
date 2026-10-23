@@ -11,7 +11,9 @@ export function buildNoCoerceBooleanCreate(
   scope: ZodImportScope,
 ): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
+    const { createSchemaVisitor, collectZodChainMethods, isZodImportName } = scope.createTracker({
+      kind: 'value',
+    });
 
     return createSchemaVisitor({
       schemaType: 'coerce',
@@ -34,7 +36,8 @@ export function buildNoCoerceBooleanCreate(
         // and resumed at a method after a property access (`z.coerce.boolean().def.type.toString()`) —
         // report it, just without the suggestion.
         const head = collectZodChainMethods(node).at(0);
-        const factoryCallee = head && isZodFactoryChainItem(head) ? head.member : null;
+        const factoryCallee =
+          head && isZodFactoryChainItem(head, isZodImportName) ? head.member : null;
 
         if (
           zodSchemaMeta.schemaDecl !== 'namespace' ||

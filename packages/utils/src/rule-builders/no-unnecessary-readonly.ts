@@ -49,13 +49,14 @@ export function buildNoUnnecessaryReadonlyCreate(
       detectZodSchemaRootNode,
       collectZodChainMethods,
       collectZodSchemaConstraints,
+      isZodImportName,
     } = scope.createTracker({ kind: 'value' });
 
     /** Immutability of the schema produced by `chain[0..endIndex)`. */
     function classifyChain(schemaType: string, chain: ChainItems, endIndex: number): Immutability {
       // After a property access (`z.string().pipe(x).out.readonly()`) the factory says nothing about the chain.
       const head = chain.at(0);
-      if (head && !isZodFactoryChainItem(head)) {
+      if (head && !isZodFactoryChainItem(head, isZodImportName)) {
         return 'unknown';
       }
 
@@ -110,7 +111,8 @@ export function buildNoUnnecessaryReadonlyCreate(
         // Wrapper form: `z.readonly(inner)` (`zod/mini`).
         if (zodSchemaMeta.schemaType === 'readonly') {
           const head = methods.at(0);
-          const wrapperCall = head && isZodFactoryChainItem(head) ? head.node : undefined;
+          const wrapperCall =
+            head && isZodFactoryChainItem(head, isZodImportName) ? head.node : undefined;
           const inner =
             wrapperCall?.arguments.length === 1 ? wrapperCall.arguments.at(0) : undefined;
           const immutability = classifyExpression(inner);

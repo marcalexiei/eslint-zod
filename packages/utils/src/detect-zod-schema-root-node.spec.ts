@@ -247,6 +247,50 @@ describe('detectZodSchemaRootNode', () => {
   });
 });
 
+describe('detectZodSchemaRootNode with a root resolver', () => {
+  const base = { schemaDecl: 'namespace' as const, schemaType: 'string', methods: ['string'] };
+  const resolveRoot = (root: TSESTree.Identifier): typeof base | null =>
+    root.name === 'base' ? base : null;
+
+  it('appends the chained methods to the schema the root is bound to', () => {
+    const call = makeCall(makeME(makeCall(makeME(makeIdent('base'), 'nullable')), 'isOptional'));
+    setOutermostParent(call);
+    expect(detectZodSchemaRootNode(call, imports, resolveRoot)).toStrictEqual({
+      ...base,
+      methods: ['string', 'nullable', 'isOptional'],
+    });
+  });
+
+  it('returns null for a bare call, or a root the resolver does not know', () => {
+    const bare = makeCall(makeIdent('base'));
+    const unknown = makeCall(makeME(makeIdent('other'), 'optional'));
+    setOutermostParent(bare);
+    setOutermostParent(unknown);
+    expect(detectZodSchemaRootNode(bare, imports, resolveRoot)).toBeNull();
+    expect(detectZodSchemaRootNode(unknown, imports, resolveRoot)).toBeNull();
+  });
+
+  it('looks through a TS assertion only with a resolver', () => {
+    const asserted = {
+      type: AST_NODE_TYPES.TSAsExpression,
+      expression: makeCall(makeME(makeIdent('z'), 'string')),
+    } as unknown as TSESTree.Expression;
+    const call = makeCall(makeME(asserted, 'optional'));
+    setOutermostParent(call);
+    expect(detectZodSchemaRootNode(call, imports, resolveRoot)?.methods).toStrictEqual([
+      'string',
+      'optional',
+    ]);
+    expect(detectZodSchemaRootNode(call, imports)).toBeNull();
+  });
+
+  it('ignores local roots without a resolver', () => {
+    const call = makeCall(makeME(makeIdent('base'), 'optional'));
+    setOutermostParent(call);
+    expect(detectZodSchemaRootNode(call, imports)).toBeNull();
+  });
+});
+
 describe('isZodSchemaOfType', () => {
   it('returns false for non-CallExpression', () => {
     expect(isZodSchemaOfType(makeIdent('z'), 'number', imports)).toBe(false);

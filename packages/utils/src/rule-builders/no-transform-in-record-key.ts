@@ -31,6 +31,7 @@ export function buildNoTransformInRecordKeyCreate(
       detectZodSchemaRootNode,
       collectZodChainMethods,
       collectZodSchemaConstraints,
+      isZodImportName,
     } = scope.createTracker({ kind: 'value' });
 
     function findTransform(schema: TSESTree.CallExpression): TSESTree.Node | undefined {
@@ -67,7 +68,7 @@ export function buildNoTransformInRecordKeyCreate(
         // `node` is the outermost call, which is not the `record()` one once something is chained on it.
         const head = collectZodChainMethods(node).at(0);
         // After a property access (`z.record(k, v).keyType.or(…)`) the chain is not the record's.
-        if (head && !isZodFactoryChainItem(head)) {
+        if (head && !isZodFactoryChainItem(head, isZodImportName)) {
           return;
         }
         const recordCall = head?.node ?? node;

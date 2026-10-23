@@ -65,6 +65,7 @@ describe('collectZodSchemaConstraints', () => {
     const methods = [makeChainItem('string')];
 
     const constraints = collectZodSchemaConstraints({
+      isZodImportName: () => true,
       methods,
       detectZodSchemaRootNode: makeDetector(),
     });
@@ -77,6 +78,7 @@ describe('collectZodSchemaConstraints', () => {
     const methods = [makeChainItem('string'), makeChainItem('min'), makeChainItem('max')];
 
     const constraints = collectZodSchemaConstraints({
+      isZodImportName: () => true,
       methods,
       detectZodSchemaRootNode: makeDetector(),
     });
@@ -98,6 +100,7 @@ describe('collectZodSchemaConstraints', () => {
     const methods = [{ ...makeChainItem('trim'), member: afterProperty }, makeChainItem('min')];
 
     const constraints = collectZodSchemaConstraints({
+      isZodImportName: () => true,
       methods,
       detectZodSchemaRootNode: makeDetector(),
     });
@@ -117,6 +120,7 @@ describe('collectZodSchemaConstraints', () => {
     const methods = [makeChainItem('string'), makeChainItem('check', [minLength, maxLength])];
 
     const constraints = collectZodSchemaConstraints({
+      isZodImportName: () => true,
       methods,
       detectZodSchemaRootNode: makeDetector(),
     });
@@ -149,6 +153,7 @@ describe('collectZodSchemaConstraints', () => {
     const methods = [makeChainItem('string'), makeChainItem('with', [minLength])];
 
     const constraints = collectZodSchemaConstraints({
+      isZodImportName: () => true,
       methods,
       detectZodSchemaRootNode: makeDetector(),
     });
@@ -172,6 +177,7 @@ describe('collectZodSchemaConstraints', () => {
     ];
 
     const constraints = collectZodSchemaConstraints({
+      isZodImportName: () => true,
       methods,
       detectZodSchemaRootNode: makeDetector(),
     });
@@ -203,6 +209,7 @@ describe('collectZodSchemaConstraints', () => {
     ];
 
     const constraints = collectZodSchemaConstraints({
+      isZodImportName: () => true,
       methods,
       detectZodSchemaRootNode: makeDetector(['someCustomCheck']),
     });
@@ -224,6 +231,7 @@ describe('collectZodSchemaConstraints', () => {
     const methods = [makeChainItem('string'), makeChainItem('check', [])];
 
     const constraints = collectZodSchemaConstraints({
+      isZodImportName: () => true,
       methods,
       detectZodSchemaRootNode: makeDetector(),
     });

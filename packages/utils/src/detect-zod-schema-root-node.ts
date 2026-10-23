@@ -73,24 +73,30 @@ function isOutermostCallExpression(node: TSESTree.CallExpression): boolean {
   return !(ancestor.type === AST_NODE_TYPES.CallExpression && ancestor.callee === child);
 }
 
+/** Resolves a chain's root identifier to the schema it is bound to, or `null`. */
+type ZodSchemaRootResolver = (root: TSESTree.Identifier) => ZodSchemaMeta | null;
+
 /**
  * Parse a CallExpression to detect whether it's a zod schema expression (namespace or named).
  * This helper DOES NOT require the call to be outermost.
+ * With `resolveRoot`, a chain rooted at a local schema (`base.optional()`) is detected too,
+ * and TS assertions in the chain are looked through.
  *
  * Returns:
  *  { schemaDecl, schemaType, methods, node } if successful
  *  null otherwise
  */
-function parseZodCallExpression(
+export function parseZodCallExpression(
   call: TSESTree.CallExpression,
   imports: ZodImports,
+  resolveRoot?: ZodSchemaRootResolver,
 ): ZodSchemaMeta | null {
   let cur: TSESTree.Node = call.callee;
 
   // Collect names in right-to-left order, then reverse at the end
   const methodsRightToLeft: Array<string> = [];
   // Assigned by the only `break` in the loop below; every other exit returns.
-  let leftmostIdentifier: string;
+  let leftmost: TSESTree.Identifier;
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   while (true) {
@@ -111,8 +117,19 @@ function parseZodCallExpression(
     }
 
     if (cur.type === AST_NODE_TYPES.Identifier) {
-      leftmostIdentifier = cur.name;
+      leftmost = cur;
       break;
+    }
+
+    // Resolver path only: `collectZodChainMethods` cannot walk an assertion, so plain detection must not see through one.
+    if (
+      resolveRoot &&
+      (cur.type === AST_NODE_TYPES.TSAsExpression ||
+        cur.type === AST_NODE_TYPES.TSSatisfiesExpression ||
+        cur.type === AST_NODE_TYPES.TSNonNullExpression)
+    ) {
+      cur = cur.expression;
+      continue;
     }
 
     // unsupported left shape (e.g. complex expression) — bail
@@ -120,6 +137,7 @@ function parseZodCallExpression(
   }
 
   const methods = methodsRightToLeft.slice().reverse(); // left -> right order
+  const leftmostIdentifier = leftmost.name;
 
   // Namespace style: z.number().int()
   if (imports.namespaces.has(leftmostIdentifier)) {
@@ -147,7 +165,9 @@ function parseZodCallExpression(
     };
   }
 
-  return null;
+  // A chained call on a local schema; a bare call (`base()`) is not one.
+  const base = methods.length > 0 ? resolveRoot?.(leftmost) : null;
+  return base ? { ...base, methods: [...base.methods, ...methods] } : null;
 }
 
 /**
@@ -178,10 +198,12 @@ export function isZodSchemaOfType(
  *
  * @param node - The AST node to analyze (typically a `CallExpression` from an ESLint visitor)
  * @param imports - The file's zod imports, from a tracker
+ * @param resolveRoot - Also detect a chain rooted at a local schema
  */
 export function detectZodSchemaRootNode(
   node: TSESTree.Node,
   imports: ZodImports,
+  resolveRoot?: ZodSchemaRootResolver,
 ): ZodSchemaMeta | null {
   if (node.type !== AST_NODE_TYPES.CallExpression) {
     return null;
@@ -194,7 +216,7 @@ export function detectZodSchemaRootNode(
   }
 
   // Parse the outer call expression into zod schema info
-  const outer = parseZodCallExpression(call, imports);
+  const outer = parseZodCallExpression(call, imports, resolveRoot);
   if (!outer) {
     return null;
   }
