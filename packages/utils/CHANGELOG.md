@@ -1,5 +1,17 @@
 # @eslint-zod/utils
 
+## 6.4.0
+
+### Minor Changes
+
+- [#583](https://github.com/marcalexiei/eslint-zod/pull/583) [`2f4f585`](https://github.com/marcalexiei/eslint-zod/commit/2f4f585fc7c49b1e32ef68ab04c10dca6c250226) - feat(utils): add `tracker.resolveZodSchema(node)` and a `localSchemas` option to `createSchemaVisitor`, so rules can follow `const` bindings to a schema.
+
+### Patch Changes
+
+- [#584](https://github.com/marcalexiei/eslint-zod/pull/584) [`9a6810b`](https://github.com/marcalexiei/eslint-zod/commit/9a6810b9ef5686f0082d208687cd917a97383284) - fix(no-dynamic-schema-value): accept a schema built from a local `const` and a member access on a static value, and report parse results.
+
+- [#585](https://github.com/marcalexiei/eslint-zod/pull/585) [`ae6d0ac`](https://github.com/marcalexiei/eslint-zod/commit/ae6d0acb0e59817fa367e632f93f1ee2c064b785) - fix: report `isOptional`, `isNullable`, `isInt` and `isFinite` on a schema bound to a `const`.
+
 ## 6.3.0
 
 ### Minor Changes
