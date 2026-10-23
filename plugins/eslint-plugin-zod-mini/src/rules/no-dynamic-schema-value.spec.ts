@@ -159,6 +159,56 @@ ruleTester.run(noDynamicSchemaValue.name, noDynamicSchemaValue, {
         }
       `,
     },
+    {
+      name: 'schema method called on a local schema',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const base = z.object({});
+        const branded = base.brand<'Base'>();
+        const union = z.union([base, branded]);
+        const name = z.string();
+        const user = z.object({ name: name.check(z.minLength(1)) });
+        const typed = z.object({}) satisfies z.ZodMiniObject;
+        const wrapped = z.union([typed.brand<'Typed'>()]);
+      `,
+    },
+    {
+      name: 'shape of a local schema spread into another',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const base = z.object({ name: z.string() });
+        const extended = z.object({ ...base.shape, age: z.number() });
+      `,
+    },
+    {
+      name: 'member access on a static value',
+      code: dedent`
+        import * as z from 'zod/mini';
+        import { config } from './helpers.js';
+        const messages = { short: 'too short' };
+        const schema = z.string().check(z.minLength(1, config.message));
+        const schema2 = z.string().check(z.minLength(1, messages['short']));
+        const schema3 = z.string().check(z.minLength(1, config?.message));
+      `,
+    },
+    {
+      name: 'method on a local schema read through a literal key',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const base = z.object({});
+        const computed = z.union([base['brand']()]);
+      `,
+    },
+    {
+      name: 'input parsed by a local schema',
+      code: dedent`
+        import * as z from 'zod/mini';
+        import { input } from './helpers.js';
+        const base = z.object({});
+        base.parse(input);
+        base.brand<'Base'>().safeParse(input);
+      `,
+    },
   ],
 
   invalid: [
@@ -235,11 +285,100 @@ ruleTester.run(noDynamicSchemaValue.name, noDynamicSchemaValue, {
       errors: [{ messageId: 'dynamicValue' }],
     },
     {
-      name: 'optional member access as an argument',
+      name: 'optional member access on a dynamic value',
       code: dedent`
         import * as z from 'zod/mini';
-        import { isValid, config } from './helpers.js';
-        const schema = z.string().check(z.refine(isValid, config?.message));
+        import { isValid, getConfig } from './helpers.js';
+        const schema = z.string().check(z.refine(isValid, getConfig()?.message));
+      `,
+      errors: [{ messageId: 'dynamicValue' }],
+    },
+    {
+      name: 'computed member access with a dynamic key',
+      code: dedent`
+        import * as z from 'zod/mini';
+        import { isValid, getKey } from './helpers.js';
+        const messages = { short: 'too short' };
+        const schema = z.string().check(z.refine(isValid, messages[getKey()]));
+      `,
+      errors: [{ messageId: 'dynamicValue' }],
+    },
+    {
+      name: 'schema method on a local schema called with a dynamic value',
+      code: dedent`
+        import * as z from 'zod/mini';
+        function getChecks() { return []; }
+        const base = z.object({});
+        const union = z.union([base, base.check(...getChecks())]);
+      `,
+      errors: [{ messageId: 'dynamicValue' }],
+    },
+    {
+      name: 'local schema method called with a dynamic value at the top level',
+      code: dedent`
+        import * as z from 'zod/mini';
+        function getChecks() { return []; }
+        const base = z.object({});
+        const extended = base.check(...getChecks());
+        const union = z.union([extended]);
+      `,
+      errors: [{ messageId: 'dynamicValue', line: 4 }],
+    },
+    {
+      name: 'parse results used as arguments',
+      code: dedent`
+        import * as z from 'zod/mini';
+        import { isValid, input } from './helpers.js';
+        const env = z.object({ HOST: z.string() }).parse(process.env);
+        const host = z.string().parse(process.env.HOST);
+        const result = z.string().safeParse(input);
+        const schema = z.string().check(z.refine(isValid, env.HOST));
+        const schema2 = z.string().check(z.refine(isValid, host));
+        const schema3 = z.string().check(z.refine(isValid, result.data));
+      `,
+      errors: [
+        { messageId: 'dynamicValue', line: 6 },
+        { messageId: 'dynamicValue', line: 7 },
+        { messageId: 'dynamicValue', line: 8 },
+      ],
+    },
+    {
+      name: 'method called on a helper result',
+      code: dedent`
+        import * as z from 'zod/mini';
+        import { isValid, error } from './helpers.js';
+        const message = z.prettifyError(error);
+        const schema = z.string().check(z.refine(isValid, message.trim()));
+      `,
+      errors: [{ messageId: 'dynamicValue' }],
+    },
+    {
+      name: 'method called on a const that is not a schema',
+      code: dedent`
+        import * as z from 'zod/mini';
+        import { isValid } from './helpers.js';
+        const helpers = { message: () => 'bad' };
+        const schema = z.string().check(z.refine(isValid, helpers.message()));
+      `,
+      errors: [{ messageId: 'dynamicValue' }],
+    },
+    {
+      name: 'parse result of a local schema used as an argument',
+      code: dedent`
+        import * as z from 'zod/mini';
+        import { isValid, raw } from './helpers.js';
+        const fallback = z.string();
+        const schema = z.string().check(z.refine(isValid, fallback.parse(raw)));
+      `,
+      errors: [{ messageId: 'dynamicValue' }],
+    },
+    {
+      // An import is not provably a schema, so a method called on one is not resolved.
+      name: 'schema method called on an imported schema',
+      code: dedent`
+        import * as z from 'zod/mini';
+        import { base } from './schemas.js';
+        const user = z.object({ base: base.brand<'Base'>() });
       `,
       errors: [{ messageId: 'dynamicValue' }],
     },

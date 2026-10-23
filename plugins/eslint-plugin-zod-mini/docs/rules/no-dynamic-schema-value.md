@@ -57,14 +57,22 @@ const schema2 = z.string().check(z.refine((value) => value.length > 0, message))
 // refine/transform/superRefine callback by reference rather than needing to hoist it.
 let threshold = 5;
 const schema3 = z.string().check(z.refine((value) => value.length > threshold));
+
+// A schema built in this file can be wrapped, or spread through its `shape`.
+const base = z.object({ name: z.string() });
+const schema4 = z.union([base, base.brand<'Base'>()]);
+const schema5 = z.object({ ...base.shape, age: z.number() });
 ```
 
 ## Limitations
 
 The rule resolves an identifier as static only through an import binding, a `function` declaration, or a
-`const` initialized (directly or transitively) to another static value. A member access (`config.message`) is always treated as dynamic,
-even when the object it reads from is itself static. A `const` that refers to itself is reported rather
-than resolved.
+`const` initialized (directly or transitively) to another static value.
+A member access (`config.message`, `schema.shape`) is static when the object it reads from is.
+A parse result is a runtime value, so `env.HOST` is reported when `env` holds `schema.parse(process.env)`.
+A method call is static only on a schema built in the same file (`base.brand()`, `base.check(…)`).
+An import is not provably a schema, so `importedSchema.brand()` is reported.
+A `const` that refers to itself is reported rather than resolved.
 
 A function literal is always static, regardless of what it captures — the rule does not look inside its
 body. This matches `zod-compiler`, which compiles a `refine`/`transform`/`superRefine`/`preprocess`
