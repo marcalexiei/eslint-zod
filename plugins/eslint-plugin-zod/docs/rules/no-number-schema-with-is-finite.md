@@ -9,6 +9,8 @@
 ## Rule Details
 
 This rule flags property access to `isFinite` on `z.number()…` chain expressions, such as `z.number().isFinite` or `z.number().min(0).isFinite`.
+A schema bound to a `const` counts too, so `amount.isFinite` is reported when `const amount = z.number()`.
+A `let`, a parameter or an imported schema is not followed.
 
 ## Examples
 
@@ -19,6 +21,9 @@ import { z } from 'zod';
 
 z.number().isFinite;
 z.number().min(0).isFinite;
+
+const amount = z.number();
+amount.isFinite;
 ```
 
 ### Valid

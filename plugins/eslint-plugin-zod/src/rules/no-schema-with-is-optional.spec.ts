@@ -15,11 +15,13 @@ ruleTester.run(noSchemaWithIsOptional.name, noSchemaWithIsOptional, {
       `,
     },
     {
-      name: 'schema variable is not modeled',
+      name: 'schema bound to a binding that can change',
       code: dedent`
         import * as z from 'zod';
-        const schema = z.string().optional();
+        import { userSchema } from './schemas.js';
+        let schema = z.string().optional();
         void schema.isOptional();
+        void userSchema.isOptional();
       `,
     },
     {
@@ -52,6 +54,20 @@ ruleTester.run(noSchemaWithIsOptional.name, noSchemaWithIsOptional, {
     },
   ],
   invalid: [
+    {
+      name: 'schema bound to a const',
+      code: dedent`
+        import * as z from 'zod';
+        const schema = z.string().optional();
+        const nested = schema.array();
+        void schema.isOptional();
+        void nested.optional().isOptional();
+      `,
+      errors: [
+        { messageId: 'useSafeParse', line: 4 },
+        { messageId: 'useSafeParse', line: 5 },
+      ],
+    },
     {
       name: 'z.string().isOptional()',
       code: dedent`

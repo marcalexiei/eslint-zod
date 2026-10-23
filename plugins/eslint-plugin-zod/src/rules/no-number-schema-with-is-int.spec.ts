@@ -51,8 +51,34 @@ ruleTester.run(noNumberSchemaWithIsInt.name, noNumberSchemaWithIsInt, {
         }
       `,
     },
+    {
+      name: 'isInt on a schema that is not a number, or not provably one',
+      code: dedent`
+        import * as z from 'zod';
+        import { amount } from './schemas.js';
+        const name = z.string();
+        let count = z.number();
+        void name.isInt;
+        void count.isInt;
+        void amount.isInt;
+      `,
+    },
   ],
   invalid: [
+    {
+      name: 'number schema bound to a const',
+      code: dedent`
+        import * as z from 'zod';
+        const amount = z.number();
+        const positive = amount.min(0);
+        void amount.isInt;
+        void positive.isInt;
+      `,
+      errors: [
+        { messageId: 'useFormat', line: 4 },
+        { messageId: 'useFormat', line: 5 },
+      ],
+    },
     {
       name: 'z.number().isInt',
       code: dedent`

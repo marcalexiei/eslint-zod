@@ -9,6 +9,8 @@
 ## Rule Details
 
 This rule flags property access to `isInt` on expressions the plugin recognizes as a `z.number()…` chain (for example `z.number().isInt` or `z.number().min(0).isInt`).
+A schema bound to a `const` counts too, so `amount.isInt` is reported when `const amount = z.number()`.
+A `let`, a parameter or an imported schema is not followed.
 
 ## Examples
 
@@ -19,6 +21,9 @@ import { z } from 'zod';
 
 z.number().isInt;
 z.number().min(0).isInt;
+
+const amount = z.number();
+amount.isInt;
 ```
 
 ### Valid
@@ -31,7 +36,7 @@ z.number();
 
 ## When Not To Use It
 
-If you read `isInt` in contexts this rule does not model (e.g. after assigning the schema to a variable), you may need to disable the rule for that line or file.
+If you read `isInt` intentionally, you may need to disable the rule for that line or file.
 
 ## Further Reading
 

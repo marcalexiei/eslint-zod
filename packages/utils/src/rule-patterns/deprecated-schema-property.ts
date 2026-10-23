@@ -18,7 +18,7 @@ export interface DeprecatedSchemaPropertyOptions<TMessageIds extends string> {
 }
 
 /**
- * Flags a deprecated property access on a schema of `schemaType` (`z.number().isInt`).
+ * Flags a deprecated property access on a schema of `schemaType` (`z.number().isInt`, or `amount.isInt` on a local schema).
  * Report-only: the replacement depends on surrounding code, so no fix is safe.
  */
 export function buildDeprecatedSchemaPropertyCreate<TMessageIds extends string>(
@@ -27,7 +27,10 @@ export function buildDeprecatedSchemaPropertyCreate<TMessageIds extends string>(
   const { scope, schemaType, propertyName, messageId } = options;
 
   return function create(context) {
-    const { importDeclarationListener, isZodSchemaOfType } = scope.createTracker({ kind: 'value' });
+    const { importDeclarationListener, resolveZodSchema } = scope.createTracker({
+      kind: 'value',
+      sourceCode: context.sourceCode,
+    });
 
     return {
       ImportDeclaration: importDeclarationListener,
@@ -42,10 +45,8 @@ export function buildDeprecatedSchemaPropertyCreate<TMessageIds extends string>(
         if (node.property.name !== propertyName) {
           return;
         }
-        if (node.object.type !== AST_NODE_TYPES.CallExpression) {
-          return;
-        }
-        if (!isZodSchemaOfType(node.object, schemaType)) {
+        // Also a schema bound to a `const` (`amount.isInt`), the usual form.
+        if (resolveZodSchema(node.object)?.schemaType !== schemaType) {
           return;
         }
 
