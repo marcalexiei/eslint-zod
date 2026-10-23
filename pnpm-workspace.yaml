@@ -9,14 +9,14 @@ catalogs:
 
   dev:
     # typescript-eslint ecosystem (keep versions aligned)
-    '@typescript-eslint/rule-tester': '8.71.2'
-    typescript-eslint: '8.71.2'
+    '@typescript-eslint/rule-tester': '8.72.0'
+    typescript-eslint: '8.72.0'
 
     # build & test toolchain
     tsdown: '0.23.1'
     # keep `@vitest/coverage-v8` aligned with `vitest`
-    '@vitest/coverage-v8': '5.0.4'
-    vitest: '5.0.4'
+    '@vitest/coverage-v8': '5.0.5'
+    vitest: '5.0.5'
 
     # published-artifact checks
     '@arethetypeswrong/cli': '0.18.5'
@@ -33,7 +33,7 @@ catalogs:
 overrides:
   # vitest declares an optional `@types/node` peer: without a version here the
   # projects that don't depend on `@types/node` themselves resolve a second copy
-  '@types/node': '24.13.2'
+  '@types/node': '24.19.2'
 
 allowBuilds:
   # postinstall places the platform binary; without it `pnpm exec` fails
