@@ -74,7 +74,9 @@ export function buildPreferTopLevelFactoryCreate<
   return function create(context) {
     const { sourceCode } = context;
 
-    const { createSchemaVisitor, findZodChainedMethod } = scope.createTracker({ kind: 'value' });
+    const { createSchemaVisitor, findZodChainedMethod, isZodImportName } = scope.createTracker({
+      kind: 'value',
+    });
 
     return createSchemaVisitor({
       schemaType: factoryName,
@@ -86,7 +88,7 @@ export function buildPreferTopLevelFactoryCreate<
 
         // A chain that does not start at the factory resumes after a property access
         // (`z.string().foo.email()`), so its methods are not chained on `<factoryName>()`.
-        if (found.methods.length > 0 && !isZodFactoryChainItem(found.methods[0])) {
+        if (found.methods.length > 0 && !isZodFactoryChainItem(found.methods[0], isZodImportName)) {
           return;
         }
 

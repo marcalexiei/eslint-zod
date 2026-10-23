@@ -77,15 +77,21 @@ export function collectZodSchemaConstraints(opts: {
 
   /** Detector bound to the file's imports (see `detectZodSchemaRootNode`). */
   detectZodSchemaRootNode: (node: TSESTree.Node) => ZodSchemaMeta | null;
+
+  /** Whether a local name is bound to a zod import, to tell the factory from a local schema. */
+  isZodImportName: (name: string) => boolean;
 }): Array<ZodSchemaConstraint> {
-  const { methods, detectZodSchemaRootNode } = opts;
+  const { methods, detectZodSchemaRootNode, isZodImportName } = opts;
 
   const constraints: Array<ZodSchemaConstraint> = [];
 
   for (const [chainIndex, method] of methods.entries()) {
     // Index 0 is the schema factory (or wrapper), not a constraint —
     // unless the chain resumes after a property access (`z.object({…}).shape.a.trim()`).
-    if (chainIndex === 0 && isZodFactoryChainItem({ member: method.member ?? null })) {
+    if (
+      chainIndex === 0 &&
+      isZodFactoryChainItem({ member: method.member ?? null }, isZodImportName)
+    ) {
       continue;
     }
 

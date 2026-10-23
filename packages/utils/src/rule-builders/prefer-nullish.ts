@@ -35,6 +35,7 @@ export function buildPreferNullishCreate(
       detectZodSchemaRootNode,
       collectZodChainMethods,
       getNamedImportLocal,
+      isZodImportName,
     } = scope.createTracker({ kind: 'value' });
 
     /**
@@ -73,7 +74,11 @@ export function buildPreferNullishCreate(
     function handleWrapper(node: TSESTree.CallExpression, meta: ZodSchemaMeta): void {
       const wrapper = collectZodChainMethods(node).at(0);
       // The head is the wrapper call unless the chain resumes after a property access; guard extra args.
-      if (!wrapper || !isZodFactoryChainItem(wrapper) || wrapper.node.arguments.length !== 1) {
+      if (
+        !wrapper ||
+        !isZodFactoryChainItem(wrapper, isZodImportName) ||
+        wrapper.node.arguments.length !== 1
+      ) {
         return;
       }
       const wrapperCall = wrapper.node;

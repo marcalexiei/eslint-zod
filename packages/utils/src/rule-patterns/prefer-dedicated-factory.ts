@@ -74,7 +74,9 @@ export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
   } = options;
 
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
+    const { createSchemaVisitor, collectZodChainMethods, isZodImportName } = scope.createTracker({
+      kind: 'value',
+    });
 
     return createSchemaVisitor({
       schemaType: factoryName,
@@ -96,7 +98,8 @@ export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
             // A named declaration has no `<ns>.<factory>` member to rewrite,
             // and after a property access (`z.object({…}).shape.a.passthrough()`) the factory is out of reach.
             const factory = methods.at(0);
-            const factoryCallee = factory && isZodFactoryChainItem(factory) ? factory.member : null;
+            const factoryCallee =
+              factory && isZodFactoryChainItem(factory, isZodImportName) ? factory.member : null;
             const modifierCallee = modifierMethod?.member;
             if (!factoryCallee || !modifierCallee || zodSchemaMeta.schemaDecl === 'named') {
               return null;

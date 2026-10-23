@@ -122,8 +122,12 @@ export function buildNoDynamicSchemaValueCreate(
   scope: ZodImportScope,
 ): (context: Context) => RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, detectZodSchemaRootNode, collectZodChainMethods } =
-      scope.createTracker({ kind: 'value' });
+    const {
+      createSchemaVisitor,
+      detectZodSchemaRootNode,
+      collectZodChainMethods,
+      isZodImportName,
+    } = scope.createTracker({ kind: 'value' });
     const state: StaticCheckState = {
       context,
       isZodCall: (node) => detectZodSchemaRootNode(node) !== null,
@@ -147,7 +151,7 @@ export function buildNoDynamicSchemaValueCreate(
         const end = names.findIndex((name) => ZOD_NON_SCHEMA_PRODUCING_METHODS.includes(name));
         // The chain may resume after a property access (`….parse(x).tags.split(sep)`),
         // so its methods are the last ones named.
-        const chainedItems = chain.filter((item) => !isZodFactoryChainItem(item));
+        const chainedItems = chain.filter((item) => !isZodFactoryChainItem(item, isZodImportName));
         const offset = names.length - chainedItems.length;
         const schemaChain = chain.filter((item) => {
           const position = chainedItems.indexOf(item);

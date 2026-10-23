@@ -14,7 +14,9 @@ export function buildNoNativeEnumCreate(
   scope: ZodImportScope,
 ): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
+    const { createSchemaVisitor, collectZodChainMethods, isZodImportName } = scope.createTracker({
+      kind: 'value',
+    });
 
     return createSchemaVisitor({
       schemaType: 'nativeEnum',
@@ -23,7 +25,8 @@ export function buildNoNativeEnumCreate(
         // and resumed at a method after a property access (`z.nativeEnum(Foo).options.map(…)`) —
         // report it, just without a fix.
         const head = collectZodChainMethods(node).at(0);
-        const factoryCallee = head && isZodFactoryChainItem(head) ? head.member : null;
+        const factoryCallee =
+          head && isZodFactoryChainItem(head, isZodImportName) ? head.member : null;
 
         context.report({
           node,

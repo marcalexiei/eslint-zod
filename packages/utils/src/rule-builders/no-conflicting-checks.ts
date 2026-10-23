@@ -183,8 +183,12 @@ export function buildNoConflictingChecksCreate(
       ...context.options.at(0),
     };
 
-    const { createSchemaVisitor, collectZodChainMethods, collectZodSchemaConstraints } =
-      scope.createTracker({ kind: 'value' });
+    const {
+      createSchemaVisitor,
+      collectZodChainMethods,
+      collectZodSchemaConstraints,
+      isZodImportName,
+    } = scope.createTracker({ kind: 'value' });
 
     function describe(check: AnalyzedCheck): string {
       const args = check.node.arguments
@@ -640,7 +644,7 @@ export function buildNoConflictingChecksCreate(
         // leaving `chain` empty.
         // Bail rather than deref `chain[0]`.
         // After a property access (`z.array(x).element.min(1)`) the checks are another schema's.
-        if (chain.length === 0 || !isZodFactoryChainItem(chain[0])) {
+        if (chain.length === 0 || !isZodFactoryChainItem(chain[0], isZodImportName)) {
           return;
         }
         if (chain.slice(1).some((item) => ZOD_TYPE_CHANGING_METHODS.includes(item.name))) {
