@@ -54,22 +54,8 @@ jobs:
       - name: Install Dependencies
         uses: marcalexiei/github-actions/setup-node-and-pnpm@92c64c084d3479cff756151cb8163d03608f2acd # v2.4.2
 
-      # Version mode resets the release PR to this run's commit, so only the newest run may do it.
-      - name: Skip version mode if main moved on
-        id: stale
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          tip=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$GITHUB_REF_NAME" --jq .object.sha)
-          changesets=$(find .changeset -maxdepth 1 -name '*.md' ! -name README.md)
-          if [ "$tip" != "$GITHUB_SHA" ] && [ -n "$changesets" ]; then
-            echo "::notice::$GITHUB_REF_NAME is at $tip, a newer run will update the release PR"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        if: ${{ steps.stale.outputs.skip != 'true' }}
         uses: changesets/action@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
         with:
           github-token: ${{ steps.release-helper.outputs.token }}
