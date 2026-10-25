@@ -1,8 +1,9 @@
 name: CI
 
 concurrency:
-  group: '${{ github.workflow }}-${{ github.head_ref || github.ref }}'
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  # head_ref is empty on push, so each commit on main gets its own group and is never cancelled
+  group: '${{ github.workflow }}-${{ github.head_ref || github.sha }}'
+  cancel-in-progress: true
 
 on:
   push:
