@@ -133,7 +133,11 @@ jobs:
       - test
       - coverage
       - code-checks
+    permissions:
+      actions: read # required to list the run's jobs
+      contents: read # required to read the workflow file
     steps:
-      - name: Exit with error if some jobs are not successful
-        run: exit 1
-        if: ${{ always() && (contains(needs.*.result, 'failure') || contains(needs.*.result, 'skipped') || contains(needs.*.result, 'cancelled')) }}
+      - name: Check needed jobs
+        uses: marcalexiei/github-actions/check-needs@4a51d6dfcaac0c263c6f2efd97249eafe0076721 # v2.5.0
+        with:
+          needs: ${{ toJSON(needs) }}
