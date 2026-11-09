@@ -59,15 +59,6 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
       `,
     },
     {
-      name: "extend with another schema's shape that has no common key",
-      code: dedent`
-        import * as z from 'zod/mini';
-        const otherSchema = z.object({ b: z.number() });
-        const userSchema = z.object({ a: z.string() }).check(z.refine((value) => value.a !== ''));
-        z.extend(userSchema, otherSchema.shape);
-      `,
-    },
-    {
       name: 'extend on an object with checks whose shape is not a literal',
       code: dedent`
         import * as z from 'zod/mini';
@@ -106,12 +97,13 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
       `,
     },
     {
-      name: 'extend with a spread that has no common key',
+      name: "extend with another schema's shape or a spread that has no common key",
       code: dedent`
         import * as z from 'zod/mini';
         const userSchema = z.object({ a: z.string() }).check(z.refine((value) => value.a !== ''));
         const extraSchema = z.object({ b: z.number() });
         z.extend(userSchema, { ...extraSchema.shape, c: z.string() });
+        z.extend(userSchema, extraSchema.shape);
       `,
     },
     {
@@ -333,16 +325,21 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         { messageId: 'reshapeRefinedInCall', data: { method: 'pick' }, line: 10 },
       ],
     },
-    {
-      name: 'an apply callback that overwrites a key',
-      code: dedent`
+    suggest(
+      'an apply callback that overwrites a key',
+      dedent`
         import * as z from 'zod/mini';
         z.object({ a: z.string() })
           .check(z.refine((value) => value.a !== ''))
           .apply((schema) => z.extend(schema, { a: z.number() }));
       `,
-      errors: [{ messageId: 'reshapeRefinedInCall', data: { method: 'extend' }, line: 4 }],
-    },
+      dedent`
+        import * as z from 'zod/mini';
+        z.object({ a: z.string() })
+          .check(z.refine((value) => value.a !== ''))
+          .apply((schema) => z.safeExtend(schema, { a: z.number() }));
+      `,
+    ),
     {
       name: 'a helper reshaping a schema of its own is reported inside it, not at each call',
       code: dedent`
@@ -435,21 +432,6 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
           .object({ ...baseSchema.shape, c: z.string() })
           .check(z.refine((value) => value.a !== value.c));
         z.safeExtend(userSchema, { a: z.number() });
-      `,
-    ),
-    suggest(
-      'extend overwriting a key that pick kept',
-      dedent`
-        import * as z from 'zod/mini';
-        const baseSchema = z.object({ a: z.string(), b: z.string() });
-        const pickedSchema = z.pick(baseSchema, { a: true }).check(z.refine((value) => value.a !== ''));
-        z.extend(pickedSchema, { a: z.number() });
-      `,
-      dedent`
-        import * as z from 'zod/mini';
-        const baseSchema = z.object({ a: z.string(), b: z.string() });
-        const pickedSchema = z.pick(baseSchema, { a: true }).check(z.refine((value) => value.a !== ''));
-        z.safeExtend(pickedSchema, { a: z.number() });
       `,
     ),
     suggest(

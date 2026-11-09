@@ -75,6 +75,8 @@ interface Operation {
 /** A local function the rule can evaluate: every parameter a plain name, and a single returned expression. */
 interface InlineFunction {
   node: TSESTree.Node;
+  /** Written in place, as an `.apply()` callback is, rather than named. */
+  literal: boolean;
   params: ReadonlyArray<TSESTree.Parameter>;
   body: TSESTree.Expression;
 }
@@ -97,7 +99,6 @@ function union(left: Keys, right: Keys): Keys {
   return new Set([...left, ...right]);
 }
 
-/** The node naming the called function: the property of a member call, else the callee. */
 function getCalleeName(call: TSESTree.CallExpression): TSESTree.Node {
   return call.callee.type === AST_NODE_TYPES.MemberExpression ? call.callee.property : call.callee;
 }
@@ -126,7 +127,6 @@ function readMask(node: TSESTree.Node): Keys | null {
   return selected;
 }
 
-/** The returned expression of a single-return function, or `null`. */
 function readReturnedExpression(
   fn: TSESTree.ArrowFunctionExpression | TSESTree.FunctionDeclaration | TSESTree.FunctionExpression,
 ): TSESTree.Expression | null {
@@ -197,7 +197,9 @@ export function buildNoReshapeOnRefinedObjectCreate(
         case 'Parameter':
           return definition.name;
         case 'Variable': {
-          const reassigned = variable?.references.some((ref) => ref.isWrite() && !ref.init);
+          const reassigned =
+            definition.parent.kind !== 'const' &&
+            variable?.references.some((ref) => ref.isWrite() && !ref.init);
           return definition.node.id.type === AST_NODE_TYPES.Identifier &&
             definition.node.init &&
             !reassigned
@@ -209,7 +211,10 @@ export function buildNoReshapeOnRefinedObjectCreate(
       }
     }
 
-    function resolveFunction(node: TSESTree.Node): InlineFunction | null {
+    function resolveFunction(node: TSESTree.Node | undefined): InlineFunction | null {
+      if (!node) {
+        return null;
+      }
       const fn = resolveBinding(node);
       if (
         fn.type !== AST_NODE_TYPES.ArrowFunctionExpression &&
@@ -220,7 +225,10 @@ export function buildNoReshapeOnRefinedObjectCreate(
       }
       const body = readReturnedExpression(fn);
       const plain = fn.params.every((param) => param.type === AST_NODE_TYPES.Identifier);
-      return body && plain && !active.has(fn) ? { node: fn, params: fn.params, body } : null;
+      const literal = fn === unwrap(node);
+      return body && plain && !active.has(fn)
+        ? { node: fn, literal, params: fn.params, body }
+        : null;
     }
 
     function readOperation(
@@ -246,16 +254,14 @@ export function buildNoReshapeOnRefinedObjectCreate(
       site: TSESTree.CallExpression | null,
     ): void {
       const node = getCalleeName(site ?? call);
-      if (reported.has(node)) {
+      // Skipped at a call site when the reshape was already reported where it is written.
+      if (reported.has(node) || reported.has(getCalleeName(call))) {
         return;
       }
       reported.add(node);
-      if (site) {
-        context.report({ node, messageId: 'reshapeRefinedInCall', data: { method: name } });
-        return;
-      }
-      if (name !== 'extend') {
-        context.report({ node, messageId: 'reshapeRefined', data: { method: name } });
+      if (site || name !== 'extend') {
+        const messageId = site ? 'reshapeRefinedInCall' : 'reshapeRefined';
+        context.report({ node, messageId, data: { method: name } });
         return;
       }
       const { callee } = call;
@@ -289,6 +295,7 @@ export function buildNoReshapeOnRefinedObjectCreate(
       if (PRESERVING_METHODS.has(name)) {
         return receiver;
       }
+      // `findThrow` has passed, so the receiver has no checks for the rest to clear.
       const mask = args.length > 0 ? readMask(resolveBinding(args[0])) : null;
       switch (name) {
         case 'extend':
@@ -298,24 +305,17 @@ export function buildNoReshapeOnRefinedObjectCreate(
             keys: union(receiver.keys, argument?.kind === 'shape' ? argument.keys : new Set()),
           };
         case 'merge':
-          // The result takes the other object's checks.
           return argument?.kind === 'schema'
-            ? {
-                kind: 'schema',
-                refined: argument.refined,
-                keys: union(receiver.keys, argument.keys),
-              }
+            ? { ...argument, keys: union(receiver.keys, argument.keys) }
             : null;
-        // These three clear the checks.
         case 'partial':
-          return { kind: 'schema', refined: false, keys: receiver.keys };
+          return receiver;
         case 'pick':
-          return { kind: 'schema', refined: false, keys: mask ?? new Set() };
+          return { ...receiver, keys: mask ?? new Set() };
         case 'omit':
           // An unreadable mask may omit any key.
           return {
-            kind: 'schema',
-            refined: false,
+            ...receiver,
             keys: new Set([...receiver.keys].filter((key) => mask && !mask.has(key))),
           };
         default:
@@ -328,7 +328,6 @@ export function buildNoReshapeOnRefinedObjectCreate(
       env: Env,
       evaluateNode: Evaluate,
     ): Value | null {
-      const site = env.site ?? call;
       const callFunction = (
         fn: InlineFunction | null,
         values: Array<Value | null>,
@@ -337,6 +336,8 @@ export function buildNoReshapeOnRefinedObjectCreate(
           return null;
         }
         const params = new Map(fn.params.map((param, index) => [param, values.at(index) ?? null]));
+        // A named function's throw is reported at the outermost call that reaches it.
+        const site = fn.literal ? env.site : (env.site ?? call);
         active.add(fn.node);
         const result = evaluateNode(fn.body, { params, site });
         active.delete(fn.node);
@@ -355,8 +356,13 @@ export function buildNoReshapeOnRefinedObjectCreate(
 
       const operation = readOperation(call, factoryName);
       if (!operation) {
+        const fn = resolveFunction(call.callee);
+        // At the top level each argument is visited on its own.
+        if (!fn && !env.site) {
+          return null;
+        }
         return callFunction(
-          factoryName === undefined ? resolveFunction(call.callee) : null,
+          fn,
           // After a spread the positions are unknown.
           call.arguments.some((argument) => argument.type === AST_NODE_TYPES.SpreadElement)
             ? []
@@ -369,7 +375,7 @@ export function buildNoReshapeOnRefinedObjectCreate(
       }
       const first = operation.args.at(0);
       if (operation.name === 'apply') {
-        return callFunction(first ? resolveFunction(first) : null, [receiver]);
+        return callFunction(resolveFunction(first), [receiver]);
       }
 
       const argument = first ? evaluateNode(first, env) : null;
@@ -378,15 +384,10 @@ export function buildNoReshapeOnRefinedObjectCreate(
         return applyOperation(operation, receiver, argument);
       }
       if (env.site) {
-        // A reshape that throws whatever the arguments is reported where it is written.
-        const own = evaluateNode(operation.receiver, TOP_LEVEL);
-        const ownArgument = first ? evaluateNode(first, TOP_LEVEL) : null;
-        const throwsAlone =
-          own?.kind === 'schema' && findThrow(operation.name, own, ownArgument) !== null;
-        reportThrow(operation, thrown, throwsAlone ? null : env.site);
-      } else {
-        reportThrow(operation, thrown, null);
+        // A reshape that throws whatever the arguments is reported where it is written by this pass.
+        evaluateNode(call, TOP_LEVEL);
       }
+      reportThrow(operation, thrown, env.site);
       return null;
     }
 

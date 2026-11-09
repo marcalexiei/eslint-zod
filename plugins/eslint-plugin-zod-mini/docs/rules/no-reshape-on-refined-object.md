@@ -26,7 +26,7 @@ Zod keeps the checks through `.brand()`, `.register()`, `.clone()`, `z.required(
 The object is followed through `const` bindings, and `let` bindings that are never reassigned,
 so a schema declared once and reshaped elsewhere in the file is reported too.
 It is also followed into `.apply()` callbacks and local functions whose body is a single `return`.
-When such a function reaches `z.pick()` or another throwing call on the schema passed to it, the call that passes the schema is reported.
+When a named function reaches `z.pick()` or another throwing call on the schema passed to it, the call that passes the schema is reported.
 Keys are read from object literals, spreads, `.shape` and `pick`/`omit` masks, so `z.extend(schema, otherSchema.shape)` is reported when it overwrites a key.
 
 ## Examples
