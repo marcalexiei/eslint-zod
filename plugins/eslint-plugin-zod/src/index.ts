@@ -23,6 +23,7 @@ import { noNumberSchemaWithSafe } from './rules/no-number-schema-with-safe.js';
 import { noNumberSchemaWithStep } from './rules/no-number-schema-with-step.js';
 import { noOptionalAndDefaultTogether } from './rules/no-optional-and-default-together.js';
 import { noPromiseSchema } from './rules/no-promise-schema.js';
+import { noReshapeOnRefinedObject } from './rules/no-reshape-on-refined-object.js';
 import { noSchemaWithIsNullable } from './rules/no-schema-with-is-nullable.js';
 import { noSchemaWithIsOptional } from './rules/no-schema-with-is-optional.js';
 import { noThrowInRefine } from './rules/no-throw-in-refine.js';
@@ -87,6 +88,7 @@ const eslintPluginZod = {
     'no-number-schema-with-step': noNumberSchemaWithStep,
     'no-optional-and-default-together': noOptionalAndDefaultTogether,
     'no-promise-schema': noPromiseSchema,
+    'no-reshape-on-refined-object': noReshapeOnRefinedObject,
     'no-schema-with-is-nullable': noSchemaWithIsNullable,
     'no-schema-with-is-optional': noSchemaWithIsOptional,
     'no-throw-in-refine': noThrowInRefine,
@@ -146,6 +148,7 @@ const recommendedRules = {
   'zod/no-number-schema-with-step': 'error',
   'zod/no-optional-and-default-together': 'error',
   'zod/no-promise-schema': 'error',
+  'zod/no-reshape-on-refined-object': 'error',
   'zod/no-schema-with-is-nullable': 'error',
   'zod/no-schema-with-is-optional': 'error',
   'zod/no-throw-in-refine': 'error',
