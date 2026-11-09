@@ -15,12 +15,13 @@ TypeScript accepts the code, so the error first shows up when the module loads.
 
 This rule reports:
 
-- `z.pick()`, `z.omit()`, `z.partial()` and `z.merge()` on an object schema with a check, which always throw;
+- `z.pick()`, `z.omit()`, `z.partial()`, `z.exactPartial()` and `z.merge()` on an object schema with a check, which always throw;
 - `z.extend()` when it overwrites a key the object already has, which throws with "Cannot overwrite keys on object schemas containing refinements".
 
 Any `.check()` or `.with()` argument counts, not only `z.refine()`:
 `.check(z.describe('…'))` and `.check(z.meta({…}))` add a check too, and make `z.pick()` throw.
-Zod keeps the checks through `.brand()`, `.register()`, `.clone()`, `z.required()`, `z.extend()`, `z.safeExtend()` and `z.catchall()`, so the rule follows the object through them.
+Called with no argument, `.check()` and `.with()` add none.
+Zod keeps the checks through `.brand()`, `.register()`, `.clone()` without arguments, `z.required()`, `z.extend()`, `z.safeExtend()` and `z.catchall()`, so the rule follows the object through them.
 `z.merge()` takes the checks of its second argument.
 
 The object is followed through `const` bindings, and `let` bindings that are never reassigned,
@@ -84,7 +85,7 @@ With a named import, the suggestion is offered only when `safeExtend` is importe
 A key the rule cannot read, from a function parameter or a computed name, may well be new, so it is not reported.
 
 The rule stops following the object at any step it cannot prove:
-a reassigned binding, an imported schema, or a function with more than one statement or a destructured parameter.
+a reassigned binding or parameter, an imported schema, or a function with more than one statement or a destructured parameter.
 
 ## Further Reading
 

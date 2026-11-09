@@ -25,7 +25,6 @@ const REFINING_METHODS: ReadonlySet<string> = new Set<ZodName>([
 const PRESERVING_METHODS: ReadonlySet<string> = new Set<ZodName>([
   'brand',
   'catchall',
-  'clone',
   'describe',
   'loose',
   'meta',
@@ -38,6 +37,7 @@ const PRESERVING_METHODS: ReadonlySet<string> = new Set<ZodName>([
 
 // Zod throws on these whenever the object has checks.
 const THROWING_METHODS: ReadonlySet<string> = new Set<ZodName>([
+  'exactPartial',
   'merge',
   'omit',
   'partial',
@@ -86,6 +86,7 @@ type Evaluate = (node: TSESTree.Node, env: Env) => Value | null;
 function unwrap(node: TSESTree.Node): TSESTree.Node {
   let current = node;
   while (
+    current.type === AST_NODE_TYPES.ChainExpression ||
     current.type === AST_NODE_TYPES.TSAsExpression ||
     current.type === AST_NODE_TYPES.TSSatisfiesExpression ||
     current.type === AST_NODE_TYPES.TSNonNullExpression
@@ -99,8 +100,24 @@ function union(left: Keys, right: Keys): Keys {
   return new Set([...left, ...right]);
 }
 
+function isSpread(node: TSESTree.CallExpressionArgument): boolean {
+  return node.type === AST_NODE_TYPES.SpreadElement;
+}
+
 function getCalleeName(call: TSESTree.CallExpression): TSESTree.Node {
   return call.callee.type === AST_NODE_TYPES.MemberExpression ? call.callee.property : call.callee;
+}
+
+/** A property's key; `null` for a plain `__proto__: value`, which sets the prototype instead. */
+function readLiteralKey(property: TSESTree.Property): string | null {
+  const name = getStaticPropertyName(property);
+  const setsPrototype =
+    name === '__proto__' &&
+    property.kind === 'init' &&
+    !property.computed &&
+    !property.shorthand &&
+    !property.method;
+  return setsPrototype ? null : name;
 }
 
 /** The keys a `pick`/`omit` mask selects, read from an object literal of boolean literals. */
@@ -116,7 +133,7 @@ function readMask(node: TSESTree.Node): Keys | null {
     ) {
       return null;
     }
-    const name = getStaticPropertyName(property);
+    const name = readLiteralKey(property);
     if (name === null) {
       return null;
     }
@@ -162,7 +179,7 @@ function findThrow(name: string, receiver: Schema, argument: Value | null): stri
  * Builds the `create` function for the `no-reshape-on-refined-object` rule.
  *
  * Reports what zod throws on once an object schema has a refinement:
- * `pick`, `omit`, `partial` and `merge` always, and `extend` when it overwrites a key.
+ * `pick`, `omit`, `partial`, `exactPartial` and `merge` always, and `extend` when it overwrites a key.
  * A local function that throws on the schema passed to it is reported at the call.
  * Bails on any step it cannot follow.
  */
@@ -178,9 +195,12 @@ export function buildNoReshapeOnRefinedObjectCreate(
       getZodImportBindings,
     } = scope.createTracker({ kind: 'value', sourceCode });
 
-    /** Bindings and functions being evaluated, so a cycle cannot recurse forever. */
+    /** Functions being evaluated, so recursion stops. */
     const active = new Set<TSESTree.Node>();
     const reported = new Set<TSESTree.Node>();
+    // Each binding and call is evaluated once, or sharing them makes the work exponential.
+    const bindings = new Map<TSESTree.Node, Value | null>();
+    const calls = new Map<string, Value | null>();
 
     /** The value a name settles: a never-reassigned binding's initializer, a function declaration or a parameter. */
     function resolveBinding(node: TSESTree.Node): TSESTree.Node {
@@ -191,21 +211,18 @@ export function buildNoReshapeOnRefinedObjectCreate(
       const variable = findVariable(sourceCode.getScope(target), target.name);
       // more than one definition means the binding is re-declared, so it does not settle its value
       const definition = variable?.defs.length === 1 ? variable.defs[0] : null;
+      const reassigned = variable?.references.some((ref) => ref.isWrite() && !ref.init);
       switch (definition?.type) {
         case 'FunctionName':
           return definition.node;
         case 'Parameter':
-          return definition.name;
-        case 'Variable': {
-          const reassigned =
-            definition.parent.kind !== 'const' &&
-            variable?.references.some((ref) => ref.isWrite() && !ref.init);
+          return reassigned ? target : definition.name;
+        case 'Variable':
           return definition.node.id.type === AST_NODE_TYPES.Identifier &&
             definition.node.init &&
             !reassigned
             ? unwrap(definition.node.init)
             : target;
-        }
         default:
           return target;
       }
@@ -239,7 +256,7 @@ export function buildNoReshapeOnRefinedObjectCreate(
         const [receiver, ...args] = call.arguments;
         return call.arguments.length > 0 ? { call, name: factoryName, receiver, args } : null;
       }
-      if (call.callee.type !== AST_NODE_TYPES.MemberExpression || call.callee.optional) {
+      if (call.callee.type !== AST_NODE_TYPES.MemberExpression) {
         return null;
       }
       const name = getStaticPropertyName(call.callee);
@@ -290,6 +307,10 @@ export function buildNoReshapeOnRefinedObjectCreate(
       argument: Value | null,
     ): Value | null {
       if (REFINING_METHODS.has(name)) {
+        // `check` and `with` add as many checks as they are given.
+        if ((name === 'check' || name === 'with') && args.every(isSpread)) {
+          return args.length === 0 ? receiver : null;
+        }
         return { ...receiver, refined: true };
       }
       if (PRESERVING_METHODS.has(name)) {
@@ -308,6 +329,10 @@ export function buildNoReshapeOnRefinedObjectCreate(
           return argument?.kind === 'schema'
             ? { ...argument, keys: union(receiver.keys, argument.keys) }
             : null;
+        case 'clone':
+          // A definition passed to `clone` replaces the checks.
+          return args.length === 0 ? receiver : null;
+        case 'exactPartial':
         case 'partial':
           return receiver;
         case 'pick':
@@ -338,9 +363,17 @@ export function buildNoReshapeOnRefinedObjectCreate(
         const params = new Map(fn.params.map((param, index) => [param, values.at(index) ?? null]));
         // A named function's throw is reported at the outermost call that reaches it.
         const site = fn.literal ? env.site : (env.site ?? call);
+        const key = JSON.stringify([fn.node.range, site?.range, values], (_, value: unknown) =>
+          value instanceof Set ? [...value] : value,
+        );
+        const cached = calls.get(key);
+        if (cached !== undefined) {
+          return cached;
+        }
         active.add(fn.node);
         const result = evaluateNode(fn.body, { params, site });
         active.delete(fn.node);
+        calls.set(key, result);
         return result;
       };
 
@@ -364,7 +397,7 @@ export function buildNoReshapeOnRefinedObjectCreate(
         return callFunction(
           fn,
           // After a spread the positions are unknown.
-          call.arguments.some((argument) => argument.type === AST_NODE_TYPES.SpreadElement)
+          call.arguments.some(isSpread)
             ? []
             : call.arguments.map((argument) => evaluateNode(argument, env)),
         );
@@ -399,13 +432,15 @@ export function buildNoReshapeOnRefinedObjectCreate(
         return param;
       }
       if (target !== written) {
-        if (active.has(target)) {
-          return null;
+        const cached = bindings.get(target);
+        if (cached !== undefined) {
+          return cached;
         }
+        // Set first, so a cycle reads `null`.
+        bindings.set(target, null);
         // A binding is declared outside the function being evaluated, so its value does not depend on it.
-        active.add(target);
         const value = evaluate(target, TOP_LEVEL);
-        active.delete(target);
+        bindings.set(target, value);
         return value;
       }
       switch (target.type) {
@@ -413,7 +448,7 @@ export function buildNoReshapeOnRefinedObjectCreate(
           const keys = new Set<string>();
           for (const property of target.properties) {
             if (property.type === AST_NODE_TYPES.Property) {
-              const key = getStaticPropertyName(property);
+              const key = readLiteralKey(property);
               if (key !== null) {
                 keys.add(key);
               }

@@ -184,6 +184,36 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
       `,
     },
     {
+      name: 'calls that leave the object without checks',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const userSchema = z.object({ a: z.string() }).check(z.refine((value) => value.a !== ''));
+        z.pick(z.object({ a: z.string() }).check(), { a: true });
+        z.pick(z.object({ a: z.string() }).with(...[]), { a: true });
+        z.pick(userSchema.clone({ ...userSchema.def, checks: [] }), { a: true });
+      `,
+    },
+    {
+      name: 'a helper that reassigns its parameter before reshaping it',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const second = <T>(_first: unknown, value: T) => value;
+        function pickA(schema: z.ZodMiniObject<{ a: z.ZodMiniString }>) {
+          return second((schema = z.object({ a: z.string() })), z.pick(schema, { a: true }));
+        }
+        const userSchema = z.object({ a: z.string() }).check(z.refine((value) => value.a !== ''));
+        pickA(userSchema);
+      `,
+    },
+    {
+      name: 'extend with a __proto__ key, which sets the prototype instead',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const userSchema = z.object({ ['__proto__']: z.string() }).check(z.refine(() => true));
+        z.extend(userSchema, { __proto__: null, b: z.string() });
+      `,
+    },
+    {
       name: 'not a zod import',
       code: dedent`
         import * as z from 'not-zod';
@@ -483,5 +513,37 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         extend(userSchema, { a: string().check(minLength(1)) });
       `,
     ),
+    {
+      name: 'exactPartial, and reshapes behind optional chaining',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const userSchema = z.object({ a: z.string() }).check(z.refine((value) => value.a !== ''));
+        z.exactPartial(userSchema);
+        z.pick(userSchema?.brand<'User'>(), { a: true });
+        const brandedSchema = userSchema?.brand<'User'>();
+        z.omit(brandedSchema, { a: true });
+      `,
+      errors: [
+        { messageId: 'reshapeRefined', data: { method: 'exactPartial' }, line: 3 },
+        { messageId: 'reshapeRefined', data: { method: 'pick' }, line: 4 },
+        { messageId: 'reshapeRefined', data: { method: 'omit' }, line: 6 },
+      ],
+    },
+    {
+      name: 'bindings and helpers shared at every level are evaluated once',
+      code: [
+        "import * as z from 'zod/mini';",
+        'const s0 = z.object({ a: z.string() });',
+        ...Array.from({ length: 40 }, (_, i) => `const s${i + 1} = z.extend(s${i}, s${i}.shape);`),
+        'const f0 = (schema: z.ZodMiniObject): z.ZodMiniObject => schema.clone();',
+        ...Array.from(
+          { length: 10 },
+          (_, i) =>
+            `const f${i + 1} = (schema: z.ZodMiniObject): z.ZodMiniObject => f${i}(f${i}(schema));`,
+        ),
+        'z.pick(f10(s40.check(z.refine(() => true))), { a: true });',
+      ].join('\n'),
+      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' } }],
+    },
   ],
 });

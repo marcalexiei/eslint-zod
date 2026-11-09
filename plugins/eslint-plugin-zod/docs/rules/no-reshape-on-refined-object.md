@@ -15,11 +15,12 @@ TypeScript accepts the code, so the error first shows up when the module loads.
 
 This rule reports:
 
-- `.pick()`, `.omit()`, `.partial()` and `.merge()` on an object schema with a refinement, which always throw;
+- `.pick()`, `.omit()`, `.partial()`, `.exactPartial()` and `.merge()` on an object schema with a refinement, which always throw;
 - `.extend()` when it overwrites a key the object already has, which throws with "Cannot overwrite keys on object schemas containing refinements".
 
 A refinement is anything that adds a check: `.refine()`, `.superRefine()`, `.check()`, `.with()` and `.overwrite()`.
-Zod keeps the checks through `.describe()`, `.meta()`, `.brand()`, `.register()`, `.clone()`, `.required()`, `.extend()`, `.safeExtend()`, `.catchall()` and the unknown-key methods (`.strict()`, `.strip()`, `.loose()`, `.passthrough()`), so the rule follows the object through them.
+Called with no argument, `.check()` and `.with()` add none.
+Zod keeps the checks through `.describe()`, `.meta()`, `.brand()`, `.register()`, `.clone()` without arguments, `.required()`, `.extend()`, `.safeExtend()`, `.catchall()` and the unknown-key methods (`.strict()`, `.strip()`, `.loose()`, `.passthrough()`), so the rule follows the object through them.
 `.merge()` takes the refinements of its argument.
 
 The object is followed through `const` bindings, and `let` bindings that are never reassigned,
@@ -79,7 +80,7 @@ It is a suggestion rather than a fix: `.safeExtend()` keeps running the refineme
 A key the rule cannot read, from a function parameter or a computed name, may well be new, so it is not reported.
 
 The rule stops following the object at any step it cannot prove:
-a reassigned binding, an imported schema, or a function with more than one statement or a destructured parameter.
+a reassigned binding or parameter, an imported schema, or a function with more than one statement or a destructured parameter.
 
 ## Further Reading
 
