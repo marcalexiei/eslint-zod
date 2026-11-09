@@ -4,18 +4,13 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { findVariable } from '../find-variable.js';
 import { getStaticPropertyName } from '../get-static-property-name.js';
-import type { RuleContext, RuleFix, RuleListener, ScopeVariable } from '../rule-types.js';
+import { getZodSchemaBaseType } from '../get-zod-schema-base-type.js';
+import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 type MessageIds = 'reshapeRefined' | 'reshapeRefinedInCall' | 'overwriteRefined' | 'useSafeExtend';
 
 type ZodName = ZodExportName | ZodMethodName | ZodMiniMethodName;
-
-const OBJECT_FACTORIES: ReadonlySet<string> = new Set<ZodExportName>([
-  'looseObject',
-  'object',
-  'strictObject',
-]);
 
 // Each adds to the schema's checks, which is what zod's guard tests.
 const REFINING_METHODS: ReadonlySet<string> = new Set<ZodName>([
@@ -52,8 +47,22 @@ const THROWING_METHODS: ReadonlySet<string> = new Set<ZodName>([
 /** The keys an object is known to have; it may have more. */
 type Keys = ReadonlySet<string>;
 
+interface Schema {
+  kind: 'schema';
+  refined: boolean;
+  keys: Keys;
+}
+
 /** What an expression is known to evaluate to: an object schema, or a shape (the object passed to `z.object`). */
-type Value = { kind: 'schema'; refined: boolean; keys: Keys } | { kind: 'shape'; keys: Keys };
+type Value = Schema | { kind: 'shape'; keys: Keys };
+
+/** The parameter values of the function being evaluated, and the outermost call that runs it. */
+interface Env {
+  params: ReadonlyMap<TSESTree.Node, Value | null>;
+  site: TSESTree.CallExpression | null;
+}
+
+const TOP_LEVEL: Env = { params: new Map(), site: null };
 
 /** A call applied to a schema: `schema.pick(mask)`, or the `zod/mini` factory form `z.pick(schema, mask)`. */
 interface Operation {
@@ -61,20 +70,16 @@ interface Operation {
   name: string;
   receiver: TSESTree.Node;
   args: ReadonlyArray<TSESTree.CallExpressionArgument>;
-  /** The method name for a chained call, the whole call for a factory. */
-  reportNode: TSESTree.Node;
 }
 
 /** A local function the rule can evaluate: every parameter a plain name, and a single returned expression. */
 interface InlineFunction {
   node: TSESTree.Node;
-  /** The call that runs it: the helper call, or the `.apply()` call. */
-  site: TSESTree.CallExpression;
   params: ReadonlyArray<TSESTree.Parameter>;
   body: TSESTree.Expression;
 }
 
-type Evaluate = (node: TSESTree.Node) => Value | null;
+type Evaluate = (node: TSESTree.Node, env: Env) => Value | null;
 
 function unwrap(node: TSESTree.Node): TSESTree.Node {
   let current = node;
@@ -92,20 +97,26 @@ function union(left: Keys, right: Keys): Keys {
   return new Set([...left, ...right]);
 }
 
+/** The node naming the called function: the property of a member call, else the callee. */
+function getCalleeName(call: TSESTree.CallExpression): TSESTree.Node {
+  return call.callee.type === AST_NODE_TYPES.MemberExpression ? call.callee.property : call.callee;
+}
+
 /** The keys a `pick`/`omit` mask selects, read from an object literal of boolean literals. */
-function readMask(node: TSESTree.Node | undefined): Keys | null {
-  const mask = node && unwrap(node);
-  if (mask?.type !== AST_NODE_TYPES.ObjectExpression) {
+function readMask(node: TSESTree.Node): Keys | null {
+  if (node.type !== AST_NODE_TYPES.ObjectExpression) {
     return null;
   }
   const selected = new Set<string>();
-  for (const property of mask.properties) {
-    const name = property.type === AST_NODE_TYPES.Property ? getStaticPropertyName(property) : null;
+  for (const property of node.properties) {
     if (
-      name === null ||
       property.type !== AST_NODE_TYPES.Property ||
       property.value.type !== AST_NODE_TYPES.Literal
     ) {
+      return null;
+    }
+    const name = getStaticPropertyName(property);
+    if (name === null) {
       return null;
     }
     if (property.value.value) {
@@ -133,76 +144,73 @@ function readReturnedExpression(
     : null;
 }
 
+/** What throws when `name` runs on `receiver`: the key an `extend` overwrites, else the method name. */
+function findThrow(name: string, receiver: Schema, argument: Value | null): string | null {
+  if (!receiver.refined) {
+    return null;
+  }
+  if (THROWING_METHODS.has(name)) {
+    return name;
+  }
+  if (name !== 'extend' || argument?.kind !== 'shape') {
+    return null;
+  }
+  return [...argument.keys].find((key) => receiver.keys.has(key)) ?? null;
+}
+
 /**
  * Builds the `create` function for the `no-reshape-on-refined-object` rule.
  *
  * Reports what zod throws on once an object schema has a refinement:
- * `pick`, `omit`, `partial` and `merge` always, and `extend` when it overwrites an existing key.
- * Handles the chained form (`schema.pick(mask)`) and the `zod/mini` factory form (`z.pick(schema, mask)`).
- * Follows bindings that are never reassigned, `.shape` reads, spreads, `.apply(fn)` and single-return local functions.
- * A function that throws on the schema passed to it is reported at the call.
- * Bails on any step it cannot follow; `extend` is reported only for a key both shapes are known to have.
+ * `pick`, `omit`, `partial` and `merge` always, and `extend` when it overwrites a key.
+ * A local function that throws on the schema passed to it is reported at the call.
+ * Bails on any step it cannot follow.
  */
 export function buildNoReshapeOnRefinedObjectCreate(
   scope: ZodImportScope,
 ): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const { sourceCode } = context;
-    const { importDeclarationListener, resolveZodExport, getNamedImportLocal } =
-      scope.createTracker({ kind: 'value', sourceCode });
+    const {
+      importDeclarationListener,
+      resolveZodExport,
+      getNamedImportLocal,
+      getZodImportBindings,
+    } = scope.createTracker({ kind: 'value', sourceCode });
 
     /** Bindings and functions being evaluated, so a cycle cannot recurse forever. */
     const active = new Set<TSESTree.Node>();
-    /** The values of the parameters of the functions being evaluated. */
-    const parameterValues = new Map<TSESTree.Node, Value>();
-    /** Set while checking whether a reshape throws on its own, whatever the arguments. */
-    let ignoreParameters = false;
-    /** The calls whose functions are being evaluated, outermost first. */
-    const sites: Array<TSESTree.CallExpression> = [];
-    const reportedSites = new Set<TSESTree.CallExpression>();
+    const reported = new Set<TSESTree.Node>();
 
-    function getVariable(node: TSESTree.Identifier): ScopeVariable | null {
-      const variable = findVariable(sourceCode.getScope(node), node.name);
+    /** The value a name settles: a never-reassigned binding's initializer, a function declaration or a parameter. */
+    function resolveBinding(node: TSESTree.Node): TSESTree.Node {
+      const target = unwrap(node);
+      if (target.type !== AST_NODE_TYPES.Identifier) {
+        return target;
+      }
+      const variable = findVariable(sourceCode.getScope(target), target.name);
       // more than one definition means the binding is re-declared, so it does not settle its value
-      return variable?.defs.length === 1 ? variable : null;
-    }
-
-    /** The initializer of a variable that is never reassigned. */
-    function getInit(variable: ScopeVariable | null): TSESTree.Expression | null {
-      const definition = variable?.defs[0];
-      if (
-        definition?.type !== 'Variable' ||
-        definition.node.id.type !== AST_NODE_TYPES.Identifier ||
-        active.has(definition.node) ||
-        variable?.references.some((reference) => reference.isWrite() && !reference.init)
-      ) {
-        return null;
-      }
-      return definition.node.init;
-    }
-
-    /** `node`, or the initializer of the binding it names. */
-    function resolveBinding(node: TSESTree.Node | undefined): TSESTree.Node | undefined {
-      const target = node && unwrap(node);
-      return target?.type === AST_NODE_TYPES.Identifier
-        ? (getInit(getVariable(target)) ?? target)
-        : target;
-    }
-
-    function resolveFunction(
-      node: TSESTree.Node,
-      site: TSESTree.CallExpression,
-    ): InlineFunction | null {
-      let fn = unwrap(node);
-      if (fn.type === AST_NODE_TYPES.Identifier) {
-        const variable = getVariable(fn);
-        const definition = variable?.defs[0];
-        const target = definition?.type === 'FunctionName' ? definition.node : getInit(variable);
-        if (!target) {
-          return null;
+      const definition = variable?.defs.length === 1 ? variable.defs[0] : null;
+      switch (definition?.type) {
+        case 'FunctionName':
+          return definition.node;
+        case 'Parameter':
+          return definition.name;
+        case 'Variable': {
+          const reassigned = variable?.references.some((ref) => ref.isWrite() && !ref.init);
+          return definition.node.id.type === AST_NODE_TYPES.Identifier &&
+            definition.node.init &&
+            !reassigned
+            ? unwrap(definition.node.init)
+            : target;
         }
-        fn = target;
+        default:
+          return target;
       }
+    }
+
+    function resolveFunction(node: TSESTree.Node): InlineFunction | null {
+      const fn = resolveBinding(node);
       if (
         fn.type !== AST_NODE_TYPES.ArrowFunctionExpression &&
         fn.type !== AST_NODE_TYPES.FunctionDeclaration &&
@@ -212,17 +220,16 @@ export function buildNoReshapeOnRefinedObjectCreate(
       }
       const body = readReturnedExpression(fn);
       const plain = fn.params.every((param) => param.type === AST_NODE_TYPES.Identifier);
-      return body && plain && !active.has(fn) ? { node: fn, site, params: fn.params, body } : null;
+      return body && plain && !active.has(fn) ? { node: fn, params: fn.params, body } : null;
     }
 
-    function readOperation(call: TSESTree.CallExpression): Operation | null {
-      const factoryName = resolveZodExport(call.callee)?.name;
+    function readOperation(
+      call: TSESTree.CallExpression,
+      factoryName: string | undefined,
+    ): Operation | null {
       if (factoryName !== undefined) {
-        if (call.arguments.length === 0) {
-          return null;
-        }
         const [receiver, ...args] = call.arguments;
-        return { call, name: factoryName, receiver, args, reportNode: call };
+        return call.arguments.length > 0 ? { call, name: factoryName, receiver, args } : null;
       }
       if (call.callee.type !== AST_NODE_TYPES.MemberExpression || call.callee.optional) {
         return null;
@@ -230,87 +237,59 @@ export function buildNoReshapeOnRefinedObjectCreate(
       const name = getStaticPropertyName(call.callee);
       return name === null
         ? null
-        : {
-            call,
-            name,
-            receiver: call.callee.object,
-            args: call.arguments,
-            reportNode: call.callee.property,
-          };
+        : { call, name, receiver: call.callee.object, args: call.arguments };
     }
 
-    /** Evaluates `fn` with its parameters bound to `values`. */
-    function evaluateFunction(
-      fn: InlineFunction,
-      values: ReadonlyArray<Value | null>,
-      evaluateNode: Evaluate,
-    ): Value | null {
-      fn.params.forEach((param, index) => {
-        const value = values.at(index);
-        if (value) {
-          parameterValues.set(param, value);
-        }
-      });
-      active.add(fn.node);
-      sites.push(fn.site);
-      const result = evaluateNode(fn.body);
-      sites.pop();
-      active.delete(fn.node);
-      for (const param of fn.params) {
-        parameterValues.delete(param);
-      }
-      return result;
-    }
-
-    /**
-     * Whether `operation` throws on `receiver`: `{ key }` names the key an `extend` overwrites.
-     */
-    function findThrow(
-      { name, args }: Operation,
-      receiver: Extract<Value, { kind: 'schema' }>,
-      evaluateNode: Evaluate,
-    ): { key: string | null } | null {
-      if (!receiver.refined) {
-        return null;
-      }
-      if (THROWING_METHODS.has(name)) {
-        return { key: null };
-      }
-      if (name !== 'extend') {
-        return null;
-      }
-      const shape = args.length > 0 ? evaluateNode(args[0]) : null;
-      const added = shape?.kind === 'shape' ? [...shape.keys] : [];
-      const key = added.find((item) => receiver.keys.has(item));
-      return key === undefined ? null : { key };
-    }
-
-    function reportSite(site: TSESTree.CallExpression, method: string): void {
-      if (reportedSites.has(site)) {
+    function reportThrow(
+      { call, name }: Operation,
+      thrown: string,
+      site: TSESTree.CallExpression | null,
+    ): void {
+      const node = getCalleeName(site ?? call);
+      if (reported.has(node)) {
         return;
       }
-      reportedSites.add(site);
+      reported.add(node);
+      if (site) {
+        context.report({ node, messageId: 'reshapeRefinedInCall', data: { method: name } });
+        return;
+      }
+      if (name !== 'extend') {
+        context.report({ node, messageId: 'reshapeRefined', data: { method: name } });
+        return;
+      }
+      const { callee } = call;
+      let safeExtend: string | undefined = getNamedImportLocal('safeExtend');
+      if (callee.type === AST_NODE_TYPES.MemberExpression) {
+        safeExtend = callee.computed ? "'safeExtend'" : 'safeExtend';
+      }
       context.report({
-        node:
-          site.callee.type === AST_NODE_TYPES.MemberExpression ? site.callee.property : site.callee,
-        messageId: 'reshapeRefinedInCall',
-        data: { method },
+        node,
+        messageId: 'overwriteRefined',
+        data: { key: thrown },
+        suggest: safeExtend
+          ? [
+              {
+                messageId: 'useSafeExtend',
+                fix: (fixer): RuleFix => fixer.replaceText(node, safeExtend),
+              },
+            ]
+          : [],
       });
     }
 
     function applyOperation(
-      operation: Operation,
-      receiver: Extract<Value, { kind: 'schema' }>,
-      evaluateNode: Evaluate,
+      { name, args }: Operation,
+      receiver: Schema,
+      argument: Value | null,
     ): Value | null {
-      const { name, args } = operation;
       if (REFINING_METHODS.has(name)) {
         return { ...receiver, refined: true };
       }
       if (PRESERVING_METHODS.has(name)) {
         return receiver;
       }
-      const argument = args.length > 0 ? evaluateNode(args[0]) : null;
+      const mask = args.length > 0 ? readMask(resolveBinding(args[0])) : null;
       switch (name) {
         case 'extend':
         case 'safeExtend':
@@ -331,32 +310,42 @@ export function buildNoReshapeOnRefinedObjectCreate(
         case 'partial':
           return { kind: 'schema', refined: false, keys: receiver.keys };
         case 'pick':
+          return { kind: 'schema', refined: false, keys: mask ?? new Set() };
+        case 'omit':
+          // An unreadable mask may omit any key.
           return {
             kind: 'schema',
             refined: false,
-            keys: readMask(resolveBinding(args.at(0))) ?? new Set(),
+            keys: new Set([...receiver.keys].filter((key) => mask && !mask.has(key))),
           };
-        case 'omit': {
-          // An unreadable mask may omit any key.
-          const omitted = readMask(resolveBinding(args.at(0)));
-          const keys = omitted
-            ? new Set([...receiver.keys].filter((key) => !omitted.has(key)))
-            : new Set<string>();
-          return { kind: 'schema', refined: false, keys };
-        }
-        case 'apply': {
-          const fn = args.length > 0 ? resolveFunction(args[0], operation.call) : null;
-          return fn && evaluateFunction(fn, [receiver], evaluateNode);
-        }
         default:
           return null;
       }
     }
 
-    function evaluateCall(call: TSESTree.CallExpression, evaluateNode: Evaluate): Value | null {
+    function evaluateCall(
+      call: TSESTree.CallExpression,
+      env: Env,
+      evaluateNode: Evaluate,
+    ): Value | null {
+      const site = env.site ?? call;
+      const callFunction = (
+        fn: InlineFunction | null,
+        values: Array<Value | null>,
+      ): Value | null => {
+        if (!fn) {
+          return null;
+        }
+        const params = new Map(fn.params.map((param, index) => [param, values.at(index) ?? null]));
+        active.add(fn.node);
+        const result = evaluateNode(fn.body, { params, site });
+        active.delete(fn.node);
+        return result;
+      };
+
       const factoryName = resolveZodExport(call.callee)?.name;
-      if (factoryName !== undefined && OBJECT_FACTORIES.has(factoryName)) {
-        const shape = call.arguments.length > 0 ? evaluateNode(call.arguments[0]) : null;
+      if (factoryName !== undefined && getZodSchemaBaseType(factoryName) === 'object') {
+        const shape = call.arguments.length > 0 ? evaluateNode(call.arguments[0], env) : null;
         return {
           kind: 'schema',
           refined: false,
@@ -364,54 +353,61 @@ export function buildNoReshapeOnRefinedObjectCreate(
         };
       }
 
-      const helper = factoryName === undefined ? resolveFunction(call.callee, call) : null;
-      if (helper) {
-        const values = call.arguments.map((argument) =>
-          argument.type === AST_NODE_TYPES.SpreadElement ? null : evaluateNode(argument),
+      const operation = readOperation(call, factoryName);
+      if (!operation) {
+        return callFunction(
+          factoryName === undefined ? resolveFunction(call.callee) : null,
+          // After a spread the positions are unknown.
+          call.arguments.some((argument) => argument.type === AST_NODE_TYPES.SpreadElement)
+            ? []
+            : call.arguments.map((argument) => evaluateNode(argument, env)),
         );
-        return evaluateFunction(helper, values, evaluateNode);
+      }
+      const receiver = evaluateNode(operation.receiver, env);
+      if (receiver?.kind !== 'schema') {
+        return null;
+      }
+      const first = operation.args.at(0);
+      if (operation.name === 'apply') {
+        return callFunction(first ? resolveFunction(first) : null, [receiver]);
       }
 
-      const operation = readOperation(call);
-      const receiver = operation && evaluateNode(operation.receiver);
-      if (!operation || receiver?.kind !== 'schema') {
-        return null;
+      const argument = first ? evaluateNode(first, env) : null;
+      const thrown = findThrow(operation.name, receiver, argument);
+      if (thrown === null) {
+        return applyOperation(operation, receiver, argument);
       }
-      const site = sites.at(0);
-      if (site && findThrow(operation, receiver, evaluateNode)) {
-        // A reshape that throws whatever the arguments is reported where it is written instead.
-        const previous = ignoreParameters;
-        ignoreParameters = true;
-        const own = evaluateNode(operation.receiver);
-        const throwsAlone = own?.kind === 'schema' && findThrow(operation, own, evaluateNode);
-        ignoreParameters = previous;
-        if (!throwsAlone) {
-          reportSite(site, operation.name);
-        }
-        return null;
+      if (env.site) {
+        // A reshape that throws whatever the arguments is reported where it is written.
+        const own = evaluateNode(operation.receiver, TOP_LEVEL);
+        const ownArgument = first ? evaluateNode(first, TOP_LEVEL) : null;
+        const throwsAlone =
+          own?.kind === 'schema' && findThrow(operation.name, own, ownArgument) !== null;
+        reportThrow(operation, thrown, throwsAlone ? null : env.site);
+      } else {
+        reportThrow(operation, thrown, null);
       }
-      return applyOperation(operation, receiver, evaluateNode);
+      return null;
     }
 
-    function evaluate(node: TSESTree.Node): Value | null {
-      const target = unwrap(node);
-      switch (target.type) {
-        case AST_NODE_TYPES.Identifier: {
-          const variable = getVariable(target);
-          const definition = variable?.defs[0];
-          if (definition?.type === 'Parameter') {
-            return ignoreParameters ? null : (parameterValues.get(definition.name) ?? null);
-          }
-          const init = getInit(variable);
-          if (!init || !definition) {
-            return null;
-          }
-          active.add(definition.node);
-          const value = evaluate(init);
-          active.delete(definition.node);
-          return value;
+    function evaluate(node: TSESTree.Node, env: Env): Value | null {
+      const written = unwrap(node);
+      const target = resolveBinding(written);
+      const param = env.params.get(target);
+      if (param !== undefined) {
+        return param;
+      }
+      if (target !== written) {
+        if (active.has(target)) {
+          return null;
         }
-
+        // A binding is declared outside the function being evaluated, so its value does not depend on it.
+        active.add(target);
+        const value = evaluate(target, TOP_LEVEL);
+        active.delete(target);
+        return value;
+      }
+      switch (target.type) {
         case AST_NODE_TYPES.ObjectExpression: {
           const keys = new Set<string>();
           for (const property of target.properties) {
@@ -421,7 +417,7 @@ export function buildNoReshapeOnRefinedObjectCreate(
                 keys.add(key);
               }
             } else {
-              const spread = evaluate(property.argument);
+              const spread = evaluate(property.argument, env);
               for (const key of spread?.kind === 'shape' ? spread.keys : []) {
                 keys.add(key);
               }
@@ -429,75 +425,24 @@ export function buildNoReshapeOnRefinedObjectCreate(
           }
           return { kind: 'shape', keys };
         }
-
         case AST_NODE_TYPES.MemberExpression: {
-          const schema = getStaticPropertyName(target) === 'shape' ? evaluate(target.object) : null;
+          const schema =
+            getStaticPropertyName(target) === 'shape' ? evaluate(target.object, env) : null;
           return schema?.kind === 'schema' ? { kind: 'shape', keys: schema.keys } : null;
         }
-
         case AST_NODE_TYPES.CallExpression:
-          return evaluateCall(target, evaluate);
-
+          return evaluateCall(target, env, evaluate);
         default:
           return null;
       }
     }
 
-    function reportSafeExtend(operation: Operation, key: string): void {
-      const { callee } = operation.call;
-      let safeExtendName: string | undefined;
-      if (callee.type === AST_NODE_TYPES.MemberExpression) {
-        safeExtendName = callee.computed ? undefined : 'safeExtend';
-      } else {
-        // A named import is renamed to `safeExtend`'s local name, so it must be imported.
-        safeExtendName = getNamedImportLocal('safeExtend');
-      }
-
-      context.report({
-        node: operation.reportNode,
-        messageId: 'overwriteRefined',
-        data: { key },
-        suggest: safeExtendName
-          ? [
-              {
-                messageId: 'useSafeExtend',
-                fix(fixer): RuleFix {
-                  return fixer.replaceText(
-                    callee.type === AST_NODE_TYPES.MemberExpression ? callee.property : callee,
-                    safeExtendName,
-                  );
-                },
-              },
-            ]
-          : [],
-      });
-    }
-
-    function check(operation: Operation): void {
-      const { name, receiver, reportNode } = operation;
-      if (!THROWING_METHODS.has(name) && name !== 'extend') {
-        return;
-      }
-      const value = evaluate(receiver);
-      const thrown = value?.kind === 'schema' ? findThrow(operation, value, evaluate) : null;
-      if (thrown?.key) {
-        reportSafeExtend(operation, thrown.key);
-      } else if (thrown) {
-        context.report({ node: reportNode, messageId: 'reshapeRefined', data: { method: name } });
-      }
-    }
-
     return {
       ImportDeclaration: importDeclarationListener,
-      // Every call, not only detected schemas: a helper's result (`withId(userSchema).pick(…)`) is one too.
+      // Every call, not only detected schemas: a local helper's result can be one too.
       CallExpression(call): void {
-        const operation = readOperation(call);
-        if (operation) {
-          check(operation);
-        }
-        // A helper or `.apply()` callback may throw inside, on the schema passed to it.
-        if (!operation || operation.name === 'apply') {
-          evaluate(call);
+        if (getZodImportBindings().length > 0) {
+          evaluate(call, TOP_LEVEL);
         }
       },
     };

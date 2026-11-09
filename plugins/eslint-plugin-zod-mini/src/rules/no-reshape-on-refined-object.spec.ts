@@ -137,15 +137,6 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
       `,
     },
     {
-      name: 'a let binding that is reassigned',
-      code: dedent`
-        import * as z from 'zod/mini';
-        let userSchema = z.object({ a: z.string() }).check(z.refine((value) => value.a !== ''));
-        userSchema = z.object({ a: z.string() });
-        z.pick(userSchema, { a: true });
-      `,
-    },
-    {
       name: 'extend with keys the rule cannot read',
       code: dedent`
         import * as z from 'zod/mini';

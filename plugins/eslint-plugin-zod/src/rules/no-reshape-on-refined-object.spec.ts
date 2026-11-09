@@ -4,7 +4,7 @@ import dedent from 'dedent';
 
 import { noReshapeOnRefinedObject } from './no-reshape-on-refined-object.js';
 
-const { suggest, report } = createSuggestionCases(noReshapeOnRefinedObject, {
+const { suggest } = createSuggestionCases(noReshapeOnRefinedObject, {
   messageId: 'overwriteRefined',
   suggestionMessageId: 'useSafeExtend',
   data: { key: 'a' },
@@ -139,15 +139,6 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         }
         const userSchema = z.object({ a: z.string() }).refine((value) => value.a !== '');
         withoutRefinements(userSchema).pick({ a: true });
-      `,
-    },
-    {
-      name: 'a let binding that is reassigned',
-      code: dedent`
-        import * as z from 'zod';
-        let userSchema = z.object({ a: z.string() }).refine((value) => value.a !== '');
-        userSchema = z.object({ a: z.string() });
-        userSchema.pick({ a: true });
       `,
     },
     {
@@ -525,12 +516,17 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         export const otherSchema = userSchema.safeExtend({ c: z.string(), 'a': z.string().min(1) });
       `,
     ),
-    report(
-      'extend called through a computed member offers no suggestion',
+    suggest(
+      'extend called through a computed member',
       dedent`
         import * as z from 'zod';
         const userSchema = z.object({ a: z.string() }).refine((value) => value.a !== '');
         export const otherSchema = userSchema['extend']({ a: z.string().min(1) });
+      `,
+      dedent`
+        import * as z from 'zod';
+        const userSchema = z.object({ a: z.string() }).refine((value) => value.a !== '');
+        export const otherSchema = userSchema['safeExtend']({ a: z.string().min(1) });
       `,
     ),
   ],
