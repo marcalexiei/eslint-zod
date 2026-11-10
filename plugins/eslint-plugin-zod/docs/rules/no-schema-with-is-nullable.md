@@ -9,7 +9,7 @@
 ## Rule Details
 
 This rule flags `.isNullable()` calls on expressions the plugin recognizes as Zod schema chains, such as `z.string().isNullable()` or `z.string().nullable().isNullable()`.
-A schema bound to a `const` counts too, so `schema.isNullable()` is reported when `const schema = z.string().nullable()`.
+A schema bound to a `const`, or a `let` that is never reassigned, counts too, so `schema.isNullable()` is reported when `const schema = z.string().nullable()`.
 A `let`, a parameter or an imported schema is not followed.
 
 ## Examples

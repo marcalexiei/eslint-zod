@@ -58,6 +58,7 @@ ruleTester.run(noNumberSchemaWithIsInt.name, noNumberSchemaWithIsInt, {
         import { amount } from './schemas.js';
         const name = z.string();
         let count = z.number();
+        count = z.number().int();
         void name.isInt;
         void count.isInt;
         void amount.isInt;
@@ -66,11 +67,11 @@ ruleTester.run(noNumberSchemaWithIsInt.name, noNumberSchemaWithIsInt, {
   ],
   invalid: [
     {
-      name: 'number schema bound to a const',
+      name: 'number schema bound to a const or a let that is never reassigned',
       code: dedent`
         import * as z from 'zod';
         const amount = z.number();
-        const positive = amount.min(0);
+        let positive = amount.min(0);
         void amount.isInt;
         void positive.isInt;
       `,

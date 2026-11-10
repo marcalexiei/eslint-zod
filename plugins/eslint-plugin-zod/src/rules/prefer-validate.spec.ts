@@ -600,6 +600,19 @@ ruleTester.run(preferValidate.name, preferValidate, {
   ],
   invalid: [
     suggest(
+      'schema bound to a let that is never reassigned',
+      dedent`
+        import * as z from 'zod';
+        let schema = z.string();
+        schema.safeParse(data).success;
+      `,
+      dedent`
+        import * as z from 'zod';
+        let schema = z.string();
+        schema.validate(data);
+      `,
+    ),
+    suggest(
       'parenthesized computed success',
       "import * as z from 'zod'; const schema = z.string(); ((schema).safeParse(data))[(('success'))];",
       "import * as z from 'zod'; const schema = z.string(); ((schema).validate(data));",

@@ -3,6 +3,7 @@ import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { findVariable } from '../find-variable.js';
+import { getBindingInitializer } from '../get-binding-initializer.js';
 import { getStaticPropertyName } from '../get-static-property-name.js';
 import { getZodSchemaBaseType } from '../get-zod-schema-base-type.js';
 import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
@@ -211,23 +212,17 @@ export function buildNoReshapeOnRefinedObjectCreate(
         return target;
       }
       const variable = findVariable(sourceCode.getScope(target), target.name);
-      // more than one definition means the binding is re-declared, so it does not settle its value
-      const definition = variable?.defs.length === 1 ? variable.defs[0] : null;
-      const reassigned = variable?.references.some((ref) => ref.isWrite() && !ref.init);
-      switch (definition?.type) {
-        case 'FunctionName':
-          return definition.node;
-        case 'Parameter':
-          return reassigned ? target : definition.name;
-        case 'Variable':
-          return definition.node.id.type === AST_NODE_TYPES.Identifier &&
-            definition.node.init &&
-            !reassigned
-            ? unwrap(definition.node.init)
-            : target;
-        default:
-          return target;
+      const init = getBindingInitializer(variable);
+      if (init) {
+        return unwrap(init);
       }
+      const definition = variable?.defs.length === 1 ? variable.defs[0] : null;
+      if (definition?.type === 'FunctionName') {
+        return definition.node;
+      }
+      // A parameter's value is looked up in the environment, unless the function reassigns it.
+      const reassigned = variable?.references.some((reference) => reference.isWrite());
+      return definition?.type === 'Parameter' && !reassigned ? definition.name : target;
     }
 
     function resolveFunction(node: TSESTree.Node | undefined): InlineFunction | null {

@@ -4,6 +4,7 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import { parseZodCallExpression } from './detect-zod-schema-root-node.js';
 import type { ZodImports, ZodSchemaMeta } from './detect-zod-schema-root-node.js';
 import { findVariable } from './find-variable.js';
+import { getBindingInitializer } from './get-binding-initializer.js';
 import type { SourceCode } from './rule-types.js';
 import { chainsZodNonSchemaMethod } from './zod-non-schema-producing-methods.js';
 import { isZodSchemaFactoryCall } from './zod-schema-factory-names.js';
@@ -20,7 +21,7 @@ export function createZodSchemaResolver(
     if (cached !== undefined) {
       return cached;
     }
-    // A node reached again while it resolves is a `const` cycle, which is a TDZ error at runtime.
+    // A node reached again while it resolves is a binding cycle, which is a TDZ error at runtime.
     cache.set(node, null);
     let result: ZodSchemaMeta | null = null;
 
@@ -32,17 +33,8 @@ export function createZodSchemaResolver(
         break;
 
       case AST_NODE_TYPES.Identifier: {
-        const variable = findVariable(sourceCode.getScope(node), node.name);
-        // more than one definition means the binding is re-declared, so its initializer does not settle its value
-        const definition = variable?.defs.length === 1 ? variable.defs[0] : undefined;
-        if (
-          definition?.type === 'Variable' &&
-          definition.parent.kind === 'const' &&
-          definition.node.id.type === AST_NODE_TYPES.Identifier &&
-          definition.node.init !== null
-        ) {
-          result = resolve(definition.node.init);
-        }
+        const init = getBindingInitializer(findVariable(sourceCode.getScope(node), node.name));
+        result = init ? resolve(init) : null;
         break;
       }
 
