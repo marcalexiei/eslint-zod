@@ -20,6 +20,7 @@ ruleTester.run(noSchemaWithIsOptional.name, noSchemaWithIsOptional, {
         import * as z from 'zod';
         import { userSchema } from './schemas.js';
         let schema = z.string().optional();
+        schema = z.string();
         void schema.isOptional();
         void userSchema.isOptional();
       `,
@@ -55,11 +56,11 @@ ruleTester.run(noSchemaWithIsOptional.name, noSchemaWithIsOptional, {
   ],
   invalid: [
     {
-      name: 'schema bound to a const',
+      name: 'schema bound to a const or a let that is never reassigned',
       code: dedent`
         import * as z from 'zod';
         const schema = z.string().optional();
-        const nested = schema.array();
+        let nested = schema.array();
         void schema.isOptional();
         void nested.optional().isOptional();
       `,

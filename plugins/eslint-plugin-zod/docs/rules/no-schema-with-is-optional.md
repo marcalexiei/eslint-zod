@@ -9,7 +9,7 @@
 ## Rule Details
 
 This rule flags `.isOptional()` calls on expressions the plugin recognizes as Zod schema chains, such as `z.string().isOptional()` or `z.string().optional().isOptional()`.
-A schema bound to a `const` counts too, so `schema.isOptional()` is reported when `const schema = z.string().optional()`.
+A schema bound to a `const`, or a `let` that is never reassigned, counts too, so `schema.isOptional()` is reported when `const schema = z.string().optional()`.
 A `let`, a parameter or an imported schema is not followed.
 
 ## Examples

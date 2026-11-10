@@ -583,6 +583,7 @@ describe('resolveZodSchema', () => {
     init: TSESTree.Node | null;
     destructured?: boolean;
     redeclared?: boolean;
+    reassigned?: boolean;
   }
 
   /** A tracker importing `z` as a namespace, whose scope declares the given bindings. */
@@ -592,7 +593,7 @@ describe('resolveZodSchema', () => {
   } {
     const set = new Map(
       Object.entries(definitions).map(
-        ([name, { kind = 'const', init, destructured, redeclared }]) => {
+        ([name, { kind = 'const', init, destructured, redeclared, reassigned }]) => {
           const definition = {
             type: 'Variable',
             node: {
@@ -601,7 +602,8 @@ describe('resolveZodSchema', () => {
             },
             parent: { kind },
           };
-          return [name, { defs: redeclared ? [definition, definition] : [definition] }];
+          const references = reassigned ? [{ isWrite: (): boolean => true }] : [];
+          return [name, { defs: redeclared ? [definition, definition] : [definition], references }];
         },
       ),
     );
@@ -665,9 +667,14 @@ describe('resolveZodSchema', () => {
     expect(resolve(makeCall(makeME(makeIdent('base'), 'safeParse')))).toBeNull();
   });
 
+  it('follows a let that is never reassigned', () => {
+    const { resolve } = trackerWith({ base: { kind: 'let', init: zString() } });
+    expect(resolve(makeIdent('base'))).toMatchObject({ schemaType: 'string' });
+  });
+
   it('returns null for a binding it cannot settle', () => {
     const { resolve } = trackerWith({
-      mutable: { kind: 'let', init: zString() },
+      mutable: { kind: 'let', init: zString(), reassigned: true },
       declared: { init: null },
       destructured: { init: zString(), destructured: true },
       redeclared: { init: zString(), redeclared: true },
@@ -677,7 +684,7 @@ describe('resolveZodSchema', () => {
     }
   });
 
-  it('returns null for a const cycle', () => {
+  it('returns null for a binding cycle', () => {
     const cycle = makeCall(makeME(makeIdent('self'), 'optional'));
     const { resolve } = trackerWith({ self: { init: cycle } });
     expect(resolve(makeIdent('self'))).toBeNull();

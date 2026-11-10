@@ -2,6 +2,7 @@ import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { findVariable } from '../find-variable.js';
+import { getBindingInitializer } from '../get-binding-initializer.js';
 import { getZodChainedMethodNames } from '../get-zod-chained-method-names.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
@@ -101,28 +102,21 @@ export function buildNoDynamicSchemaValueCreate(
           );
 
         case AST_NODE_TYPES.Identifier: {
-          const def = findVariable(context.sourceCode.getScope(node), node.name)?.defs[0];
-          if (!def) {
-            return false;
-          }
-
+          const variable = findVariable(context.sourceCode.getScope(node), node.name);
+          const def = variable?.defs[0];
           // A hoisted declaration is a function literal, exactly like `const f = () => {}`.
-          if (def.type === 'ImportBinding' || def.type === 'FunctionName') {
+          if (def?.type === 'ImportBinding' || def?.type === 'FunctionName') {
             return true;
           }
 
-          if (
-            def.type !== 'Variable' ||
-            def.parent.kind !== 'const' ||
-            def.node.init === null ||
-            resolving.has(def.node)
-          ) {
+          const init = getBindingInitializer(variable);
+          if (!init || resolving.has(init)) {
             return false;
           }
 
-          resolving.add(def.node);
-          const isStatic = isStaticExpression(def.node.init);
-          resolving.delete(def.node);
+          resolving.add(init);
+          const isStatic = isStaticExpression(init);
+          resolving.delete(init);
           return isStatic;
         }
 

@@ -9,7 +9,7 @@
 ## Rule Details
 
 This rule flags property access to `isInt` on expressions the plugin recognizes as a `z.number()…` chain (for example `z.number().isInt` or `z.number().min(0).isInt`).
-A schema bound to a `const` counts too, so `amount.isInt` is reported when `const amount = z.number()`.
+A schema bound to a `const`, or a `let` that is never reassigned, counts too, so `amount.isInt` is reported when `const amount = z.number()`.
 A `let`, a parameter or an imported schema is not followed.
 
 ## Examples

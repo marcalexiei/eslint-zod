@@ -2,6 +2,7 @@ import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { findVariable } from '../find-variable.js';
+import { getBindingInitializer } from '../get-binding-initializer.js';
 import { getStaticPropertyName } from '../get-static-property-name.js';
 import type { RuleContext, RuleFix, RuleListener, ScopeVariable } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
@@ -59,21 +60,12 @@ export function buildPreferValidateCreate(
     ): TSESTree.ImportDeclaration | undefined {
       if (node.type === AST_NODE_TYPES.Identifier) {
         const found = variable(node);
-        if (!found || seen.has(found) || found.defs.length !== 1) {
+        const init = getBindingInitializer(found);
+        if (!found || !init || seen.has(found)) {
           return undefined;
         }
         seen.add(found);
-        const [definition] = found.defs;
-        if (
-          definition.type !== 'Variable' ||
-          definition.parent.kind !== 'const' ||
-          definition.node.id.type !== AST_NODE_TYPES.Identifier ||
-          !definition.node.init ||
-          found.references.some((reference) => reference.isWrite() && !reference.init)
-        ) {
-          return undefined;
-        }
-        return schemaSource(definition.node.init, seen);
+        return schemaSource(init, seen);
       }
       if (node.type !== AST_NODE_TYPES.CallExpression || node.optional) {
         return undefined;

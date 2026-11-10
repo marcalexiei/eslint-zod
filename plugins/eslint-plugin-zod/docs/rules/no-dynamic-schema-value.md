@@ -48,7 +48,7 @@ const schema = z.string().min(1, 'too short');
 import { isValid, errorMessage } from './helpers.js';
 const schema = z.string().refine(isValid, errorMessage);
 
-// A `const` whose own initializer is itself static is fine.
+// A `const`, or a `let` that is never reassigned, whose initializer is static is fine.
 const message = errorMessage;
 const schema2 = z.string().refine(isValid, message);
 
@@ -66,13 +66,13 @@ const schema5 = z.object({ ...base.shape, parent: base.optional() });
 
 ## Limitations
 
-The rule resolves an identifier as static only through an import binding, a `function` declaration, or a
-`const` initialized (directly or transitively) to another static value.
+The rule resolves an identifier as static only through an import binding, a `function` declaration,
+or a binding that is never reassigned and whose initializer is (directly or transitively) static.
 A member access (`config.message`, `schema.shape`) is static when the object it reads from is.
 A parse result is a runtime value, so `env.HOST` is reported when `env` holds `schema.parse(process.env)`.
 A method call is static only on a schema built in the same file (`base.extend({…})`, `base.optional()`).
 An import is not provably a schema, so `importedSchema.optional()` is reported.
-A `const` that refers to itself is reported rather than resolved.
+A binding that refers to itself is reported rather than resolved.
 
 A function literal is always static, regardless of what it captures — the rule does not look inside its
 body. This matches `zod-compiler`, which compiles a `refine`/`transform`/`superRefine`/`preprocess`

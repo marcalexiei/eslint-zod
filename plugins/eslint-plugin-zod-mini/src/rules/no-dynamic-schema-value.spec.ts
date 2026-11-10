@@ -8,6 +8,15 @@ const ruleTester = new RuleTester();
 ruleTester.run(noDynamicSchemaValue.name, noDynamicSchemaValue, {
   valid: [
     {
+      name: 'let that is never reassigned used as an argument',
+      code: dedent`
+        import * as z from 'zod/mini';
+        import { isValid } from './helpers.js';
+        let message = 'bad';
+        const schema = z.string().check(z.refine(isValid, message));
+      `,
+    },
+    {
       name: 'the input of a parse call is not a schema value',
       code: dedent`
         import * as z from 'zod/mini';
@@ -213,6 +222,16 @@ ruleTester.run(noDynamicSchemaValue.name, noDynamicSchemaValue, {
 
   invalid: [
     {
+      name: 'schema method on a local schema bound to a let that is never reassigned',
+      code: dedent`
+        import * as z from 'zod/mini';
+        function getChecks() { return []; }
+        let base = z.object({});
+        const union = z.union([base, base.check(...getChecks())]);
+      `,
+      errors: [{ messageId: 'dynamicValue' }],
+    },
+    {
       name: 'factory called with a dynamic value',
       code: dedent`
         import * as z from 'zod/mini';
@@ -269,6 +288,7 @@ ruleTester.run(noDynamicSchemaValue.name, noDynamicSchemaValue, {
         import * as z from 'zod/mini';
         import { isValid } from './helpers.js';
         let message = 'bad';
+        message = 'worse';
         const schema = z.string().check(z.refine(isValid, message));
       `,
       errors: [{ messageId: 'dynamicValue' }],

@@ -20,6 +20,7 @@ ruleTester.run(noSchemaWithIsNullable.name, noSchemaWithIsNullable, {
         import * as z from 'zod';
         import { userSchema } from './schemas.js';
         let schema = z.string().nullable();
+        schema = z.string();
         void schema.isNullable();
         void userSchema.isNullable();
       `,
@@ -55,11 +56,11 @@ ruleTester.run(noSchemaWithIsNullable.name, noSchemaWithIsNullable, {
   ],
   invalid: [
     {
-      name: 'schema bound to a const',
+      name: 'schema bound to a const or a let that is never reassigned',
       code: dedent`
         import * as z from 'zod';
         const schema = z.string().nullable();
-        const nested = schema.array();
+        let nested = schema.array();
         void schema.isNullable();
         void nested.nullable().isNullable();
       `,
