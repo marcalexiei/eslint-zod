@@ -9,14 +9,15 @@ catalogs:
 
   dev:
     # typescript-eslint ecosystem (keep versions aligned)
-    '@typescript-eslint/rule-tester': '8.72.0'
-    typescript-eslint: '8.72.0'
+    '@typescript-eslint/rule-tester': '8.72.1'
+    typescript-eslint: '8.72.1'
 
     # build & test toolchain
-    tsdown: '0.23.1'
+    # 0.23.7 moves to rolldown 1.3, while vite (via vitest) still needs 1.2
+    tsdown: '0.23.5'
     # keep `@vitest/coverage-v8` aligned with `vitest`
-    '@vitest/coverage-v8': '5.0.5'
-    vitest: '5.0.5'
+    '@vitest/coverage-v8': '5.1.0'
+    vitest: '5.1.0'
 
     # published-artifact checks
     '@arethetypeswrong/cli': '0.18.5'
