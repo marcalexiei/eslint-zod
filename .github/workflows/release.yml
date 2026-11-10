@@ -41,7 +41,7 @@ jobs:
     steps:
       - name: Setup release helper
         id: release-helper
-        uses: marcalexiei/github-actions/setup-github-app-user-bot@e9655755a6dc0040e650a931ee5d958c7d7a9f22 # v2.3.1
+        uses: marcalexiei/github-actions/setup-github-app-user-bot@4a51d6dfcaac0c263c6f2efd97249eafe0076721 # v2.5.0
         with:
           app-id: ${{ vars.RELEASE_HELPER_APP_ID }}
           private-key: ${{ secrets.RELEASE_HELPER_PRIVATE_KEY }}
@@ -52,7 +52,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@92c64c084d3479cff756151cb8163d03608f2acd # v2.4.2
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@4a51d6dfcaac0c263c6f2efd97249eafe0076721 # v2.5.0
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
@@ -83,7 +83,7 @@ jobs:
       # then come from the same bot that opened the release PR.
       - name: Setup release helper
         id: release-helper
-        uses: marcalexiei/github-actions/setup-github-app-user-bot@e9655755a6dc0040e650a931ee5d958c7d7a9f22 # v2.3.1
+        uses: marcalexiei/github-actions/setup-github-app-user-bot@4a51d6dfcaac0c263c6f2efd97249eafe0076721 # v2.5.0
         with:
           app-id: ${{ vars.RELEASE_HELPER_APP_ID }}
           private-key: ${{ secrets.RELEASE_HELPER_PRIVATE_KEY }}
@@ -95,7 +95,7 @@ jobs:
           fetch-depth: 0 # the commenter reads the history before the release commit
 
       - name: Comment on shipped PRs and issues
-        uses: marcalexiei/changesets-release-commenter@ec778ccda5a45d2eff60cb43c58f4e2e144cd2ea # v0.3.0
+        uses: marcalexiei/changesets-release-commenter@97096fbe9cde74fcae784df963274998e0090a7c # v0.3.1
         with:
           github-token: ${{ steps.release-helper.outputs.token }}
           published-packages: ${{ needs.release.outputs.publishedPackages }}

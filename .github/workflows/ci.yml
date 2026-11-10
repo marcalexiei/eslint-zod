@@ -47,7 +47,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@92c64c084d3479cff756151cb8163d03608f2acd # v2.4.2
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@4a51d6dfcaac0c263c6f2efd97249eafe0076721 # v2.5.0
         with:
           node-version: ${{ matrix.node }}
           # Both ESLint legs of a Node.js version share a cache key.
@@ -79,7 +79,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@92c64c084d3479cff756151cb8163d03608f2acd # v2.4.2
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@4a51d6dfcaac0c263c6f2efd97249eafe0076721 # v2.5.0
         with:
           save-cache: false # shares its cache key with Code checks
 
@@ -104,7 +104,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@92c64c084d3479cff756151cb8163d03608f2acd # v2.4.2
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@4a51d6dfcaac0c263c6f2efd97249eafe0076721 # v2.5.0
 
       # Before Typecheck: without `tsc -b` output a leaked `zod-api` type builds as `any`, which `lint:dts` catches.
       - name: Build
@@ -146,14 +146,14 @@ jobs:
           fi
       - name: Run zizmor
         if: ${{ steps.changes.outputs.github == 'true' }}
-        uses: zizmorcore/zizmor-action@cc914d7f3750a2d13d75c7f184a1060aa0e9d482 # v0.6.4
+        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
         with:
           advanced-security: false
           annotations: true
       - name: Run jactionlint
         # still runs when zizmor fails, so one run reports both
         if: ${{ !cancelled() && steps.changes.outputs.github == 'true' }}
-        uses: jdx/jactionlint@a0bb9f012b6b5760c17c9ccd040001d08002a10e # v2.1.0
+        uses: jdx/jactionlint@9e87e8f34edfc00b849a27807e26eff9d00b936d # v2.5.0
         with:
           online: strict # a lookup it cannot make fails the job instead of being skipped
 
