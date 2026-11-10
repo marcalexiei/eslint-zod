@@ -41,7 +41,7 @@ A rule that overlaps an existing one keeps its own name and documents the overla
    });
    ```
 
-   Spread it (`{ ...createSchemaVisitor({ … }), 'Program:exit'() {} }`) to add visitor keys. Use `importDeclarationListener` directly **only** when the rule's primary listener is not `CallExpression` — the three current cases are `consistent-schema-var-name` (`VariableDeclarator`), `consistent-schema-output-type-style` (`TSTypeReference`), and the `deprecated-schema-property` pattern (`MemberExpression`).
+   Spread it (`{ ...createSchemaVisitor({ … }), 'Program:exit'() {} }`) to add visitor keys. Use `importDeclarationListener` directly **only** when the rule's primary listener is not schema detection — the current cases are `consistent-schema-var-name` (`VariableDeclarator`), `consistent-schema-output-type-style` (`TSTypeReference`), the `deprecated-schema-property` pattern (`MemberExpression`), and `no-reshape-on-refined-object` (every `CallExpression`, not only detected schemas).
 
 3. **No exports-map entry to add** — `./rule-builders/*` is a single wildcard entry, so dropping the file in is enough. The flip side: everything in that directory is public, so a helper that is not a builder belongs at `src/` root instead.
 4. If the rule reasons about check names, canonicalize through `canonicalizeZodConstraintName(constraint, baseType)` rather than writing a spelling table — chained names are type-dependent and the shared vocabulary already covers them. Add missing entries to `packages/utils/src/zod-check-vocabulary.ts`.

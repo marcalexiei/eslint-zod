@@ -15,6 +15,7 @@ import { noEmptyCustomSchema } from './rules/no-empty-custom-schema.js';
 import { noFunctionScopedSchema } from './rules/no-function-scoped-schema.js';
 import { noNativeEnum } from './rules/no-native-enum.js';
 import { noPromiseSchema } from './rules/no-promise-schema.js';
+import { noReshapeOnRefinedObject } from './rules/no-reshape-on-refined-object.js';
 import { noThrowInRefine } from './rules/no-throw-in-refine.js';
 import { noTransformInRecordKey } from './rules/no-transform-in-record-key.js';
 import { noUnknownSchema } from './rules/no-unknown-schema.js';
@@ -63,6 +64,7 @@ const eslintPluginZodMini = {
     'no-function-scoped-schema': noFunctionScopedSchema,
     'no-native-enum': noNativeEnum,
     'no-promise-schema': noPromiseSchema,
+    'no-reshape-on-refined-object': noReshapeOnRefinedObject,
     'no-throw-in-refine': noThrowInRefine,
     'no-transform-in-record-key': noTransformInRecordKey,
     'no-unknown-schema': noUnknownSchema,
@@ -107,6 +109,7 @@ const recommendedRules = {
   'zod-mini/no-empty-custom-schema': 'error',
   'zod-mini/no-native-enum': 'error',
   'zod-mini/no-promise-schema': 'error',
+  'zod-mini/no-reshape-on-refined-object': 'error',
   'zod-mini/no-throw-in-refine': 'error',
   'zod-mini/no-transform-in-record-key': 'error',
   'zod-mini/require-brand-type-parameter': 'error',

@@ -113,6 +113,7 @@ Each rule shared between `eslint-plugin-zod` and `eslint-plugin-zod-mini` (some 
 - `buildNoFunctionScopedSchemaCreate(scope)`
 - `buildNoNativeEnumCreate(scope)`
 - `buildNoPromiseSchemaCreate(scope)`
+- `buildNoReshapeOnRefinedObjectCreate(scope)`
 - `buildNoThrowInRefineCreate(scope)`
 - `buildNoTransformInRecordKeyCreate(scope, transformNames)` — `transformNames` are matched against the key schema's factory and its constraints, so one list covers both API styles
 - `buildNoUnknownSchemaCreate(scope)`
