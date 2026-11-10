@@ -68,6 +68,8 @@ const TOP_LEVEL: Env = { params: new Map(), site: null };
 interface Operation {
   call: TSESTree.CallExpression;
   name: string;
+  /** The call as written, for messages: `.pick` or `z.pick`. */
+  method: string;
   receiver: TSESTree.Node;
   args: ReadonlyArray<TSESTree.CallExpressionArgument>;
 }
@@ -254,7 +256,10 @@ export function buildNoReshapeOnRefinedObjectCreate(
     ): Operation | null {
       if (factoryName !== undefined) {
         const [receiver, ...args] = call.arguments;
-        return call.arguments.length > 0 ? { call, name: factoryName, receiver, args } : null;
+        const method = sourceCode.getText(call.callee);
+        return call.arguments.length > 0
+          ? { call, name: factoryName, method, receiver, args }
+          : null;
       }
       if (call.callee.type !== AST_NODE_TYPES.MemberExpression) {
         return null;
@@ -262,11 +267,11 @@ export function buildNoReshapeOnRefinedObjectCreate(
       const name = getStaticPropertyName(call.callee);
       return name === null
         ? null
-        : { call, name, receiver: call.callee.object, args: call.arguments };
+        : { call, name, method: `.${name}`, receiver: call.callee.object, args: call.arguments };
     }
 
     function reportThrow(
-      { call, name }: Operation,
+      { call, name, method }: Operation,
       thrown: string,
       site: TSESTree.CallExpression | null,
     ): void {
@@ -278,7 +283,7 @@ export function buildNoReshapeOnRefinedObjectCreate(
       reported.add(node);
       if (site || name !== 'extend') {
         const messageId = site ? 'reshapeRefinedInCall' : 'reshapeRefined';
-        context.report({ node, messageId, data: { method: name } });
+        context.report({ node, messageId, data: { method } });
         return;
       }
       const { callee } = call;
@@ -289,7 +294,7 @@ export function buildNoReshapeOnRefinedObjectCreate(
       context.report({
         node,
         messageId: 'overwriteRefined',
-        data: { key: thrown },
+        data: { key: thrown, method },
         suggest: safeExtend
           ? [
               {
@@ -312,9 +317,6 @@ export function buildNoReshapeOnRefinedObjectCreate(
           return args.length === 0 ? receiver : null;
         }
         return { ...receiver, refined: true };
-      }
-      if (PRESERVING_METHODS.has(name)) {
-        return receiver;
       }
       // `findThrow` has passed, so the receiver has no checks for the rest to clear.
       const mask = args.length > 0 ? readMask(resolveBinding(args[0])) : null;
@@ -344,7 +346,7 @@ export function buildNoReshapeOnRefinedObjectCreate(
             keys: new Set([...receiver.keys].filter((key) => mask && !mask.has(key))),
           };
         default:
-          return null;
+          return PRESERVING_METHODS.has(name) ? receiver : null;
       }
     }
 

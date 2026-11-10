@@ -4,10 +4,16 @@ import dedent from 'dedent';
 
 import { noReshapeOnRefinedObject } from './no-reshape-on-refined-object.js';
 
-const { suggest, report } = createSuggestionCases(noReshapeOnRefinedObject, {
+const { suggest } = createSuggestionCases(noReshapeOnRefinedObject, {
   messageId: 'overwriteRefined',
   suggestionMessageId: 'useSafeExtend',
-  data: { key: 'a' },
+  data: { key: 'a', method: 'z.extend' },
+});
+
+const named = createSuggestionCases(noReshapeOnRefinedObject, {
+  messageId: 'overwriteRefined',
+  suggestionMessageId: 'useSafeExtend',
+  data: { key: 'a', method: 'extend' },
 });
 
 const ruleTester = new RuleTester();
@@ -231,7 +237,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
           .check(z.refine((value) => value.a !== value.b));
         z.pick(userSchema, { a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' }, line: 5 }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: 'z.pick' }, line: 5 }],
     },
     {
       name: 'omit, partial and merge on an object with checks',
@@ -243,9 +249,9 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         export const cSchema = z.merge(userSchema, z.object({ b: z.string() }));
       `,
       errors: [
-        { messageId: 'reshapeRefined', data: { method: 'omit' }, line: 3 },
-        { messageId: 'reshapeRefined', data: { method: 'partial' }, line: 4 },
-        { messageId: 'reshapeRefined', data: { method: 'merge' }, line: 5 },
+        { messageId: 'reshapeRefined', data: { method: 'z.omit' }, line: 3 },
+        { messageId: 'reshapeRefined', data: { method: 'z.partial' }, line: 4 },
+        { messageId: 'reshapeRefined', data: { method: 'z.merge' }, line: 5 },
       ],
     },
     {
@@ -275,7 +281,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
           .brand<'User'>();
         z.pick(z.required(z.catchall(userSchema, z.string())), { a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' }, line: 6 }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: 'z.pick' }, line: 6 }],
     },
     {
       name: 'followed across several bindings and an extend',
@@ -285,7 +291,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         const moreSchema = z.extend(baseSchema, { b: z.string() });
         export const pickedSchema = z.pick(moreSchema as typeof moreSchema, { a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' }, line: 4 }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: 'z.pick' }, line: 4 }],
     },
     {
       name: 'merge takes the checks of its second argument',
@@ -294,7 +300,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         const refinedSchema = z.object({ b: z.string() }).check(z.refine((value) => value.b !== ''));
         z.pick(z.merge(z.object({ a: z.string() }), refinedSchema), { a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' } }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: 'z.pick' } }],
     },
     {
       name: 'pick after apply, which keeps the checks',
@@ -306,7 +312,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
           .apply((schema) => schema.brand<'User'>());
         z.pick(userSchema, { a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' }, line: 6 }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: 'z.pick' }, line: 6 }],
     },
     {
       name: 'local helpers that keep the checks',
@@ -322,8 +328,8 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         z.omit(withCreatedAt(userSchema), { a: true });
       `,
       errors: [
-        { messageId: 'reshapeRefined', data: { method: 'pick' }, line: 8 },
-        { messageId: 'reshapeRefined', data: { method: 'omit' }, line: 9 },
+        { messageId: 'reshapeRefined', data: { method: 'z.pick' }, line: 8 },
+        { messageId: 'reshapeRefined', data: { method: 'z.omit' }, line: 9 },
       ],
     },
     {
@@ -333,7 +339,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         let userSchema = z.object({ a: z.string() }).check(z.refine((value) => value.a !== ''));
         z.pick(userSchema, { a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' }, line: 3 }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: 'z.pick' }, line: 3 }],
     },
     {
       name: 'local helpers that reshape the schema passed to them',
@@ -350,9 +356,9 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         z.extend(pickA(userSchema), { b: z.string() });
       `,
       errors: [
-        { messageId: 'reshapeRefinedInCall', data: { method: 'pick' }, line: 7 },
-        { messageId: 'reshapeRefinedInCall', data: { method: 'pick' }, line: 8 },
-        { messageId: 'reshapeRefinedInCall', data: { method: 'pick' }, line: 10 },
+        { messageId: 'reshapeRefinedInCall', data: { method: 'z.pick' }, line: 7 },
+        { messageId: 'reshapeRefinedInCall', data: { method: 'z.pick' }, line: 8 },
+        { messageId: 'reshapeRefinedInCall', data: { method: 'z.pick' }, line: 10 },
       ],
     },
     suggest(
@@ -381,7 +387,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         pickUser();
         pickUser();
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' }, line: 4 }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: 'z.pick' }, line: 4 }],
     },
     suggest(
       'extend overwriting a known key next to keys the rule cannot read',
@@ -492,7 +498,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         export const otherSchema = z.safeExtend(userSchema, { c: z.string(), 'a': z.string().check(z.minLength(1)) });
       `,
     ),
-    suggest(
+    named.suggest(
       'named import renames to the local name of safeExtend',
       dedent`
         import { extend, minLength, object, refine, safeExtend as safe, string } from 'zod/mini';
@@ -505,7 +511,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         safe(userSchema, { a: string().check(minLength(1)) });
       `,
     ),
-    report(
+    named.report(
       'named import offers no suggestion when safeExtend is not imported',
       dedent`
         import { extend, minLength, object, refine, string } from 'zod/mini';
@@ -524,9 +530,9 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         z.omit(brandedSchema, { a: true });
       `,
       errors: [
-        { messageId: 'reshapeRefined', data: { method: 'exactPartial' }, line: 3 },
-        { messageId: 'reshapeRefined', data: { method: 'pick' }, line: 4 },
-        { messageId: 'reshapeRefined', data: { method: 'omit' }, line: 6 },
+        { messageId: 'reshapeRefined', data: { method: 'z.exactPartial' }, line: 3 },
+        { messageId: 'reshapeRefined', data: { method: 'z.pick' }, line: 4 },
+        { messageId: 'reshapeRefined', data: { method: 'z.omit' }, line: 6 },
       ],
     },
     {
@@ -543,7 +549,16 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         ),
         'z.pick(f10(s40.check(z.refine(() => true))), { a: true });',
       ].join('\n'),
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' } }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: 'z.pick' } }],
+    },
+    {
+      name: 'named import is reported by its local name',
+      code: dedent`
+        import { object, omit as without, refine, string } from 'zod/mini';
+        const userSchema = object({ a: string() }).check(refine((value) => value.a !== ''));
+        without(userSchema, { a: true });
+      `,
+      errors: [{ messageId: 'reshapeRefined', data: { method: 'without' } }],
     },
   ],
 });

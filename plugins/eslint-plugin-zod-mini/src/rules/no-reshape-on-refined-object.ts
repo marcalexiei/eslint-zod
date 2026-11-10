@@ -13,12 +13,12 @@ export const noReshapeOnRefinedObject = createZodMiniPluginRule({
     },
     messages: {
       reshapeRefined:
-        '`z.{{method}}()` throws on an object schema that has checks. Reshape the object before adding checks.',
+        '`{{method}}()` throws on an object schema that has checks. Reshape the object before adding checks.',
       reshapeRefinedInCall:
-        'This call throws: inside it, `z.{{method}}()` reshapes an object schema that has checks.',
+        'This call throws: inside it, `{{method}}()` reshapes an object schema that has checks.',
       overwriteRefined:
-        '`z.extend()` throws when it overwrites a key (`{{key}}`) of an object schema that has checks.',
-      useSafeExtend: 'Use `z.safeExtend()` instead.',
+        '`{{method}}()` throws when it overwrites a key (`{{key}}`) of an object schema that has checks.',
+      useSafeExtend: 'Use `safeExtend()` instead.',
     },
     schema: [],
   },

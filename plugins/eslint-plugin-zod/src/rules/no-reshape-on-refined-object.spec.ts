@@ -7,7 +7,7 @@ import { noReshapeOnRefinedObject } from './no-reshape-on-refined-object.js';
 const { suggest } = createSuggestionCases(noReshapeOnRefinedObject, {
   messageId: 'overwriteRefined',
   suggestionMessageId: 'useSafeExtend',
-  data: { key: 'a' },
+  data: { key: 'a', method: '.extend' },
 });
 
 const ruleTester = new RuleTester();
@@ -236,7 +236,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
           .refine((value) => value.a !== value.b)
           .pick({ a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' } }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: '.pick' } }],
     },
     {
       name: 'omit, partial and merge on a refined object bound to a const',
@@ -248,9 +248,9 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         export const cSchema = userSchema.merge(z.object({ b: z.string() }));
       `,
       errors: [
-        { messageId: 'reshapeRefined', data: { method: 'omit' }, line: 3 },
-        { messageId: 'reshapeRefined', data: { method: 'partial' }, line: 4 },
-        { messageId: 'reshapeRefined', data: { method: 'merge' }, line: 5 },
+        { messageId: 'reshapeRefined', data: { method: '.omit' }, line: 3 },
+        { messageId: 'reshapeRefined', data: { method: '.partial' }, line: 4 },
+        { messageId: 'reshapeRefined', data: { method: '.merge' }, line: 5 },
       ],
     },
     {
@@ -295,7 +295,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
           .required()
           .pick({ a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' } }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: '.pick' } }],
     },
     {
       name: 'followed across several bindings and an extend',
@@ -305,7 +305,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         const moreSchema = baseSchema.extend({ b: z.string() });
         export const pickedSchema = (moreSchema as typeof moreSchema).pick({ a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' }, line: 4 }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: '.pick' }, line: 4 }],
     },
     {
       name: 'merge takes the refinements of its argument',
@@ -314,7 +314,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         const refinedSchema = z.object({ b: z.string() }).refine((value) => value.b !== '');
         z.object({ a: z.string() }).merge(refinedSchema).pick({ a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' } }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: '.pick' } }],
     },
     {
       name: 'named import',
@@ -324,7 +324,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
           .refine((value) => value.a !== '')
           .omit({ a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'omit' } }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: '.omit' } }],
     },
     {
       name: 'pick after apply, which keeps the refinement',
@@ -335,7 +335,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
           .apply((schema) => schema.describe('user'))
           .pick({ a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' }, line: 5 }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: '.pick' }, line: 5 }],
     },
     {
       name: 'local helpers that keep the refinement',
@@ -351,8 +351,8 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         withCreatedAt(userSchema).omit({ a: true });
       `,
       errors: [
-        { messageId: 'reshapeRefined', data: { method: 'pick' }, line: 8 },
-        { messageId: 'reshapeRefined', data: { method: 'omit' }, line: 9 },
+        { messageId: 'reshapeRefined', data: { method: '.pick' }, line: 8 },
+        { messageId: 'reshapeRefined', data: { method: '.omit' }, line: 9 },
       ],
     },
     {
@@ -362,7 +362,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         let userSchema = z.object({ a: z.string() }).refine((value) => value.a !== '');
         userSchema.pick({ a: true });
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' }, line: 3 }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: '.pick' }, line: 3 }],
     },
     {
       name: 'local helpers that reshape the schema passed to them',
@@ -379,9 +379,9 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         pickA(userSchema).extend({ b: z.string() });
       `,
       errors: [
-        { messageId: 'reshapeRefinedInCall', data: { method: 'pick' }, line: 7 },
-        { messageId: 'reshapeRefinedInCall', data: { method: 'pick' }, line: 8 },
-        { messageId: 'reshapeRefinedInCall', data: { method: 'pick' }, line: 10 },
+        { messageId: 'reshapeRefinedInCall', data: { method: '.pick' }, line: 7 },
+        { messageId: 'reshapeRefinedInCall', data: { method: '.pick' }, line: 8 },
+        { messageId: 'reshapeRefinedInCall', data: { method: '.pick' }, line: 10 },
       ],
     },
     suggest(
@@ -410,7 +410,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         pickUser();
         pickUser();
       `,
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' }, line: 4 }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: '.pick' }, line: 4 }],
     },
     suggest(
       'extend overwriting a known key next to keys the rule cannot read',
@@ -549,9 +549,9 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         extendedSchema.omit({ a: true });
       `,
       errors: [
-        { messageId: 'reshapeRefined', data: { method: 'exactPartial' }, line: 3 },
-        { messageId: 'reshapeRefined', data: { method: 'pick' }, line: 4 },
-        { messageId: 'reshapeRefined', data: { method: 'omit' }, line: 6 },
+        { messageId: 'reshapeRefined', data: { method: '.exactPartial' }, line: 3 },
+        { messageId: 'reshapeRefined', data: { method: '.pick' }, line: 4 },
+        { messageId: 'reshapeRefined', data: { method: '.omit' }, line: 6 },
       ],
     },
     {
@@ -567,7 +567,7 @@ ruleTester.run(noReshapeOnRefinedObject.name, noReshapeOnRefinedObject, {
         ),
         'f10(s40.refine(() => true)).pick({ a: true });',
       ].join('\n'),
-      errors: [{ messageId: 'reshapeRefined', data: { method: 'pick' } }],
+      errors: [{ messageId: 'reshapeRefined', data: { method: '.pick' } }],
     },
   ],
 });

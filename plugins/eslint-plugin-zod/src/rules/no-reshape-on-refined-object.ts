@@ -14,11 +14,11 @@ export const noReshapeOnRefinedObject = createZodPluginRule({
     },
     messages: {
       reshapeRefined:
-        '`.{{method}}()` throws on an object schema that has refinements. Reshape the object before refining it.',
+        '`{{method}}()` throws on an object schema that has refinements. Reshape the object before refining it.',
       reshapeRefinedInCall:
-        'This call throws: inside it, `.{{method}}()` reshapes an object schema that has refinements.',
+        'This call throws: inside it, `{{method}}()` reshapes an object schema that has refinements.',
       overwriteRefined:
-        '`.extend()` throws when it overwrites a key (`{{key}}`) of an object schema that has refinements.',
+        '`{{method}}()` throws when it overwrites a key (`{{key}}`) of an object schema that has refinements.',
       useSafeExtend: 'Use `.safeExtend()` instead.',
     },
     schema: [],
