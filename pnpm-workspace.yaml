@@ -13,7 +13,8 @@ catalogs:
     typescript-eslint: '8.72.1'
 
     # build & test toolchain
-    tsdown: '0.23.7'
+    # 0.23.7 moves to rolldown 1.3, while vite (via vitest) still needs 1.2
+    tsdown: '0.23.5'
     # keep `@vitest/coverage-v8` aligned with `vitest`
     '@vitest/coverage-v8': '5.1.0'
     vitest: '5.1.0'
