@@ -1,5 +1,6 @@
 import type { ZodMethodName } from '@eslint-zod/zod-api';
 
+import { buildZodChainRemoveMethodFix } from '../build-zod-chain-remove-method-fix.js';
 import { buildZodChainReplacementFix } from '../build-zod-chain-replacement-fix.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
@@ -29,14 +30,20 @@ export interface TopLevelFactoryReplacement {
 export interface PreferTopLevelFactoryOptions<TMessageIds extends string> {
   scope: ZodImportScope;
 
-  /** Factory the deprecated method is chained on (e.g. `string`, `number`). */
-  factoryName: string;
+  /** Factories the deprecated method is chained on (e.g. `string`, `number`). */
+  factoryName: string | ReadonlyArray<string>;
 
   /** Chained method → top-level factory that replaces it. */
   replacements: ReadonlyArray<TopLevelFactoryReplacement>;
 
-  /** Message reported on the schema; gets `sourceMethod` / `replacementMethod` data. */
+  /** Message reported on the schema; gets `factory` / `sourceMethod` / `replacementMethod` data. */
   messageId: TMessageIds;
+
+  /**
+   * Factories that already imply the method (`z.int32()` for `.int()`).
+   * There the fix removes the call instead, reported with this message and the same data.
+   */
+  redundant?: { factoryNames: ReadonlyArray<string>; messageId: TMessageIds };
 
   /** Method names to skip, for rules exposing an `ignore` option. */
   ignore?: ReadonlyArray<string>;
@@ -44,7 +51,7 @@ export interface PreferTopLevelFactoryOptions<TMessageIds extends string> {
 
 /**
  * Prefers a top-level factory over a deprecated method chained on a general one (`z.uuid()` over `z.string().uuid()`, `z.int()` over `z.number().safe()`).
- * The fix rewrites `z.<factory>().<method>(args)` into `z.<replacement>(args)`,
+ * The fix rewrites `z.<factory>().<method>(args)` into `z.<replacement>(args)`, or removes the method on a `redundant` factory,
  * keeping the methods in between; it bails on named imports, which would need a new import,
  * on a chain the walker cannot name, on a factory called with arguments,
  * when a mutating or type-changing method or a `.check()` sits in between,
@@ -56,7 +63,7 @@ export function buildPreferTopLevelFactoryCreate<
 >(
   options: PreferTopLevelFactoryOptions<TMessageIds>,
 ): (context: Readonly<RuleContext<TMessageIds, TOptions>>) => RuleListener {
-  const { scope, factoryName, replacements, messageId, ignore = [] } = options;
+  const { scope, factoryName, replacements, messageId, redundant, ignore = [] } = options;
 
   const ignored = new Set(ignore);
   // A plain object so the lookup types as `string`: the match is always one of its keys.
@@ -70,6 +77,11 @@ export function buildPreferTopLevelFactoryCreate<
   );
   const sourceMethodNames = Object.keys(replacementBySource);
   const everySourceMethodName = replacements.map((it) => it.sourceMethodName);
+  const redundantOn: ReadonlyArray<string> = redundant?.factoryNames ?? [];
+  const schemaType = [
+    ...(typeof factoryName === 'string' ? [factoryName] : factoryName),
+    ...redundantOn,
+  ];
 
   return function create(context) {
     const { sourceCode } = context;
@@ -79,7 +91,7 @@ export function buildPreferTopLevelFactoryCreate<
     });
 
     return createSchemaVisitor({
-      schemaType: factoryName,
+      schemaType,
       onSchema(node, zodSchemaMeta): void {
         const found = findZodChainedMethod(node, zodSchemaMeta, sourceMethodNames);
         if (found === null) {
@@ -93,11 +105,34 @@ export function buildPreferTopLevelFactoryCreate<
         }
 
         const replacementMethodName = replacementBySource[found.name];
+        const data = {
+          factory: zodSchemaMeta.schemaType,
+          sourceMethod: found.name,
+          replacementMethod: replacementMethodName,
+        };
+
+        if (redundant && redundantOn.includes(zodSchemaMeta.schemaType)) {
+          context.report({
+            node,
+            messageId: redundant.messageId,
+            data,
+            fix: (fixer) =>
+              found.member === null
+                ? null
+                : buildZodChainRemoveMethodFix({
+                    fixer,
+                    methods: found.methods,
+                    removeIndex: found.index,
+                    sourceCode,
+                  }),
+          });
+          return;
+        }
 
         context.report({
           node,
           messageId,
-          data: { sourceMethod: found.name, replacementMethod: replacementMethodName },
+          data,
           fix(fixer) {
             if (found.member === null || zodSchemaMeta.schemaDecl === 'named') {
               return null;

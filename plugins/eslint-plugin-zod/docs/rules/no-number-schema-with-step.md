@@ -11,6 +11,7 @@
 ## Rule Details
 
 The fixer renames the method from `step` to `multipleOf` and leaves arguments unchanged.
+The method is reported on every number factory: `z.int()`, `z.int32()`, `z.uint32()`, `z.float32()` and `z.float64()` as well as `z.number()`.
 
 ## Examples
 
@@ -22,6 +23,7 @@ import { z } from 'zod';
 z.number().step(0.1);
 z.number().min(0).step(2, 'error');
 z.number().step(0.1).min(0);
+z.int().step(5);
 ```
 
 ### Valid
@@ -32,6 +34,7 @@ import { z } from 'zod';
 z.number().multipleOf(0.1);
 z.number().min(0).multipleOf(2, 'error');
 z.number().multipleOf(0.1).min(0);
+z.int().multipleOf(5);
 ```
 
 ## When Not To Use It

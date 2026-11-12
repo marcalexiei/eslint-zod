@@ -2,6 +2,7 @@ import { zodImportScope } from '@eslint-zod/utils';
 import { buildDeprecatedSchemaPropertyCreate } from '@eslint-zod/utils/rule-patterns/deprecated-schema-property';
 
 import { createZodPluginRule } from '../meta.js';
+import { NUMBER_FACTORIES } from '../utils/number-factories.js';
 
 export const noNumberSchemaWithIsInt = createZodPluginRule({
   name: 'no-number-schema-with-is-int',
@@ -23,7 +24,7 @@ export const noNumberSchemaWithIsInt = createZodPluginRule({
   defaultOptions: [],
   create: buildDeprecatedSchemaPropertyCreate({
     scope: zodImportScope,
-    schemaType: 'number',
+    schemaType: NUMBER_FACTORIES,
     propertyName: 'isInt',
     messageId: 'useFormat',
   }),

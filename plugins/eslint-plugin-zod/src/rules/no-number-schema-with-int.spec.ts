@@ -53,6 +53,14 @@ ruleTester.run(noNumberSchemaWithInt.name, noNumberSchemaWithInt, {
         z.object({ age: z.int(), count: z.number() });
       `,
     },
+    {
+      name: 'z.int32() and z.float32() without .int()',
+      code: dedent`
+        import * as z from 'zod';
+        z.int32();
+        z.float32().min(0);
+      `,
+    },
   ],
   invalid: [
     {
@@ -152,6 +160,96 @@ ruleTester.run(noNumberSchemaWithInt.name, noNumberSchemaWithInt, {
         z.number({ error: 'e' }).int();
       `,
       errors: [{ messageId: 'removeNumber' }],
+      output: null,
+    },
+    {
+      name: 'z.float32().int() — the safe-integer check makes it z.int()',
+      code: dedent`
+        import * as z from 'zod';
+        z.float32().int();
+      `,
+      errors: [{ messageId: 'removeNumber', data: { factory: 'float32' } }],
+      output: dedent`
+        import * as z from 'zod';
+        z.int();
+      `,
+    },
+    {
+      name: 'z.float64().min(0).int()',
+      code: dedent`
+        import * as z from 'zod';
+        z.float64().min(0).int();
+      `,
+      errors: [{ messageId: 'removeNumber', data: { factory: 'float64' } }],
+      output: dedent`
+        import * as z from 'zod';
+        z.int().min(0);
+      `,
+    },
+    {
+      name: 'z.float32() with params — the rewrite would drop them',
+      code: dedent`
+        import * as z from 'zod';
+        z.float32({ error: 'nope' }).int();
+      `,
+      errors: [{ messageId: 'removeNumber' }],
+      output: null,
+    },
+    {
+      name: 'z.int32().int() — already an integer, so the call is removed',
+      code: dedent`
+        import * as z from 'zod';
+        z.int32().int();
+      `,
+      errors: [{ messageId: 'redundantInt', data: { factory: 'int32' } }],
+      output: dedent`
+        import * as z from 'zod';
+        z.int32();
+      `,
+    },
+    {
+      name: 'z.uint32().min(1).int().max(9)',
+      code: dedent`
+        import * as z from 'zod';
+        z.uint32().min(1).int().max(9);
+      `,
+      errors: [{ messageId: 'redundantInt' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.uint32().min(1).max(9);
+      `,
+    },
+    {
+      name: 'z.int().int()',
+      code: dedent`
+        import * as z from 'zod';
+        z.int().int();
+      `,
+      errors: [{ messageId: 'redundantInt', data: { factory: 'int' } }],
+      output: dedent`
+        import * as z from 'zod';
+        z.int();
+      `,
+    },
+    {
+      name: 'int32().int() — named import, removal needs no namespace',
+      code: dedent`
+        import { int32 } from 'zod';
+        int32().int();
+      `,
+      errors: [{ messageId: 'redundantInt' }],
+      output: dedent`
+        import { int32 } from 'zod';
+        int32();
+      `,
+    },
+    {
+      name: 'z.int32().int() with a comment in the removed text — no fix',
+      code: dedent`
+        import * as z from 'zod';
+        z.int32()./* why */int();
+      `,
+      errors: [{ messageId: 'redundantInt' }],
       output: null,
     },
   ],

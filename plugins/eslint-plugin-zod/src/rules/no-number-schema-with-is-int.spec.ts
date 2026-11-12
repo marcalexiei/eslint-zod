@@ -112,5 +112,24 @@ ruleTester.run(noNumberSchemaWithIsInt.name, noNumberSchemaWithIsInt, {
       `,
       errors: [{ messageId: 'useFormat' }],
     },
+    {
+      name: 'z.int().isInt — every number factory has it',
+      code: dedent`
+        import * as z from 'zod';
+        void z.int().isInt;
+      `,
+      errors: [{ messageId: 'useFormat' }],
+      output: null,
+    },
+    {
+      name: 'isInt on a local z.int32() schema',
+      code: dedent`
+        import * as z from 'zod';
+        const n = z.int32();
+        void n.isInt;
+      `,
+      errors: [{ messageId: 'useFormat', line: 3 }],
+      output: null,
+    },
   ],
 });
