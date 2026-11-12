@@ -116,5 +116,24 @@ ruleTester.run(noNumberSchemaWithIsFinite.name, noNumberSchemaWithIsFinite, {
       `,
       errors: [{ messageId: 'deprecated' }],
     },
+    {
+      name: 'z.float64().isFinite — every number factory has it',
+      code: dedent`
+        import * as z from 'zod';
+        void z.float64().isFinite;
+      `,
+      errors: [{ messageId: 'deprecated' }],
+      output: null,
+    },
+    {
+      name: 'isFinite on a local z.int() schema',
+      code: dedent`
+        import * as z from 'zod';
+        const n = z.int();
+        void n.isFinite;
+      `,
+      errors: [{ messageId: 'deprecated', line: 3 }],
+      output: null,
+    },
   ],
 });

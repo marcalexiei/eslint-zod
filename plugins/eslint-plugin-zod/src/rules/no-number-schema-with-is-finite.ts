@@ -2,6 +2,7 @@ import { zodImportScope } from '@eslint-zod/utils';
 import { buildDeprecatedSchemaPropertyCreate } from '@eslint-zod/utils/rule-patterns/deprecated-schema-property';
 
 import { createZodPluginRule } from '../meta.js';
+import { NUMBER_FACTORIES } from '../utils/number-factories.js';
 
 export const noNumberSchemaWithIsFinite = createZodPluginRule({
   name: 'no-number-schema-with-is-finite',
@@ -16,14 +17,14 @@ export const noNumberSchemaWithIsFinite = createZodPluginRule({
     },
     messages: {
       deprecated:
-        '`isFinite` is deprecated. Number schemas no longer accept infinite values, so this is always `true` for `z.number()`.',
+        '`isFinite` is deprecated. Number schemas no longer accept infinite values, so this is always `true`.',
     },
     schema: [],
   },
   defaultOptions: [],
   create: buildDeprecatedSchemaPropertyCreate({
     scope: zodImportScope,
-    schemaType: 'number',
+    schemaType: NUMBER_FACTORIES,
     propertyName: 'isFinite',
     messageId: 'deprecated',
   }),

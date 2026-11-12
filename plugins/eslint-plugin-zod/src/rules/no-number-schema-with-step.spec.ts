@@ -125,5 +125,29 @@ ruleTester.run(noNumberSchemaWithStep.name, noNumberSchemaWithStep, {
         step().multipleOf(5);
       `,
     },
+    {
+      name: 'z.int().step(2) — every number factory chains it',
+      code: dedent`
+        import * as z from 'zod';
+        z.int().step(2);
+      `,
+      errors: [{ messageId: 'useMultipleOf' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.int().multipleOf(2);
+      `,
+    },
+    {
+      name: 'z.uint32().step(5)',
+      code: dedent`
+        import * as z from 'zod';
+        z.uint32().step(5);
+      `,
+      errors: [{ messageId: 'useMultipleOf' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.uint32().multipleOf(5);
+      `,
+    },
   ],
 });

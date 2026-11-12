@@ -7,8 +7,8 @@ import type { ZodImportScope } from '../zod-import-scope.js';
 export interface DeprecatedSchemaPropertyOptions<TMessageIds extends string> {
   scope: ZodImportScope;
 
-  /** Schema factory the property is accessed on (e.g. `number`). */
-  schemaType: string;
+  /** Schema factories the property is accessed on (e.g. `number`). */
+  schemaType: string | ReadonlyArray<string>;
 
   /** The deprecated property, accessed without calling it (e.g. `isInt`). */
   propertyName: string;
@@ -18,13 +18,15 @@ export interface DeprecatedSchemaPropertyOptions<TMessageIds extends string> {
 }
 
 /**
- * Flags a deprecated property access on a schema of `schemaType` (`z.number().isInt`, or `amount.isInt` on a local schema).
+ * Flags a deprecated property access on a schema built by one of `schemaType` (`z.number().isInt`, or `amount.isInt` on a local schema).
  * Report-only: the replacement depends on surrounding code, so no fix is safe.
  */
 export function buildDeprecatedSchemaPropertyCreate<TMessageIds extends string>(
   options: DeprecatedSchemaPropertyOptions<TMessageIds>,
 ): (context: Readonly<RuleContext<TMessageIds>>) => RuleListener {
   const { scope, schemaType, propertyName, messageId } = options;
+  const schemaTypes: ReadonlyArray<string> =
+    typeof schemaType === 'string' ? [schemaType] : schemaType;
 
   return function create(context) {
     const { importDeclarationListener, resolveZodSchema } = scope.createTracker({
@@ -46,7 +48,8 @@ export function buildDeprecatedSchemaPropertyCreate<TMessageIds extends string>(
           return;
         }
         // Also a schema bound to a `const` (`amount.isInt`), the usual form.
-        if (resolveZodSchema(node.object)?.schemaType !== schemaType) {
+        const resolved = resolveZodSchema(node.object);
+        if (!resolved || !schemaTypes.includes(resolved.schemaType)) {
           return;
         }
 

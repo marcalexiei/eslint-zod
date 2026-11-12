@@ -10,7 +10,8 @@
 
 This rule flags property access to `isFinite` on `z.number()…` chain expressions, such as `z.number().isFinite` or `z.number().min(0).isFinite`.
 A schema bound to a `const`, or a `let` that is never reassigned, counts too, so `amount.isFinite` is reported when `const amount = z.number()`.
-A `let`, a parameter or an imported schema is not followed.
+A reassigned `let`, a parameter or an imported schema is not followed.
+Every number factory counts, so `z.int().isFinite` and `z.float32().isFinite` are reported too.
 
 ## Examples
 
@@ -24,6 +25,8 @@ z.number().min(0).isFinite;
 
 const amount = z.number();
 amount.isFinite;
+
+z.int().isFinite;
 ```
 
 ### Valid

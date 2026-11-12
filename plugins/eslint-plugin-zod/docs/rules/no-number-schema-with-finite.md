@@ -12,6 +12,8 @@
 
 Zod 4+ rejects non-finite number values in `z.number()` schemas, so `z.number().finite()` is redundant. This rule disallows the deprecated call and the fixer removes it.
 
+The method is reported on every number factory: `z.int()`, `z.int32()`, `z.uint32()`, `z.float32()` and `z.float64()` as well as `z.number()`.
+
 ## Examples
 
 ### Invalid
@@ -22,6 +24,7 @@ import { z } from 'zod';
 z.number().finite();
 z.number().min(0).finite();
 z.number().finite().min(0);
+z.int().finite();
 ```
 
 ### Valid
@@ -31,6 +34,7 @@ import { z } from 'zod';
 
 z.number();
 z.number().min(0);
+z.int();
 ```
 
 ## When Not To Use It

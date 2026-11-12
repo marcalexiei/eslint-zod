@@ -116,5 +116,41 @@ ruleTester.run(noNumberSchemaWithFinite.name, noNumberSchemaWithFinite, {
         z.number().safeParse(1).success;
       `,
     },
+    {
+      name: 'z.int().finite() — every number factory chains it',
+      code: dedent`
+        import * as z from 'zod';
+        z.int().finite();
+      `,
+      errors: [{ messageId: 'removeFinite' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.int();
+      `,
+    },
+    {
+      name: 'z.float32().min(0).finite()',
+      code: dedent`
+        import * as z from 'zod';
+        z.float32().min(0).finite();
+      `,
+      errors: [{ messageId: 'removeFinite' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.float32().min(0);
+      `,
+    },
+    {
+      name: 'int32().finite() — named import',
+      code: dedent`
+        import { int32 } from 'zod';
+        int32().finite();
+      `,
+      errors: [{ messageId: 'removeFinite' }],
+      output: dedent`
+        import { int32 } from 'zod';
+        int32();
+      `,
+    },
   ],
 });
