@@ -4,6 +4,7 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import { findVariable } from '../find-variable.js';
 import { getBindingInitializer } from '../get-binding-initializer.js';
 import { getStaticPropertyName } from '../get-static-property-name.js';
+import { hasCommentInRange } from '../has-comment-in-range.js';
 import type { RuleContext, RuleFix, RuleListener, ScopeVariable } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_NON_SCHEMA_PRODUCING_METHODS } from '../zod-non-schema-producing-methods.js';
@@ -315,12 +316,7 @@ export function buildPreferValidateCreate(
         }
       }
       // Do not discard comments from accessors, destructuring, or the method call.
-      const comments = sourceCode.getAllComments();
-      const unsafe = edits.some((edit) =>
-        comments.some(
-          (comment) => comment.range[0] >= edit.range[0] && comment.range[1] <= edit.range[1],
-        ),
-      );
+      const unsafe = edits.some((edit) => hasCommentInRange(sourceCode, edit.range));
       context.report({
         node: call,
         messageId: 'preferValidate',

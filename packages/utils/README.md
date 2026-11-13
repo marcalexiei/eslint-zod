@@ -32,60 +32,20 @@ Every export carries JSDoc with usage notes — refer to the linked source files
 
 ### Root exports — `@eslint-zod/utils`
 
-AST parsing, import tracking, traversal, and fixer helpers.
+Only what the plugins import; every other helper is internal to this package.
 
-**Rule authoring**
-
-- `createRuleCreator(getRuleURL)` — builds a rule factory; each rule gets its docs URL, and `create` receives the user's options merged over `defaultOptions`. Types `RuleCreator` (the factory) and `RuleDefinition` (what it takes); the types they are written against live in [`@eslint-zod/utils/rule-types`](#rule-types--eslint-zodutilsrule-types)
-- `createPluginMeta(packageJSONURL)` — a plugin's `name`, `version`, `getRuleURL` and `createRule`, read from its `package.json`; rule docs are expected at `docs/rules/<rule-name>.md` under `repository.directory`. Type `PluginMeta`
-
-**Import tracking & scopes**
-
-- `ZodImportScope` — the class defining which import sources a plugin considers in-scope; `scope.createTracker({ kind })` is how rules get a per-file import tracker; `kind` is required, and `sourceCode` enables the scope-aware resolvers below
-- `zodImportScope`, `zodMiniImportScope`, `zodCoreImportScope` — pre-built `ZodImportScope` instances
-- `scope.createTracker({ kind, sourceCode? })` — the returned tracker exposes `createSchemaVisitor`, `detectZodSchemaRootNode`, `isZodSchemaOfType`, `collectZodChainMethods`, `collectZodSchemaConstraints`, `findZodChainedMethod`, and the import-lookup helpers. `getZodImportBindings()` returns every binding with the declaration it came from, and `resolveZodImport(node)` / `resolveZodExport(node)` resolve a node to its zod import honouring lexical scope, so a shadowed `z` resolves to `null` — use them over `isZodNamespace` in a rule whose fixer writes an import. `createTracker({ kind })` picks which specifiers are recorded, and is required — `'value'` skips `import type { … }` and `{ type … }`, `'type'` keeps only those, `'all'` keeps both and is what a rule reading a type position needs, since either form reaches one. Schema detection is reachable **only** through a tracker — the raw forms need the tracker's private import maps
-- `tracker.resolveZodSchema(node)` — the `ZodSchemaMeta` of the schema an expression evaluates to, followed through bindings that are never reassigned: with `const base = z.string()`, `base.optional()` gives `methods: ['string', 'optional']`. Unlike detection, the call need not be outermost. `null` unless every step is provably a schema — a non-zod import, a parse result, a helper call or a destructured binding is not. Needs a tracker built with `sourceCode`
-- `tracker.createSchemaVisitor({ schemaType?, localSchemas?, onSchema })` — builds the `{ ImportDeclaration, CallExpression }` visitor a rule returns, with detection and the `schemaType` filter already applied. **The standard shape for a schema rule**; spread it to add more visitor keys. `localSchemas: true` also visits a chain rooted at a local schema binding (`base.isOptional()`), with `meta` describing the whole schema; `node` is still only the local call, so check a rule's fixer before opting in. Needs a tracker built with `sourceCode`
-- `tracker.findZodChainedMethod(node, meta, methodName)` — locate a method chained onto a schema (one name, or the first chained of several), for rules that flag a deprecated chained call. `null` means not chained; a match with `member: null` means chained on a chain the walker cannot name (`z['number']().finite()`), so report without a fix
-- types `ZodSchemaImportTracker`, `ZodChainItem`, `ZodChainMember`, `ZodChainedMethodMatch`, `ZodImportBinding`, `ZodImportKind`, `ZodSchemaVisitorOptions`, `ZodTrackerOptions`
-
-**Schema detection & navigation**
-
-- `findParentSchemaMatchingCondition(node, options)` — search up the AST for a matching ancestor schema call
-- `getZodChainedMethodNames(meta)` — the methods chained _onto_ a schema, with the factory removed. `ZodSchemaMeta.methods` includes the factory for a namespace schema (`z.number().safe()` → `['number', 'safe']`) but not for a named import (`number().safe()` → `['safe']`), so a bare `methods.includes(name)` matches the factory of an aliased import. Use this to ask "does this schema chain method X?"
-- `getZodSchemaBaseType(schemaType)` — map a schema factory name to its base type category; returns `ZodSchemaBaseType | null`, `null` for factories rules should not reason about
-- `getZodSchemaFactoryName(meta)` — the factory a detected chain builds its schema with: `meta.schemaType`, except that `coerce.<name>()` gives `<name>` (`z.coerce.number()` builds a `ZodNumber`); `null` when nothing is called on `coerce`
-- type `ZodSchemaMeta` — what the tracker's `detectZodSchemaRootNode` returns (or `null`)
-- types `ZodSchemaConstraint`, `ZodChainedConstraint`, `ZodCheckArgumentConstraint` — the normalized constraints produced by the tracker's `collectZodSchemaConstraints`
-
-**Fixer helpers**
-
+- `createPluginMeta(packageJSONURL)` — a plugin's `name`, `version`, `getRuleURL` and `createRule`, read from its `package.json`; rule docs are expected at `docs/rules/<rule-name>.md` under `repository.directory`; type `RuleCreator`
+- `zodImportScope`, `zodMiniImportScope`, `zodCoreImportScope` — each plugin's import scope; `scope.createTracker({ kind, sourceCode? })` gives a rule its per-file tracker (type `ZodSchemaImportTracker`), whose members are documented in its source
+- type `ZodSchemaMeta` — what schema detection returns
+- `getZodSchemaBaseType(schemaType)` — map a schema factory name to its base type category, `null` for factories rules should not reason about
+- `getZodSchemaFactoryName(meta)` — the factory a detected chain builds its schema with: `meta.schemaType`, except that `coerce.<name>()` gives `<name>`
 - `buildZodChainRemoveMethodFix(opts)` — remove one method from a chain
 - `hasCommentInRange(sourceCode, range)` — whether a comment sits inside a range a fixer is about to remove or rewrite
-- `hasParenthesizedReceiver(member)` — whether a member expression's object is wrapped in parentheses (`(z.string()).min(1)`), where a fixer cutting at the object's end would leave the closing parenthesis behind
-- `buildZodChainReplacementFix(opts)` — replace a run of methods
-- `buildZodConstraintsRemoveFix(opts)` — remove a set of `ZodSchemaConstraint`s (chained or check-argument)
-- `buildZodWrapperUnwrapFix(opts)` — replace a single-argument wrapper call with its argument
-
-**Zod vocabulary tables**
-
-- `ZOD_IMMUTABLE_SCHEMA_TYPES` — schema factory names whose parsed output is already immutable
+- `hasParenthesizedReceiver(member)` — whether a member expression's object is wrapped in parentheses (`(z.string()).min(1)`)
 - `ZOD_MUTATING_CHECK_NAMES` — Zod check names that mutate the validated value
 - `ZOD_NON_SCHEMA_PRODUCING_METHODS` — Zod method names that do not return a schema
-- `ZOD_NON_SCHEMA_HELPER_NAMES` / `isZodNonSchemaHelperCall(meta)` — top-level `z` exports whose call yields something other than a schema (`z.toJSONSchema`, `z.registry`, `z.parse`); unlike the complement of `isZodSchemaFactoryCall` it leaves standalone checks alone
-- `ZOD_SCHEMA_FACTORY_NAMES` / `isZodSchemaFactoryName(name)` — every top-level Zod export whose call evaluates to a schema; use the predicate instead of a per-rule factory list
-- `isZodSchemaFactoryCall(meta)` — whether a `detectZodSchemaRootNode` result builds a schema; resolves the `iso` / `coerce` namespaces, and rejects the helpers that only consume a schema (`z.toJSONSchema`, `z.prettifyError`)
 - `ZOD_STRING_FORMAT_METHODS` — deprecated `z.string().<format>()` methods and the top-level factory replacing each; type `ZodStringFormatMethodName`
-- `ZOD_STRING_FORMAT_NAMES` — top-level string-format factory names that all parse to `string`
-- `ZOD_TYPE_CHANGING_METHODS` — chained methods that rebuild the schema around another type (`array`, `or`, `pipe`, …); a chain's earlier checks do not carry past one; type `ZodTypeChangingMethod`
-
-**Check vocabulary**
-
-Canonical names shared by both API styles, so rule logic compares `zod`'s `.min(2)` with `zod/mini`'s `z.minLength(2)` as one constraint.
-
-- `canonicalizeZodConstraintName(constraint, baseType)` — reduce a constraint's spelling to its canonical name
-- `getZodCheckDescriptor(canonicalName)` — what a check means: which base types accept it and what it bounds
-- types `ZodCheckDescriptor`, `ZodCheckBound`, `ZodCheckDomain`
+- `ZOD_TYPE_CHANGING_METHODS` — chained methods that rebuild the schema around another type (`array`, `or`, `pipe`, …)
 
 ### Rule types — `@eslint-zod/utils/rule-types`
 
