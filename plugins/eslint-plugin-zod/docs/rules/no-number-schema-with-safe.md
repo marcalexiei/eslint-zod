@@ -16,6 +16,7 @@ This rule disallows `z.number().safe(...)` in favor of `z.int(...)` (with the sa
 
 - on `z.float32()` and `z.float64()`, which accept fractions, the schema is `z.int()` and the fix rewrites it the same way
 - on `z.int()`, `z.int32()` and `z.uint32()`, which accept only safe integers already, the call adds nothing and the fix removes it
+- on `z.coerce.number()`, which no top-level factory replaces, the fix renames it to `.int()`
 
 ## Examples
 
@@ -29,6 +30,7 @@ z.number().safe('message');
 z.number().safe().min(0);
 z.float64().safe();
 z.int32().safe();
+z.coerce.number().safe();
 ```
 
 ### Valid
@@ -39,6 +41,7 @@ import { z } from 'zod';
 z.int();
 z.int().min(0);
 z.int32();
+z.coerce.number().int();
 ```
 
 ## Autofix Behavior

@@ -1,7 +1,7 @@
 import { zodImportScope } from '@eslint-zod/utils';
 
 import { createZodPluginRule } from '../meta.js';
-import { NUMBER_FACTORIES } from '../utils/number-factories.js';
+import { isNumberSchema } from '../utils/number-factories.js';
 
 export const noNumberSchemaWithStep = createZodPluginRule({
   name: 'no-number-schema-with-step',
@@ -24,8 +24,11 @@ export const noNumberSchemaWithStep = createZodPluginRule({
     });
 
     return createSchemaVisitor({
-      schemaType: NUMBER_FACTORIES,
       onSchema(node, zodSchemaMeta): void {
+        if (!isNumberSchema(zodSchemaMeta)) {
+          return;
+        }
+
         const step = findZodChainedMethod(node, zodSchemaMeta, 'step');
         if (step === null) {
           return;

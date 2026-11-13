@@ -149,5 +149,17 @@ ruleTester.run(noNumberSchemaWithStep.name, noNumberSchemaWithStep, {
         z.uint32().multipleOf(5);
       `,
     },
+    {
+      name: 'z.coerce.number().step(2)',
+      code: dedent`
+        import * as z from 'zod';
+        z.coerce.number().step(2);
+      `,
+      errors: [{ messageId: 'useMultipleOf' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.coerce.number().multipleOf(2);
+      `,
+    },
   ],
 });

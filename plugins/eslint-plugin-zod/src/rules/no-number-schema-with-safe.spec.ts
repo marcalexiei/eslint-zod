@@ -49,6 +49,20 @@ ruleTester.run(noNumberSchemaWithSafe.name, noNumberSchemaWithSafe, {
         z.float32().min(0);
       `,
     },
+    {
+      name: 'z.coerce.number().int()',
+      code: dedent`
+        import * as z from 'zod';
+        z.coerce.number().int();
+      `,
+    },
+    {
+      name: 'safe on z.coerce.string() — not a number schema',
+      code: dedent`
+        import * as z from 'zod';
+        z.coerce.string().safe();
+      `,
+    },
   ],
   invalid: [
     {
@@ -163,6 +177,42 @@ ruleTester.run(noNumberSchemaWithSafe.name, noNumberSchemaWithSafe, {
       output: dedent`
         import { uint32 } from 'zod';
         uint32();
+      `,
+    },
+    {
+      name: 'z.coerce.number().safe() — renamed, no top-level factory coerces',
+      code: dedent`
+        import * as z from 'zod';
+        z.coerce.number().safe();
+      `,
+      errors: [{ messageId: 'useIntMethod' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.coerce.number().int();
+      `,
+    },
+    {
+      name: 'z.coerce.number().min(0).safe() with a message',
+      code: dedent`
+        import * as z from 'zod';
+        z.coerce.number().min(0).safe('nope');
+      `,
+      errors: [{ messageId: 'useIntMethod' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.coerce.number().min(0).int('nope');
+      `,
+    },
+    {
+      name: 'coerce.number().safe() — named coerce import',
+      code: dedent`
+        import { coerce } from 'zod';
+        coerce.number().safe();
+      `,
+      errors: [{ messageId: 'useIntMethod' }],
+      output: dedent`
+        import { coerce } from 'zod';
+        coerce.number().int();
       `,
     },
   ],
