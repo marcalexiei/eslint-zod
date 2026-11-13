@@ -44,7 +44,7 @@ export function getUsageText(specifier: TSESTree.ImportClause, alias: string): s
   return imported.type === AST_NODE_TYPES.Identifier ? `${alias}.${imported.name}` : null;
 }
 
-export interface UsageReplacement {
+interface UsageReplacement {
   node: TSESTree.Node;
   text: string;
 }
