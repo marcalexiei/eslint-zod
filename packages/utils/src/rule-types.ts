@@ -119,7 +119,6 @@ export interface TokenSearchOptions {
 
 export interface SourceCode {
   getAllComments: () => Array<TSESTree.Comment>;
-  getCommentsInside: (node: TSESTree.Node) => Array<TSESTree.Comment>;
   getDeclaredVariables: (node: TSESTree.Node) => ReadonlyArray<ScopeVariable>;
   getScope: (node: TSESTree.Node) => Scope;
   getText: (node?: NodeOrToken, beforeCount?: number, afterCount?: number) => string;

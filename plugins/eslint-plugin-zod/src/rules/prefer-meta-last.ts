@@ -4,7 +4,6 @@ import {
   hasParenthesizedReceiver,
   zodImportScope,
 } from '@eslint-zod/utils';
-import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { createZodPluginRule } from '../meta.js';
@@ -29,8 +28,6 @@ export const preferMetaLast = createZodPluginRule({
     });
 
     return createSchemaVisitor({
-      // If not inside a schema root AND doesn't look like a zod chain, bail out.
-      // This preserves previous behavior while allowing standalone zod chains to be processed.
       onSchema(node): void {
         const fullChain = collectZodChainMethods(node);
 
@@ -67,10 +64,6 @@ export const preferMetaLast = createZodPluginRule({
             }
 
             const source = context.sourceCode;
-            const removals = misplaced.map((it): TSESTree.Range => [
-              it.member.object.range[1],
-              it.node.range[1],
-            ]);
             // The text between the receiver and `.meta` is dropped by the move.
             if (
               misplaced.some((it) =>
@@ -86,7 +79,9 @@ export const preferMetaLast = createZodPluginRule({
               .join('');
 
             return [
-              ...removals.map((range) => fixer.removeRange(range)),
+              ...misplaced.map((it) =>
+                fixer.removeRange([it.member.object.range[1], it.node.range[1]]),
+              ),
               fixer.insertTextAfterRange(chain[lastOtherIndex].node.range, suffix),
             ];
           },

@@ -117,14 +117,12 @@ export function buildPreferTopLevelFactoryCreate<
             messageId: redundant.messageId,
             data,
             fix: (fixer) =>
-              found.member === null
-                ? null
-                : buildZodChainRemoveMethodFix({
-                    fixer,
-                    methods: found.methods,
-                    removeIndex: found.index,
-                    sourceCode,
-                  }),
+              buildZodChainRemoveMethodFix({
+                fixer,
+                methods: found.methods,
+                removeIndex: found.index,
+                sourceCode,
+              }),
           });
           return;
         }
@@ -161,8 +159,6 @@ export function buildPreferTopLevelFactoryCreate<
               sourceCode,
               fixer,
               methods: found.methods,
-              // The factory is always the first chain item.
-              fromIndex: 0,
               toIndex: found.index,
               toMethodName: replacementMethodName,
             });

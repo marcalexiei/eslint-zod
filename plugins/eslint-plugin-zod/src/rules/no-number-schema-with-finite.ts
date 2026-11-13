@@ -39,19 +39,14 @@ export const noNumberSchemaWithFinite = createZodPluginRule({
         context.report({
           node,
           messageId: 'removeFinite',
-          fix(fixer) {
-            // A computed factory (`z['number']().finite()`) is reported without a fix.
-            if (finite.member === null) {
-              return null;
-            }
-
-            return buildZodChainRemoveMethodFix({
+          // `index` is -1 on a computed factory (`z['number']().finite()`), which gets no fix.
+          fix: (fixer) =>
+            buildZodChainRemoveMethodFix({
               fixer,
               methods: finite.methods,
               removeIndex: finite.index,
               sourceCode: context.sourceCode,
-            });
-          },
+            }),
         });
       },
     });
