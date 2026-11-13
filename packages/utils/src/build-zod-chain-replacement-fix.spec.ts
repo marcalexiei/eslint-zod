@@ -62,7 +62,7 @@ function makeFixer(): {
 }
 
 describe('buildZodChainReplacementFix', () => {
-  it('returns null when fromIndex node is missing', () => {
+  it('returns null when the factory node is missing', () => {
     const { fixer } = makeFixer();
     const sourceCode = makeSourceCode(new Map());
     expect(
@@ -70,7 +70,6 @@ describe('buildZodChainReplacementFix', () => {
         sourceCode,
         fixer,
         methods: [],
-        fromIndex: 0,
         toIndex: 1,
         toMethodName: 'int',
       }),
@@ -88,7 +87,6 @@ describe('buildZodChainReplacementFix', () => {
         sourceCode: makeSourceCode(textMap),
         fixer,
         methods: [{ name: 'number', node: numberCall }],
-        fromIndex: 0,
         toIndex: 1,
         toMethodName: 'int',
       }),
@@ -108,7 +106,6 @@ describe('buildZodChainReplacementFix', () => {
         { name: 'number', node: numberCall },
         { name: 'int', node: intCall },
       ],
-      fromIndex: 0,
       toIndex: 1,
       toMethodName: 'int',
     });
@@ -132,7 +129,6 @@ describe('buildZodChainReplacementFix', () => {
         { name: 'number', node: numberCall },
         { name: 'int', node: intCall },
       ],
-      fromIndex: 0,
       toIndex: 1,
       toMethodName: 'int',
     });
@@ -156,7 +152,6 @@ describe('buildZodChainReplacementFix', () => {
         { name: 'number', node: numberCall },
         { name: 'int', node: intCall },
       ],
-      fromIndex: 0,
       toIndex: 1,
       toMethodName: 'int',
     });
@@ -192,7 +187,6 @@ describe('buildZodChainReplacementFix', () => {
         { name: 'min', node: minCall },
         { name: 'int', node: intCall },
       ],
-      fromIndex: 0,
       toIndex: 2,
       toMethodName: 'int',
     });
@@ -224,7 +218,6 @@ describe('buildZodChainReplacementFix', () => {
         { name: 'string', node: stringCall },
         { name: 'email', node: emailCall },
       ],
-      fromIndex: 0,
       toIndex: 1,
       toMethodName: 'email',
     });

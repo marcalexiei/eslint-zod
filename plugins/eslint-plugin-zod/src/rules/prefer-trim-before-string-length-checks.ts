@@ -44,16 +44,9 @@ export const preferTrimBeforeStringLengthChecks = createZodPluginRule({
         const methods = collectZodChainMethods(node);
 
         const trimIndex = methods.findIndex((m) => m.name === 'trim');
-        if (trimIndex === -1) {
-          return;
-        }
-
         const firstLengthCheckIndex = methods.findIndex((m) => LENGTH_CHECK_METHODS.has(m.name));
-        if (firstLengthCheckIndex === -1) {
-          return;
-        }
-
-        if (trimIndex < firstLengthCheckIndex) {
+        // A missing trim (-1) sorts first too.
+        if (firstLengthCheckIndex === -1 || trimIndex < firstLengthCheckIndex) {
           return;
         }
 
@@ -76,11 +69,9 @@ export const preferTrimBeforeStringLengthChecks = createZodPluginRule({
               return null;
             }
 
-            const stringMethodNode = methods[0].node;
-
             return [
               fixer.removeRange(trimRange),
-              fixer.insertTextAfter(stringMethodNode, '.trim()'),
+              fixer.insertTextAfter(methods[0].node, '.trim()'),
             ];
           },
         });

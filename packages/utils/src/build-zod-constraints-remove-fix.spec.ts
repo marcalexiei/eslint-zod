@@ -56,6 +56,8 @@ function makeCheckArgument(opts: {
   };
 }
 
+const noComments = { getAllComments: (): Array<never> => [] };
+
 describe('buildZodConstraintsRemoveFix', () => {
   it('removes a chained constraint as a chain method', () => {
     // ranges: z.array(x) = [0,10], z.array(x).min(2) = [0,18]
@@ -67,6 +69,7 @@ describe('buildZodConstraintsRemoveFix', () => {
 
     const fixes = buildZodConstraintsRemoveFix({
       fixer,
+      sourceCode: noComments,
       methods,
       constraints: [makeChained(1, methods[1].node)],
     });
@@ -85,6 +88,7 @@ describe('buildZodConstraintsRemoveFix', () => {
 
     const fixes = buildZodConstraintsRemoveFix({
       fixer,
+      sourceCode: noComments,
       methods,
       constraints: [
         makeCheckArgument({
@@ -115,6 +119,7 @@ describe('buildZodConstraintsRemoveFix', () => {
 
     const fixes = buildZodConstraintsRemoveFix({
       fixer,
+      sourceCode: noComments,
       methods,
       // only 1 of the 2 check arguments is targeted
       constraints: [
@@ -143,6 +148,7 @@ describe('buildZodConstraintsRemoveFix', () => {
 
     const fixes = buildZodConstraintsRemoveFix({
       fixer,
+      sourceCode: noComments,
       methods,
       constraints: [
         makeChained(1, methods[1].node),
@@ -168,6 +174,7 @@ describe('buildZodConstraintsRemoveFix', () => {
 
     const fixes = buildZodConstraintsRemoveFix({
       fixer,
+      sourceCode: noComments,
       methods,
       constraints: [makeChained(0, methods[0].node)],
     });
@@ -184,6 +191,7 @@ describe('buildZodConstraintsRemoveFix', () => {
 
     const fixes = buildZodConstraintsRemoveFix({
       fixer,
+      sourceCode: noComments,
       methods,
       constraints: [
         makeCheckArgument({ chainIndex: 0, checkNode, argumentIndex: 0, argumentCount: 1 }),
