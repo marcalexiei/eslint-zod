@@ -39,13 +39,11 @@ export function buildDeprecatedSchemaPropertyCreate<TMessageIds extends string>(
       ImportDeclaration: importDeclarationListener,
 
       MemberExpression(node): void {
-        if (node.computed) {
-          return;
-        }
-        if (node.property.type !== AST_NODE_TYPES.Identifier) {
-          return;
-        }
-        if (node.property.name !== propertyName) {
+        if (
+          node.computed ||
+          node.property.type !== AST_NODE_TYPES.Identifier ||
+          node.property.name !== propertyName
+        ) {
           return;
         }
         // Also a schema bound to a `const` (`amount.isInt`), the usual form.

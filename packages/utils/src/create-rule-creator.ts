@@ -18,7 +18,7 @@ export type RuleCreator = <TOptions extends ReadonlyArray<unknown>, TMessageIds 
 ) => RuleModule<TMessageIds, TOptions>;
 
 /** A plugin's identity and rule factory, as {@link createPluginMeta} reads them. */
-export interface PluginMeta {
+interface PluginMeta {
   name: string;
   version: string;
   getRuleURL: (ruleName: string) => string;
