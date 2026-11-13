@@ -1,5 +1,6 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
+import { getZodSchemaFactoryName } from '../get-zod-schema-factory-name.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
@@ -7,7 +8,7 @@ import type { ZodImportScope } from '../zod-import-scope.js';
 export interface DeprecatedSchemaPropertyOptions<TMessageIds extends string> {
   scope: ZodImportScope;
 
-  /** Schema factories the property is accessed on (e.g. `number`). */
+  /** Schema factories the property is accessed on (e.g. `number`); `coerce.<name>()` counts as `<name>`. */
   schemaType: string | ReadonlyArray<string>;
 
   /** The deprecated property, accessed without calling it (e.g. `isInt`). */
@@ -49,7 +50,8 @@ export function buildDeprecatedSchemaPropertyCreate<TMessageIds extends string>(
         }
         // Also a schema bound to a `const` (`amount.isInt`), the usual form.
         const resolved = resolveZodSchema(node.object);
-        if (!resolved || !schemaTypes.includes(resolved.schemaType)) {
+        const factory = resolved && getZodSchemaFactoryName(resolved);
+        if (!factory || !schemaTypes.includes(factory)) {
           return;
         }
 

@@ -54,6 +54,7 @@ AST parsing, import tracking, traversal, and fixer helpers.
 - `findParentSchemaMatchingCondition(node, options)` — search up the AST for a matching ancestor schema call
 - `getZodChainedMethodNames(meta)` — the methods chained _onto_ a schema, with the factory removed. `ZodSchemaMeta.methods` includes the factory for a namespace schema (`z.number().safe()` → `['number', 'safe']`) but not for a named import (`number().safe()` → `['safe']`), so a bare `methods.includes(name)` matches the factory of an aliased import. Use this to ask "does this schema chain method X?"
 - `getZodSchemaBaseType(schemaType)` — map a schema factory name to its base type category; returns `ZodSchemaBaseType | null`, `null` for factories rules should not reason about
+- `getZodSchemaFactoryName(meta)` — the factory a detected chain builds its schema with: `meta.schemaType`, except that `coerce.<name>()` gives `<name>` (`z.coerce.number()` builds a `ZodNumber`); `null` when nothing is called on `coerce`
 - type `ZodSchemaMeta` — what the tracker's `detectZodSchemaRootNode` returns (or `null`)
 - types `ZodSchemaConstraint`, `ZodChainedConstraint`, `ZodCheckArgumentConstraint` — the normalized constraints produced by the tracker's `collectZodSchemaConstraints`
 

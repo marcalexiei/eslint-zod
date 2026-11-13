@@ -25,6 +25,13 @@ ruleTester.run(noNumberSchemaWithFinite.name, noNumberSchemaWithFinite, {
         finite().min(0);
       `,
     },
+    {
+      name: 'z.coerce.string() — a coerced schema that is not a number',
+      code: dedent`
+        import * as z from 'zod';
+        z.coerce.string().min(1);
+      `,
+    },
   ],
   invalid: [
     {
@@ -150,6 +157,30 @@ ruleTester.run(noNumberSchemaWithFinite.name, noNumberSchemaWithFinite, {
       output: dedent`
         import { int32 } from 'zod';
         int32();
+      `,
+    },
+    {
+      name: 'z.coerce.number().finite() — a coerced number is a number schema',
+      code: dedent`
+        import * as z from 'zod';
+        z.coerce.number().finite();
+      `,
+      errors: [{ messageId: 'removeFinite' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.coerce.number();
+      `,
+    },
+    {
+      name: 'coerce.number().finite() — named coerce import',
+      code: dedent`
+        import { coerce } from 'zod';
+        coerce.number().finite();
+      `,
+      errors: [{ messageId: 'removeFinite' }],
+      output: dedent`
+        import { coerce } from 'zod';
+        coerce.number();
       `,
     },
   ],

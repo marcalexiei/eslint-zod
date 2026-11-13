@@ -17,6 +17,8 @@ This rule aims to prevent the usage of the legacy `z.number().int()` method chai
 - on `z.float32()` and `z.float64()`, which accept fractions, the schema is `z.int()` and the fix rewrites it the same way
 - on `z.int()`, `z.int32()` and `z.uint32()`, which accept only safe integers already, the call adds nothing and the fix removes it
 
+`z.coerce.number().int()` is not reported: no top-level factory coerces, so `.int()` is the only way to write a coerced integer.
+
 ## Examples
 
 ### ❌ Invalid

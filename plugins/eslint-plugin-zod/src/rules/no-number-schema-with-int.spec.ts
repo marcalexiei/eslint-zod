@@ -61,6 +61,13 @@ ruleTester.run(noNumberSchemaWithInt.name, noNumberSchemaWithInt, {
         z.float32().min(0);
       `,
     },
+    {
+      name: 'z.coerce.number().int() — no top-level factory coerces, so `.int()` is the only spelling',
+      code: dedent`
+        import * as z from 'zod';
+        z.coerce.number().int();
+      `,
+    },
   ],
   invalid: [
     {

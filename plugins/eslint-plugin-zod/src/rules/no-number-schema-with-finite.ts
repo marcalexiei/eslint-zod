@@ -1,7 +1,7 @@
 import { buildZodChainRemoveMethodFix, zodImportScope } from '@eslint-zod/utils';
 
 import { createZodPluginRule } from '../meta.js';
-import { NUMBER_FACTORIES } from '../utils/number-factories.js';
+import { isNumberSchema } from '../utils/number-factories.js';
 
 export const noNumberSchemaWithFinite = createZodPluginRule({
   name: 'no-number-schema-with-finite',
@@ -26,8 +26,11 @@ export const noNumberSchemaWithFinite = createZodPluginRule({
     });
 
     return createSchemaVisitor({
-      schemaType: NUMBER_FACTORIES,
       onSchema(node, zodSchemaMeta): void {
+        if (!isNumberSchema(zodSchemaMeta)) {
+          return;
+        }
+
         const finite = findZodChainedMethod(node, zodSchemaMeta, 'finite');
         if (finite === null) {
           return;

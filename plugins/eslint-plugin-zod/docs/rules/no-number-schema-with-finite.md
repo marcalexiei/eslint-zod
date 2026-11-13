@@ -12,7 +12,7 @@
 
 Zod 4+ rejects non-finite number values in `z.number()` schemas, so `z.number().finite()` is redundant. This rule disallows the deprecated call and the fixer removes it.
 
-The method is reported on every number factory: `z.int()`, `z.int32()`, `z.uint32()`, `z.float32()` and `z.float64()` as well as `z.number()`.
+The method is reported on every number factory: `z.int()`, `z.int32()`, `z.uint32()`, `z.float32()` and `z.float64()` as well as `z.number()` and `z.coerce.number()`.
 
 ## Examples
 

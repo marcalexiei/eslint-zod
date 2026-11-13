@@ -135,5 +135,15 @@ ruleTester.run(noNumberSchemaWithIsFinite.name, noNumberSchemaWithIsFinite, {
       errors: [{ messageId: 'deprecated', line: 3 }],
       output: null,
     },
+    {
+      name: 'isFinite on a local z.coerce.number() schema',
+      code: dedent`
+        import * as z from 'zod';
+        const n = z.coerce.number();
+        void n.isFinite;
+      `,
+      errors: [{ messageId: 'deprecated', line: 3 }],
+      output: null,
+    },
   ],
 });

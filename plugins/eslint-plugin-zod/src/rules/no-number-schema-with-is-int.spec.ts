@@ -64,6 +64,13 @@ ruleTester.run(noNumberSchemaWithIsInt.name, noNumberSchemaWithIsInt, {
         void amount.isInt;
       `,
     },
+    {
+      name: 'isInt on z.coerce.string() — not a number schema',
+      code: dedent`
+        import * as z from 'zod';
+        void z.coerce.string().isInt;
+      `,
+    },
   ],
   invalid: [
     {
@@ -129,6 +136,15 @@ ruleTester.run(noNumberSchemaWithIsInt.name, noNumberSchemaWithIsInt, {
         void n.isInt;
       `,
       errors: [{ messageId: 'useFormat', line: 3 }],
+      output: null,
+    },
+    {
+      name: 'z.coerce.number().isInt',
+      code: dedent`
+        import * as z from 'zod';
+        void z.coerce.number().isInt;
+      `,
+      errors: [{ messageId: 'useFormat' }],
       output: null,
     },
   ],
