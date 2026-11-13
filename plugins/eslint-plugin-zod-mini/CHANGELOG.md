@@ -1,5 +1,22 @@
 # eslint-plugin-zod-mini
 
+## 2.2.0
+
+### Minor Changes
+
+- [#601](https://github.com/marcalexiei/eslint-zod/pull/601) [`aaf8604`](https://github.com/marcalexiei/eslint-zod/commit/aaf86041af5b408a944327815bed39f969c4e16f) - feat: follow `let` and `var` bindings that are never reassigned, as `const` bindings already are
+
+  Rules that read a schema or value through a variable now report the same code whichever keyword declares it.
+
+- [#600](https://github.com/marcalexiei/eslint-zod/pull/600) [`0846e47`](https://github.com/marcalexiei/eslint-zod/commit/0846e47d2d3cb595fcbc6d39df8894e8add9490e) - feat: add `no-reshape-on-refined-object` rule
+
+  It reports reshaping calls that zod throws on once an object schema has a refinement.
+
+### Patch Changes
+
+- Updated dependencies [[`aaf8604`](https://github.com/marcalexiei/eslint-zod/commit/aaf86041af5b408a944327815bed39f969c4e16f), [`a0c51b3`](https://github.com/marcalexiei/eslint-zod/commit/a0c51b33d9fb65fd1ae32a63d6a75becfcbc3ae3), [`64e4552`](https://github.com/marcalexiei/eslint-zod/commit/64e4552ebd627048b7eec0b5215eadd932529e50), [`0846e47`](https://github.com/marcalexiei/eslint-zod/commit/0846e47d2d3cb595fcbc6d39df8894e8add9490e)]:
+  - @eslint-zod/utils@6.5.0
+
 ## 2.1.3
 
 ### Patch Changes
