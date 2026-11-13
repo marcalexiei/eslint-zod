@@ -32,23 +32,18 @@ export interface ZodImports {
   named: Map<string, string>;
 }
 
-/**
- * Helper: extract static property names (Identifier | Literal | simple template literal)
- */
+/** A static property name: an identifier, a literal or a template literal without expressions. */
 function getPropertyName(prop: TSESTree.Expression | TSESTree.PrivateIdentifier): string | null {
-  if (prop.type === AST_NODE_TYPES.Identifier) {
-    return prop.name;
+  switch (prop.type) {
+    case AST_NODE_TYPES.Identifier:
+      return prop.name;
+    case AST_NODE_TYPES.Literal:
+      return prop.value == null ? null : String(prop.value);
+    case AST_NODE_TYPES.TemplateLiteral:
+      return prop.expressions.length === 0 ? prop.quasis[0].value.cooked : null;
+    default:
+      return null;
   }
-  if (prop.type === AST_NODE_TYPES.Literal) {
-    return prop.value == null ? null : String(prop.value);
-  }
-  if (prop.type === AST_NODE_TYPES.TemplateLiteral) {
-    if (prop.expressions.length === 0 && prop.quasis.length === 1) {
-      return prop.quasis[0].value.cooked;
-    }
-    return null;
-  }
-  return null;
 }
 
 /** Quick check: only process outermost call in a chain */
@@ -81,10 +76,6 @@ type ZodSchemaRootResolver = (root: TSESTree.Identifier) => ZodSchemaMeta | null
  * This helper DOES NOT require the call to be outermost.
  * With `resolveRoot`, a chain rooted at a local schema (`base.optional()`) is detected too,
  * and TS assertions in the chain are looked through.
- *
- * Returns:
- *  { schemaDecl, schemaType, methods, node } if successful
- *  null otherwise
  */
 export function parseZodCallExpression(
   call: TSESTree.CallExpression,
@@ -136,27 +127,15 @@ export function parseZodCallExpression(
     return null;
   }
 
-  const methods = methodsRightToLeft.slice().reverse(); // left -> right order
-  const leftmostIdentifier = leftmost.name;
+  const methods = methodsRightToLeft.reverse();
 
   // Namespace style: z.number().int()
-  if (imports.namespaces.has(leftmostIdentifier)) {
-    // the factory for namespace style is typically the first method
-    const factory = methods[0] ?? null;
-    if (!factory) {
-      return null;
-    }
-    return {
-      schemaDecl: 'namespace',
-      schemaType: factory,
-      methods,
-    };
+  if (imports.namespaces.has(leftmost.name)) {
+    return methods.length > 0 ? { schemaDecl: 'namespace', schemaType: methods[0], methods } : null;
   }
 
-  // Named import style: number().int() or array(...)
-  // A single lookup: the map value is the original zod export name, so an
-  // aliased import (`import { nativeEnum as e }`) resolves to `nativeEnum`.
-  const factory = imports.named.get(leftmostIdentifier);
+  // Named import style: number().int(); the map value is the original export name, so an alias resolves.
+  const factory = imports.named.get(leftmost.name);
   if (factory !== undefined) {
     return {
       schemaDecl: 'named',
@@ -181,11 +160,10 @@ export function isZodSchemaOfType(
   schemaType: string,
   imports: ZodImports,
 ): boolean {
-  if (node.type !== AST_NODE_TYPES.CallExpression) {
-    return false;
-  }
-  const parsed = parseZodCallExpression(node, imports);
-  return parsed !== null && parsed.schemaType === schemaType;
+  return (
+    node.type === AST_NODE_TYPES.CallExpression &&
+    parseZodCallExpression(node, imports)?.schemaType === schemaType
+  );
 }
 
 /**
@@ -205,21 +183,8 @@ export function detectZodSchemaRootNode(
   imports: ZodImports,
   resolveRoot?: ZodSchemaRootResolver,
 ): ZodSchemaMeta | null {
-  if (node.type !== AST_NODE_TYPES.CallExpression) {
+  if (node.type !== AST_NODE_TYPES.CallExpression || !isOutermostCallExpression(node)) {
     return null;
   }
-  const call = node;
-
-  // Only process the *outermost* call expression for this chain
-  if (!isOutermostCallExpression(call)) {
-    return null;
-  }
-
-  // Parse the outer call expression into zod schema info
-  const outer = parseZodCallExpression(call, imports, resolveRoot);
-  if (!outer) {
-    return null;
-  }
-
-  return outer;
+  return parseZodCallExpression(node, imports, resolveRoot);
 }

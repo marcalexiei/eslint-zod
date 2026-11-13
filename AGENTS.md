@@ -86,7 +86,7 @@ They list every syntax the builder can enforce, not what a plugin offers:
 each plugin declares its own `SYNTAXES` tuple for the schema `enum`.
 When that tuple is a strict subset, it is also the builder's type argument, so `defaultOptions` cannot name a syntax the plugin does not offer.
 
-AST helpers exported from `@eslint-zod/utils`:
+AST helpers in `@eslint-zod/utils` (most are internal, imported by relative path; the README lists the root exports):
 
 - `scope.createTracker(options)` — tracks namespace and named imports; returns an object with `createSchemaVisitor`, `isZodNamespace`, `getNamedImportOriginal` (local name → zod export name), `getNamedImportLocal` (zod export name → local name, for fixers that must write a call site: `import { nullable } from 'zod'` → `getNamedImportLocal('nullish')`, `undefined` when that export was never imported), `collectZodChainMethods`, `collectZodSchemaConstraints`, and listener hooks
 - `resolveZodImport(node)` / `resolveZodExport(node)` (tracker methods) — the zod import a node resolves to, as `{ name, local, declaration }`.
@@ -145,7 +145,7 @@ Four conventions the utils package holds to:
   A module-local list that is only iterated or spread takes the annotation directly (`ReadonlyArray<ZodExportName>`); name the literal part of a mixed table that way and spread it.
   `as const satisfies` is for a list whose literal types are read elsewhere (a derived type, the builder's reachability check), and `'name' satisfies ZodMethodName` for one inline name.
   It caught `preprocess` in `ZOD_TYPE_CHANGING_METHODS`, which no zod schema chains.
-- **The root barrel is a public toolkit, not the plugins' internal surface.** Several root exports have no consumer outside `packages/utils/src/`; they stay exported because they are coherent primitives an external rule author would need, and they are documented in `packages/utils/README.md`. The bar for adding a root export is therefore that it makes sense to someone writing their own Zod rule — not merely that a second file in this repo needs it. Helpers that fail that bar stay module-local (see `ZodImports`, `getPropertyName`).
+- **The root barrel exports only what the plugins import.** The package is internal, so breaking changes are free: a helper used only inside `packages/utils/src/` is imported by relative path, and a root export goes when its last plugin consumer does.
 
 `ZOD_STRING_FORMAT_METHODS` — deprecated `z.string().<format>()` methods paired with the top-level factory replacing each. Read two ways: as a migration (`prefer-top-level-string-formats`) and as canonicalization (`no-conflicting-checks`). Related but distinct from `ZOD_STRING_FORMAT_NAMES`, which lists top-level factory names including formats that never had a chained spelling.
 

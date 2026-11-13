@@ -5,10 +5,10 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { ZodSchemaConstraint } from '../collect-zod-schema-constraints.js';
 import { getZodSchemaBaseType } from '../get-zod-schema-base-type.js';
 import type { ZodSchemaBaseType } from '../get-zod-schema-base-type.js';
-import { CALLBACK_CHECK_NAMES } from '../has-opaque-zod-check.js';
+import { CALLBACK_CHECK_NAMES, getOpaqueCheckChainIndexes } from '../has-opaque-zod-check.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
-import type { ZodCheckDescriptor, ZodCheckDomain } from '../zod-check-vocabulary.js';
+import type { ZodCheckBound, ZodCheckDescriptor, ZodCheckDomain } from '../zod-check-vocabulary.js';
 import { canonicalizeZodConstraintName, getZodCheckDescriptor } from '../zod-check-vocabulary.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_MUTATING_CHECK_NAMES } from '../zod-mutating-check-names.js';
@@ -109,7 +109,7 @@ interface Bound {
   check: AnalyzedCheck;
 }
 
-function asNumeric(value: LiteralValue | undefined): number | bigint | undefined {
+function asNumeric(value: unknown): number | bigint | undefined {
   return typeof value === 'number' || typeof value === 'bigint' ? value : undefined;
 }
 
@@ -132,32 +132,59 @@ function boundsConflict(lower: Bound, upper: Bound): boolean {
   return numericEqual(lower.value, upper.value) && !(lower.inclusive && upper.inclusive);
 }
 
-function strongestLower(bounds: Array<Bound>): Bound | undefined {
-  let strongest: Bound | undefined;
-  for (const bound of bounds) {
-    if (
-      !strongest ||
-      bound.value > strongest.value ||
-      (numericEqual(bound.value, strongest.value) && !bound.inclusive && strongest.inclusive)
-    ) {
-      strongest = bound;
+/** The tightest bound: the highest lower or the lowest upper one, an exclusive one winning a tie. */
+function findStrongestBound(bounds: Array<Bound>, kind: 'lower' | 'upper'): Bound | undefined {
+  return bounds.reduce<Bound | undefined>((best, bound) => {
+    if (!best) {
+      return bound;
     }
-  }
-  return strongest;
+    const tighter = kind === 'lower' ? bound.value > best.value : bound.value < best.value;
+    const tie = numericEqual(bound.value, best.value) && !bound.inclusive && best.inclusive;
+    return tighter || tie ? bound : best;
+  }, undefined);
 }
 
-function strongestUpper(bounds: Array<Bound>): Bound | undefined {
-  let strongest: Bound | undefined;
-  for (const bound of bounds) {
-    if (
-      !strongest ||
-      bound.value < strongest.value ||
-      (numericEqual(bound.value, strongest.value) && !bound.inclusive && strongest.inclusive)
-    ) {
-      strongest = bound;
+/** The bounds `checks` impose in `domain`, by kind; a check whose value is unknown has none. */
+function collectBounds(
+  checks: ReadonlyArray<AnalyzedCheck>,
+  domain: ZodCheckDomain,
+): Record<ZodCheckBound['kind'], Array<Bound>> {
+  const bounds: Record<ZodCheckBound['kind'], Array<Bound>> = { lower: [], upper: [], exact: [] };
+  for (const check of checks) {
+    const { bound } = check.descriptor;
+    const value =
+      bound?.domain === domain ? (bound.fixedValue ?? asNumeric(check.literalValue)) : undefined;
+    if (bound && value !== undefined) {
+      bounds[bound.kind].push({ value, inclusive: bound.inclusive ?? true, check });
     }
   }
-  return strongest;
+  return bounds;
+}
+
+/** Whether `value` is a multiple of `divisor`; `undefined` across number and bigint, or for a zero divisor. */
+function isMultipleOf(value: number | bigint, divisor: number | bigint): boolean | undefined {
+  if (typeof value === 'number' && typeof divisor === 'number' && divisor !== 0) {
+    return value % divisor === 0;
+  }
+  if (typeof value === 'bigint' && typeof divisor === 'bigint' && divisor !== BigInt(0)) {
+    return value % divisor === BigInt(0);
+  }
+  return undefined;
+}
+
+function readLiteralArgument(node: TSESTree.CallExpression): LiteralValue | undefined {
+  const argument = node.arguments.at(0);
+  // `-5` parses as a unary expression around the literal `5`.
+  if (
+    argument?.type === AST_NODE_TYPES.UnaryExpression &&
+    argument.operator === '-' &&
+    argument.argument.type === AST_NODE_TYPES.Literal
+  ) {
+    const magnitude = asNumeric(argument.argument.value);
+    return magnitude === undefined ? undefined : -magnitude;
+  }
+  const value = argument?.type === AST_NODE_TYPES.Literal ? argument.value : undefined;
+  return typeof value === 'string' || typeof value === 'boolean' ? value : asNumeric(value);
 }
 
 /**
@@ -197,16 +224,24 @@ export function buildNoConflictingChecksCreate(
       return `${check.rawName}(${args})`;
     }
 
-    function reportImpossiblePair(a: AnalyzedCheck, b: AnalyzedCheck): void {
-      if (!options.checkImpossibleCases) {
-        return;
-      }
+    /** Reports a pair on its later check. */
+    function reportPair(
+      messageId: 'impossibleCase' | 'confusingCombination',
+      a: AnalyzedCheck,
+      b: AnalyzedCheck,
+    ): void {
       const [first, second] = a.index <= b.index ? [a, b] : [b, a];
       context.report({
         node: second.node,
-        messageId: 'impossibleCase',
+        messageId,
         data: { first: describe(first), second: describe(second) },
       });
+    }
+
+    function reportImpossiblePair(a: AnalyzedCheck, b: AnalyzedCheck): void {
+      if (options.checkImpossibleCases) {
+        reportPair('impossibleCase', a, b);
+      }
     }
 
     /**
@@ -217,22 +252,9 @@ export function buildNoConflictingChecksCreate(
       checks: Array<AnalyzedCheck>,
       segmentOf: Map<AnalyzedCheck, number>,
     ): void {
-      const lowers: Array<Bound> = [];
-      const uppers: Array<Bound> = [];
-      for (const check of checks) {
-        const { bound } = check.descriptor;
-        if (bound?.domain !== 'length' || (bound.kind !== 'lower' && bound.kind !== 'upper')) {
-          continue;
-        }
-        const value = bound.fixedValue ?? asNumeric(check.literalValue);
-        if (value !== undefined) {
-          const entry: Bound = { value, inclusive: bound.inclusive ?? true, check };
-          (bound.kind === 'lower' ? lowers : uppers).push(entry);
-        }
-      }
-
-      const lower = strongestLower(lowers);
-      const upper = strongestUpper(uppers);
+      const bounds = collectBounds(checks, 'length');
+      const lower = findStrongestBound(bounds.lower, 'lower');
+      const upper = findStrongestBound(bounds.upper, 'upper');
       // A pair inside one segment is already reported by `analyzeBounds`.
       if (
         lower &&
@@ -277,63 +299,15 @@ export function buildNoConflictingChecksCreate(
       });
     }
 
-    function readLiteralArgument(node: TSESTree.CallExpression): LiteralValue | undefined {
-      const argument = node.arguments.at(0);
-      // `-5` parses as a unary expression around the literal `5`.
-      if (
-        argument?.type === AST_NODE_TYPES.UnaryExpression &&
-        argument.operator === '-' &&
-        argument.argument.type === AST_NODE_TYPES.Literal
-      ) {
-        const { value: magnitude } = argument.argument;
-        return typeof magnitude === 'number' || typeof magnitude === 'bigint'
-          ? -magnitude
-          : undefined;
-      }
-      if (argument?.type !== AST_NODE_TYPES.Literal) {
-        return undefined;
-      }
-      const { value } = argument;
-      if (
-        typeof value === 'string' ||
-        typeof value === 'number' ||
-        typeof value === 'bigint' ||
-        typeof value === 'boolean'
-      ) {
-        return value;
-      }
-      return undefined;
-    }
-
     /** Bounds reasoning: empty ranges (impossible) and implied bounds (redundant). */
     function analyzeBounds(checks: Array<AnalyzedCheck>, domain: ZodCheckDomain): void {
-      const lowers: Array<Bound> = [];
-      const uppers: Array<Bound> = [];
-      const exacts: Array<Bound> = [];
+      const { lower: lowers, upper: uppers, exact: exacts } = collectBounds(checks, domain);
       // Lower/upper length bounds implied by content and format checks.
       let impliedLower: Bound | undefined;
       let impliedUpper: Bound | undefined;
 
-      for (const check of checks) {
-        const { bound, content, format } = check.descriptor;
-
-        if (bound?.domain === domain) {
-          const value = bound.fixedValue ?? asNumeric(check.literalValue);
-          if (value !== undefined) {
-            const entry: Bound = { value, inclusive: bound.inclusive ?? true, check };
-            if (bound.kind === 'lower') {
-              lowers.push(entry);
-            } else if (bound.kind === 'upper') {
-              uppers.push(entry);
-            } else {
-              exacts.push(entry);
-            }
-          }
-        }
-
-        if (domain !== 'length') {
-          continue;
-        }
+      for (const check of domain === 'length' ? checks : []) {
+        const { content, format } = check.descriptor;
         if (content && typeof check.literalValue === 'string') {
           const needed = check.literalValue.length;
           if (!impliedLower || needed > impliedLower.value) {
@@ -356,8 +330,8 @@ export function buildNoConflictingChecksCreate(
         }
       }
 
-      const lower = strongestLower(lowers);
-      const upper = strongestUpper(uppers);
+      const lower = findStrongestBound(lowers, 'lower');
+      const upper = findStrongestBound(uppers, 'upper');
 
       // impossible: empty explicit range
       if (lower && upper && boundsConflict(lower, upper)) {
@@ -490,18 +464,10 @@ export function buildNoConflictingChecksCreate(
 
     /** `lowercase` + `uppercase` only matches strings without case distinctions. */
     function analyzeCasing(checks: Array<AnalyzedCheck>): void {
-      if (!options.checkConfusingCases) {
-        return;
-      }
       const lower = checks.find((check) => check.descriptor.casing === 'lowercase');
       const upper = checks.find((check) => check.descriptor.casing === 'uppercase');
-      if (lower && upper) {
-        const [first, second] = lower.index <= upper.index ? [lower, upper] : [upper, lower];
-        context.report({
-          node: second.node,
-          messageId: 'confusingCombination',
-          data: { first: describe(first), second: describe(second) },
-        });
+      if (options.checkConfusingCases && lower && upper) {
+        reportPair('confusingCombination', lower, upper);
       }
     }
 
@@ -518,24 +484,16 @@ export function buildNoConflictingChecksCreate(
         const left = asNumeric(a.literalValue)!;
         for (const b of multiples.slice(index + 1)) {
           const right = asNumeric(b.literalValue)!;
-          // A zero divisor never divides anything, and `%` throws on a zero bigint.
-          if (typeof left !== typeof right || !left || !right) {
+          // A zero divisor never divides anything.
+          if (!left || !right) {
             continue;
           }
           if (left === right) {
             reportRedundant(b, a);
-          } else if (typeof left === 'number' && typeof right === 'number') {
-            if (right % left === 0) {
-              reportRedundant(a, b);
-            } else if (left % right === 0) {
-              reportRedundant(b, a);
-            }
-          } else if (typeof left === 'bigint' && typeof right === 'bigint') {
-            if (right % left === BigInt(0)) {
-              reportRedundant(a, b);
-            } else if (left % right === BigInt(0)) {
-              reportRedundant(b, a);
-            }
+          } else if (isMultipleOf(right, left)) {
+            reportRedundant(a, b);
+          } else if (isMultipleOf(left, right)) {
+            reportRedundant(b, a);
           }
         }
         if (intMarker && (left === 1 || left === BigInt(1))) {
@@ -549,12 +507,8 @@ export function buildNoConflictingChecksCreate(
       const { bound, content, casing, multipleOf, intMarker } = check.descriptor;
 
       if (bound) {
-        let subject: number | bigint | undefined;
-        if (bound.domain === 'length') {
-          subject = typeof literal === 'string' ? literal.length : undefined;
-        } else {
-          subject = asNumeric(literal);
-        }
+        const lengthOf = typeof literal === 'string' ? literal.length : undefined;
+        const subject = bound.domain === 'length' ? lengthOf : asNumeric(literal);
         const value = bound.fixedValue ?? asNumeric(check.literalValue);
         if (subject === undefined || value === undefined) {
           return undefined;
@@ -577,17 +531,11 @@ export function buildNoConflictingChecksCreate(
           : literal === literal.toUpperCase();
       }
       if (multipleOf) {
+        const value = asNumeric(literal);
         const divisor = asNumeric(check.literalValue);
-        if (!divisor) {
-          return undefined;
-        }
-        if (typeof literal === 'number' && typeof divisor === 'number') {
-          return literal % divisor === 0;
-        }
-        if (typeof literal === 'bigint' && typeof divisor === 'bigint') {
-          return literal % divisor === BigInt(0);
-        }
-        return undefined;
+        return value === undefined || divisor === undefined
+          ? undefined
+          : isMultipleOf(value, divisor);
       }
       if (intMarker) {
         return typeof literal === 'number' ? Number.isInteger(literal) : undefined;
@@ -604,16 +552,11 @@ export function buildNoConflictingChecksCreate(
       if (literal === undefined) {
         return;
       }
-      let literalBase: ZodSchemaBaseType;
-      if (typeof literal === 'string') {
-        literalBase = 'string';
-      } else if (typeof literal === 'number') {
-        literalBase = 'number';
-      } else if (typeof literal === 'bigint') {
-        literalBase = 'bigint';
-      } else {
-        literalBase = 'boolean';
-      }
+      // `LiteralValue` is exactly the primitives whose `typeof` names a base type.
+      const literalBase = typeof literal as Extract<
+        ZodSchemaBaseType,
+        'string' | 'number' | 'bigint' | 'boolean'
+      >;
       const literalDisplay: AnalyzedCheck = {
         canonical: 'literal',
         descriptor: { appliesTo: [] },
@@ -679,13 +622,7 @@ export function buildNoConflictingChecksCreate(
 
         const constraints = collectZodSchemaConstraints(node);
         // A `.check(...)` with an argument that is not a zod call (a callback, `trimIt`) may mutate too.
-        const opaqueChainIndexes = chain.flatMap((item, chainIndex) =>
-          (item.name === 'check' || item.name === 'with') &&
-          item.node.arguments.length !==
-            constraints.filter((it) => it.chainIndex === chainIndex).length
-            ? [chainIndex]
-            : [],
-        );
+        const opaqueChainIndexes = getOpaqueCheckChainIndexes(chain, constraints);
         for (const [index, constraint] of constraints.entries()) {
           const { chainIndex } = constraint;
           // the call a constraint sits in, or one passed since the previous constraint
