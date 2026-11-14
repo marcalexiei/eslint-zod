@@ -2,7 +2,6 @@ import type { ZodExportName } from '@eslint-zod/zod-api';
 import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
-import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
@@ -31,7 +30,7 @@ export function buildNoTransformInRecordKeyCreate(
       detectZodSchemaRootNode,
       collectZodChainMethods,
       collectZodSchemaConstraints,
-      isZodImportName,
+      isZodFactoryChainItem,
     } = scope.createTracker({ kind: 'value' });
 
     function findTransform(schema: TSESTree.CallExpression): TSESTree.Node | undefined {
@@ -68,7 +67,7 @@ export function buildNoTransformInRecordKeyCreate(
         // `node` is the outermost call, which is not the `record()` one once something is chained on it.
         const head = collectZodChainMethods(node).at(0);
         // After a property access (`z.record(k, v).keyType.or(…)`) the chain is not the record's.
-        if (head && !isZodFactoryChainItem(head, isZodImportName)) {
+        if (head && !isZodFactoryChainItem(head)) {
           return;
         }
         const recordCall = head?.node ?? node;

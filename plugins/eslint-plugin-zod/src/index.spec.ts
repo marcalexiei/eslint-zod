@@ -91,13 +91,10 @@ describe('config composition', () => {
     expect(all).toEqual(expect.arrayContaining([...strict, ...stylistic]));
   });
 
-  it('`stylistic` leaves out the rule that conflicts with the object factory rules', () => {
-    expect(stylistic).toContain('zod/prefer-strict-object');
-    expect(stylistic).not.toContain('zod/consistent-object-schema-type');
-  });
-
-  it('no curated config carries the key naming convention', () => {
-    expect([...strict, ...stylistic]).not.toContain('zod/consistent-object-property-key-style');
+  it('only `all` carries the naming and overlapping rules', () => {
+    expect(
+      all.filter((ruleName) => !strict.includes(ruleName) && !stylistic.includes(ruleName)),
+    ).toEqual(['zod/consistent-object-property-key-style', 'zod/consistent-object-schema-type']);
   });
 
   it('`all` contains every non-deprecated rule', () => {

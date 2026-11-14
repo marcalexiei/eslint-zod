@@ -30,6 +30,6 @@ export const consistentSchemaVarName = createZodPluginRule({
       },
     ],
   },
-  defaultOptions: [{ after: 'Schema' }],
+  defaultOptions: [{ before: '', after: 'Schema' }],
   create: buildConsistentSchemaVarNameCreate(zodImportScope),
 });

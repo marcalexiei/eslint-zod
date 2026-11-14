@@ -628,6 +628,11 @@ ruleTester.run(preferValidate.name, preferValidate, {
       "import * as z from 'zod'; const schema = z.string(); (schema)[(('validate'))](data);",
     ),
     suggest(
+      'schema bound behind a type assertion',
+      "import * as z from 'zod'; const schema = z.string() satisfies z.ZodType; schema.safeParse(data).success;",
+      "import * as z from 'zod'; const schema = z.string() satisfies z.ZodType; schema.validate(data);",
+    ),
+    suggest(
       'asserted success read',
       "import * as z from 'zod'; const schema = z.string(); schema.safeParse(data).success!;",
       "import * as z from 'zod'; const schema = z.string(); schema.validate(data)!;",

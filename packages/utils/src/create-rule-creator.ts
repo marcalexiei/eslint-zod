@@ -2,14 +2,19 @@ import { readFileSync } from 'node:fs';
 
 import type { RuleContext, RuleListener, RuleMeta, RuleModule } from './rule-types.js';
 
+/** Options once merged over `defaultOptions`, which sets every field, so none is optional. */
+export type OptionsWithDefaults<TOptions extends ReadonlyArray<unknown>> = {
+  [K in keyof TOptions]: Required<TOptions[K]>;
+};
+
 /** What a rule passes to a {@link RuleCreator}. */
 interface RuleDefinition<TOptions extends ReadonlyArray<unknown>, TMessageIds extends string> {
   name: string;
   meta: RuleMeta<TMessageIds>;
-  defaultOptions: Readonly<TOptions>;
+  defaultOptions: Readonly<OptionsWithDefaults<TOptions>>;
   create: (
     context: Readonly<RuleContext<TMessageIds, TOptions>>,
-    optionsWithDefault: Readonly<TOptions>,
+    optionsWithDefault: Readonly<OptionsWithDefaults<TOptions>>,
   ) => RuleListener;
 }
 
@@ -55,11 +60,17 @@ function applyDefaultOptions<TOptions extends ReadonlyArray<unknown>>(
  * and `create` receives the user's options merged over `defaultOptions`.
  */
 export function createRuleCreator(getRuleURL: (ruleName: string) => string): RuleCreator {
-  return function createRule({ name, meta, defaultOptions, create }) {
+  return function createRule<TOptions extends ReadonlyArray<unknown>, TMessageIds extends string>({
+    name,
+    meta,
+    defaultOptions,
+    create,
+  }: Readonly<RuleDefinition<TOptions, TMessageIds>>): RuleModule<TMessageIds, TOptions> {
     return {
       name,
       meta: { ...meta, docs: { ...meta.docs, url: getRuleURL(name) } },
-      defaultOptions,
+      // Complete defaults are a subtype of the options, which TypeScript cannot see through the mapped type.
+      defaultOptions: defaultOptions as Readonly<TOptions>,
       create: (context) => create(context, applyDefaultOptions(defaultOptions, context.options)),
     };
   };

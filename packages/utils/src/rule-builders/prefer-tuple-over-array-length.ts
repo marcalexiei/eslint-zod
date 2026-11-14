@@ -5,7 +5,6 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import { buildZodConstraintsRemoveFix } from '../build-zod-constraints-remove-fix.js';
 import type { ZodSchemaConstraint } from '../collect-zod-schema-constraints.js';
 import { hasOpaqueZodCheck } from '../has-opaque-zod-check.js';
-import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import { readIntegerLiteralValue } from '../read-integer-literal-value.js';
 import { readsZodSchemaProperty } from '../reads-zod-schema-property.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
@@ -62,7 +61,7 @@ export function buildPreferTupleOverArrayLengthCreate(
       createSchemaVisitor,
       collectZodChainMethods,
       collectZodSchemaConstraints,
-      isZodImportName,
+      isZodFactoryChainItem,
     } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
@@ -71,7 +70,7 @@ export function buildPreferTupleOverArrayLengthCreate(
         const methods = collectZodChainMethods(node);
         // After a property access (`z.array(x).element.length(2)`) the checks are another schema's.
         const head = methods.at(0);
-        if (head && !isZodFactoryChainItem(head, isZodImportName)) {
+        if (head && !isZodFactoryChainItem(head)) {
           return;
         }
 

@@ -3,7 +3,6 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { getStaticPropertyName } from '../get-static-property-name.js';
 import { hasCommentInRange } from '../has-comment-in-range.js';
-import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
@@ -74,9 +73,11 @@ export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
   } = options;
 
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods, isZodImportName } = scope.createTracker({
-      kind: 'value',
-    });
+    const { createSchemaVisitor, collectZodChainMethods, getZodChainFactory } = scope.createTracker(
+      {
+        kind: 'value',
+      },
+    );
 
     return createSchemaVisitor({
       schemaType: factoryName,
@@ -97,9 +98,7 @@ export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
           fix(fixer) {
             // A named declaration has no `<ns>.<factory>` member to rewrite,
             // and after a property access (`z.object({…}).shape.a.passthrough()`) the factory is out of reach.
-            const factory = methods.at(0);
-            const factoryCallee =
-              factory && isZodFactoryChainItem(factory, isZodImportName) ? factory.member : null;
+            const factoryCallee = getZodChainFactory(node)?.member;
             const modifierCallee = modifierMethod?.member;
             if (!factoryCallee || !modifierCallee || zodSchemaMeta.schemaDecl === 'named') {
               return null;

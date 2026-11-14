@@ -9,7 +9,7 @@ export function buildNoAnySchemaCreate(
   scope: ZodImportScope,
 ): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
+    const { createSchemaVisitor, getZodChainFactory } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: 'any',
@@ -25,7 +25,7 @@ export function buildNoAnySchemaCreate(
         // Only `<namespace>.any` can be renamed in place:
         // a named import (`any()`) has no member, a computed factory (`z['any']()`) no walkable chain,
         // and after a property access (`z.any().shape.x()`) the chain no longer starts at the factory.
-        const head = collectZodChainMethods(node).at(0)?.member;
+        const head = getZodChainFactory(node)?.member;
         const factoryCallee = head?.object.type === AST_NODE_TYPES.Identifier ? head : null;
 
         context.report({

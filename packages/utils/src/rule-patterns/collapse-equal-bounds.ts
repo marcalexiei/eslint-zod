@@ -7,7 +7,6 @@ import type { ZodSchemaBaseType } from '../get-zod-schema-base-type.js';
 import { getZodSchemaBaseType } from '../get-zod-schema-base-type.js';
 import { hasCommentInRange } from '../has-comment-in-range.js';
 import { hasOpaqueZodCheck } from '../has-opaque-zod-check.js';
-import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import { readIntegerLiteralValue } from '../read-integer-literal-value.js';
 import type { RuleContext, RuleFix, RuleFixer, RuleListener, SourceCode } from '../rule-types.js';
 import type { ZodCheckDomain } from '../zod-check-vocabulary.js';
@@ -144,7 +143,7 @@ export function buildCollapseEqualBoundsCreate<TMessageIds extends string>(
       collectZodChainMethods,
       collectZodSchemaConstraints,
       getNamedImportLocal,
-      isZodImportName,
+      isZodFactoryChainItem,
     } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
@@ -156,7 +155,7 @@ export function buildCollapseEqualBoundsCreate<TMessageIds extends string>(
 
         // After a property access (`z.set(x).def.valueType.min(3).max(3)`) the bounds are another schema's.
         const head = collectZodChainMethods(node).at(0);
-        if (head && !isZodFactoryChainItem(head, isZodImportName)) {
+        if (head && !isZodFactoryChainItem(head)) {
           return;
         }
 

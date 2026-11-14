@@ -48,8 +48,8 @@ export const preferTopLevelStringFormats = createZodPluginRule<[Options], Messag
       },
     ],
   },
-  defaultOptions: [{}],
-  create(context, [{ ignore = [] }]) {
+  defaultOptions: [{ ignore: [] }],
+  create(context, [{ ignore }]) {
     return buildPreferTopLevelFactoryCreate<MessageIds, [Options]>({
       scope: zodImportScope,
       factoryName: 'string',

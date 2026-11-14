@@ -197,6 +197,22 @@ ruleTester.run(consistentObjectPropertyKeyStyle.name, consistentObjectPropertyKe
       ),
       name: 'a shape shared by two schemas, reported once',
     },
+    {
+      ...rename(
+        { name: 'user_name', replacement: 'userName' },
+        dedent`
+          import * as z from 'zod/mini';
+          const shape = { user_name: z.string() } as const;
+          z.object(shape as typeof shape);
+        `,
+        dedent`
+          import * as z from 'zod/mini';
+          const shape = { userName: z.string() } as const;
+          z.object(shape as typeof shape);
+        `,
+      ),
+      name: 'a shape behind type assertions',
+    },
     rename(
       { name: 'user_name', replacement: 'userName' },
       dedent`

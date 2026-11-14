@@ -1,5 +1,6 @@
 import type { TSESTree } from '@typescript-eslint/types';
 
+import type { OptionsWithDefaults } from '../create-rule-creator.js';
 import { hasCommentInRange } from '../has-comment-in-range.js';
 import {
   bindsWholeModule,
@@ -25,7 +26,7 @@ export function buildConsistentImportCreate<TSyntax extends ImportSyntax = Impor
   scope: ZodImportScope,
 ): (
   context: Readonly<RuleContext<MessageIds, [ConsistentImportOptions<TSyntax>]>>,
-  options: readonly [ConsistentImportOptions<TSyntax>],
+  options: Readonly<OptionsWithDefaults<[ConsistentImportOptions<TSyntax>]>>,
 ) => RuleListener {
   return function create(context, [{ syntax }]) {
     const { sourceCode } = context;
