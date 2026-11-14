@@ -16,14 +16,8 @@ import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_MUTATING_CHECK_NAMES } from '../zod-mutating-check-names.js';
 import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
 
-/** Domains with an exact-form check to collapse into; `value` has none. */
+/** Domains with an exact check of the same name to collapse into; `value` has none. */
 export type CollapsibleBoundDomain = Extract<ZodCheckDomain, 'length' | 'size'>;
-
-/** Total by type, so the lookup cannot miss. */
-const EXACT_CHECK_BY_DOMAIN: Record<CollapsibleBoundDomain, string> = {
-  length: 'length',
-  size: 'size',
-};
 
 /** Options for {@link buildCollapseEqualBoundsCreate}. */
 export interface CollapseEqualBoundsOptions<TMessageIds extends string> {
@@ -142,7 +136,7 @@ export function buildCollapseEqualBoundsCreate<TMessageIds extends string>(
   options: CollapseEqualBoundsOptions<TMessageIds>,
 ): (context: Readonly<RuleContext<TMessageIds>>) => RuleListener {
   const { scope, baseTypes, domain, messageId } = options;
-  const exactCheckName = EXACT_CHECK_BY_DOMAIN[domain];
+  const exactCheckName: string = domain;
 
   return function create(context) {
     const {

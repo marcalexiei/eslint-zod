@@ -9,6 +9,19 @@ export const CALLBACK_CHECK_NAMES: ReadonlySet<string> = new Set<ZodExportName |
   'superRefine',
 ]);
 
+/** Chain indexes of `.check(...)` / `.with(...)` calls carrying an argument that is not a recognized zod call. */
+export function getOpaqueCheckChainIndexes(
+  methods: ReadonlyArray<{ name: string; node: TSESTree.CallExpression }>,
+  constraints: ReadonlyArray<ZodSchemaConstraint>,
+): Array<number> {
+  return methods.flatMap((method, chainIndex) =>
+    (method.name === 'check' || method.name === 'with') &&
+    method.node.arguments.length !== constraints.filter((it) => it.chainIndex === chainIndex).length
+      ? [chainIndex]
+      : [],
+  );
+}
+
 /**
  * Whether a check between two chain positions may rewrite the value without its name saying so:
  * a `.check(...)` argument that is not a zod call (`trimIt`, a callback, a spread),
@@ -25,12 +38,7 @@ export function hasOpaqueZodCheck(opts: {
     chainIndex >= fromChainIndex && chainIndex <= toChainIndex;
 
   return (
-    methods.some(
-      (method, chainIndex) =>
-        (method.name === 'check' || method.name === 'with') &&
-        isInRange(chainIndex) &&
-        method.node.arguments.length !==
-          constraints.filter((it) => it.chainIndex === chainIndex).length,
-    ) || constraints.some((it) => isInRange(it.chainIndex) && CALLBACK_CHECK_NAMES.has(it.name))
+    getOpaqueCheckChainIndexes(methods, constraints).some(isInRange) ||
+    constraints.some((it) => isInRange(it.chainIndex) && CALLBACK_CHECK_NAMES.has(it.name))
   );
 }

@@ -13,7 +13,7 @@ import type { RuleListener, SourceCode } from './rule-types.js';
 import type { ZodImportScope } from './zod-import-scope.js';
 
 /** One zod import: the export it names, its local identifier, and the declaration carrying it. */
-export interface ZodImportBinding {
+interface ZodImportBinding {
   /** The zod export name, or `'*'` for a namespace (`import * as z`, `import { z }`). */
   name: string;
   local: TSESTree.Identifier;
@@ -28,7 +28,7 @@ export interface ZodImportBinding {
  * - `type` — only those.
  * - `all` — both, for a rule reading a type position, which either form reaches.
  */
-export type ZodImportKind = 'value' | 'type' | 'all';
+type ZodImportKind = 'value' | 'type' | 'all';
 
 /** Options for {@link ZodImportScope.createTracker}. */
 export interface ZodTrackerOptions {
@@ -55,7 +55,7 @@ export interface ZodChainItem {
 }
 
 /** What {@link ZodSchemaImportTracker.findZodChainedMethod} found. */
-export interface ZodChainedMethodMatch {
+interface ZodChainedMethodMatch {
   /** The matched method name — one of the names asked for. */
   name: string;
 
@@ -78,7 +78,7 @@ function isZodChainMember(callee: TSESTree.Expression): callee is ZodChainMember
 }
 
 /** Options for {@link ZodSchemaImportTracker.createSchemaVisitor}. */
-export interface ZodSchemaVisitorOptions<TSchemaType extends string> {
+interface ZodSchemaVisitorOptions<TSchemaType extends string> {
   /**
    * Only run `onSchema` for these factories —
    * one name (`'string'`) or a list (`ZOD_OBJECT_METHODS`).
@@ -307,14 +307,9 @@ export function trackZodSchemaImports(
         break;
       }
 
-      // Unnameable callee — a computed member (`z['string']()`) or a complex expression.
-      // Detection still resolves those (`detectZodSchemaRootNode` reads literal keys),
-      // so returning what we walked so far would hand callers a chain that silently drops leading methods and no longer starts at the factory.
-      // Return nothing instead,
-      // so a chain never misses its leading calls and `chain[i]` always lines up with the constraint list.
-      const unwalkable: Array<ZodChainItem> = [];
-      chainCache.set(node, unwalkable);
-      return unwalkable;
+      // Unnameable callee (`z['string']()`): a partial chain would miss its leading calls, so return none.
+      methods.length = 0;
+      break;
     }
 
     chainCache.set(node, methods);
@@ -339,7 +334,6 @@ export function trackZodSchemaImports(
     return { name, methods, index, member: methods[index]?.member ?? null };
   }
 
-  // to be inserted into rule.create()
   function records(isTypeOnly: boolean): boolean {
     return kind === 'all' || isTypeOnly === (kind === 'type');
   }
@@ -441,7 +435,7 @@ export function trackZodSchemaImports(
     return schemaResolver(node);
   }
 
-  const result: ZodSchemaImportTracker = {
+  return {
     importDeclarationListener,
 
     createSchemaVisitor<TSchemaType extends string>({
@@ -505,6 +499,4 @@ export function trackZodSchemaImports(
 
     resolveZodSchema,
   };
-
-  return result;
 }

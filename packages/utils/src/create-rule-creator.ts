@@ -3,10 +3,7 @@ import { readFileSync } from 'node:fs';
 import type { RuleContext, RuleListener, RuleMeta, RuleModule } from './rule-types.js';
 
 /** What a rule passes to a {@link RuleCreator}. */
-export interface RuleDefinition<
-  TOptions extends ReadonlyArray<unknown>,
-  TMessageIds extends string,
-> {
+interface RuleDefinition<TOptions extends ReadonlyArray<unknown>, TMessageIds extends string> {
   name: string;
   meta: RuleMeta<TMessageIds>;
   defaultOptions: Readonly<TOptions>;
