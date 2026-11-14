@@ -12,7 +12,7 @@ export function readIntegerLiteralValue(node: TSESTree.Node | null): number | nu
   }
 
   const { value } = node;
-  if (typeof value !== 'number' || !Number.isInteger(value) || value < 0) {
+  if (typeof value !== 'number' || !Number.isInteger(value)) {
     return null;
   }
 

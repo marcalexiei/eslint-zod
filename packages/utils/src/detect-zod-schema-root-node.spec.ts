@@ -1,323 +1,116 @@
-import { AST_NODE_TYPES } from '@typescript-eslint/types';
+import { parseCode } from '@eslint-zod/tooling/vitest/parse-code';
 import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import { detectZodSchemaRootNode, isZodSchemaOfType } from './detect-zod-schema-root-node.js';
-import type { ZodImports } from './detect-zod-schema-root-node.js';
+import type { ZodImports, ZodSchemaMeta } from './detect-zod-schema-root-node.js';
 
-// --- minimal AST mock helpers ---
+const imports: ZodImports = {
+  namespaces: new Set(['z']),
+  named: new Map([
+    ['string', 'string'],
+    ['number', 'number'],
+    ['zodNativeEnum', 'nativeEnum'],
+  ]),
+};
 
-function makeIdent(name: string): TSESTree.Identifier {
-  return {
-    type: AST_NODE_TYPES.Identifier,
-    name,
-  } as unknown as TSESTree.Identifier;
+/** The node `selector` picks; by default the statement's expression. */
+function nodeOf(code: string, selector = 'ExpressionStatement > *'): TSESTree.Node {
+  return parseCode(code).find(selector);
 }
 
-function makeME(object: TSESTree.Expression, propertyName: string): TSESTree.MemberExpression {
-  return {
-    type: AST_NODE_TYPES.MemberExpression,
-    object,
-    property: makeIdent(propertyName),
-    computed: false,
-  } as unknown as TSESTree.MemberExpression;
-}
+const detect = (code: string, selector?: string): ZodSchemaMeta | null =>
+  detectZodSchemaRootNode(nodeOf(code, selector), imports);
 
-function makeComputedME(
-  object: TSESTree.Expression,
-  property: TSESTree.Expression,
-): TSESTree.MemberExpression {
-  return {
-    type: AST_NODE_TYPES.MemberExpression,
-    object,
-    property,
-    computed: true,
-  } as unknown as TSESTree.MemberExpression;
-}
-
-function makeLiteral(value: string | null): TSESTree.Literal {
-  return {
-    type: AST_NODE_TYPES.Literal,
-    value,
-  } as unknown as TSESTree.Literal;
-}
-
-function makeTemplateLiteral(
-  cooked: string,
-  expressions: Array<TSESTree.Expression> = [],
-): TSESTree.TemplateLiteral {
-  return {
-    type: AST_NODE_TYPES.TemplateLiteral,
-    expressions,
-    quasis: [{ type: AST_NODE_TYPES.TemplateElement, value: { cooked, raw: cooked } }],
-  } as unknown as TSESTree.TemplateLiteral;
-}
-
-function makeCall(
-  callee: TSESTree.Expression,
-  args: Array<TSESTree.Expression> = [],
-): TSESTree.CallExpression {
-  return {
-    type: AST_NODE_TYPES.CallExpression,
-    callee,
-    arguments: args,
-  } as unknown as TSESTree.CallExpression;
-}
-
-/** Sets node.parent to a non-call, non-member parent so it passes isOutermostCallExpression. */
-function setOutermostParent(node: TSESTree.CallExpression): void {
-  (node as unknown as Record<string, unknown>).parent = {
-    type: AST_NODE_TYPES.ExpressionStatement,
-  };
-}
-
-const namespaces = new Set(['z']);
-const named = new Map<string, string>([
-  ['string', 'string'],
-  ['number', 'number'],
-  ['array', 'array'],
-]);
-const imports: ZodImports = { namespaces, named };
+const INNER = 'CallExpression[callee.property.name="number"]';
 
 describe('detectZodSchemaRootNode', () => {
-  it('returns null for non-CallExpression nodes', () => {
-    const node = makeIdent('z') as unknown as TSESTree.Node;
-    expect(detectZodSchemaRootNode(node, imports)).toBeNull();
+  it.each([
+    ['z.string()', { schemaDecl: 'namespace', schemaType: 'string', methods: ['string'] }],
+    [
+      'z.number().min(1)',
+      { schemaDecl: 'namespace', schemaType: 'number', methods: ['number', 'min'] },
+    ],
+    ['string()', { schemaDecl: 'named', schemaType: 'string', methods: [] }],
+    ['string().optional()', { schemaDecl: 'named', schemaType: 'string', methods: ['optional'] }],
+    ['zodNativeEnum()', { schemaDecl: 'named', schemaType: 'nativeEnum', methods: [] }],
+    ["z['string']()", { schemaDecl: 'namespace', schemaType: 'string', methods: ['string'] }],
+    ['z[`string`]()', { schemaDecl: 'namespace', schemaType: 'string', methods: ['string'] }],
+  ])('detects %s', (code, expected) => {
+    expect(detect(code)).toStrictEqual(expected);
   });
 
-  it('returns null when the call is not the outermost in a chain', () => {
-    // z.number() is not outermost because z.number().min(1) chains on top of it
-    const numberCall = makeCall(makeME(makeIdent('z'), 'number'));
-    const minCall = makeCall(makeME(numberCall, 'min'));
-    // numberCall's parent is the MemberExpression z.number().min
-    const minME = minCall.callee as TSESTree.MemberExpression;
-    (numberCall as unknown as Record<string, unknown>).parent = minME;
-    (minME as unknown as Record<string, unknown>).parent = minCall;
+  it.each([
+    ['a node that is not a call', 'z'],
+    ['a call on something not imported', 'notZod.string()'],
+    // eslint-disable-next-line no-template-curly-in-string -- the code is a template literal
+    ['a template key with interpolations', 'z[`str${x}`]()'],
+    ['a null key', 'z[null]()'],
+    ['a non-static key', 'z[a + b]()'],
+    ['a root that is not an identifier', '(a + b).string()'],
+    ['a root bound locally', 'base.optional()'],
+  ])('returns null for %s: %s', (_, code) => {
+    expect(detect(code)).toBeNull();
+  });
 
-    expect(detectZodSchemaRootNode(numberCall, imports)).toBeNull();
+  it('returns null for an inner call: z.number() in z.number().min(1)', () => {
+    expect(detect('z.number().min(1);', INNER)).toBeNull();
+  });
+
+  it('returns null for the callee of another call: z.function().implement(fn)(input)', () => {
+    expect(
+      detect('z.function().implement(fn)(input);', 'CallExpression > CallExpression'),
+    ).toBeNull();
   });
 
   it('detects a call followed only by a property access: z.object({}).shape', () => {
-    const objectCall = makeCall(makeME(makeIdent('z'), 'object'));
-    const shapeME = makeME(objectCall, 'shape');
-    (objectCall as unknown as Record<string, unknown>).parent = shapeME;
-    (shapeME as unknown as Record<string, unknown>).parent = { type: 'ExpressionStatement' };
-
-    expect(detectZodSchemaRootNode(objectCall, imports)?.schemaType).toBe('object');
-  });
-
-  it('returns null for calls not in namespaces or named imports', () => {
-    const call = makeCall(makeME(makeIdent('notZod'), 'string'));
-    setOutermostParent(call);
-    expect(detectZodSchemaRootNode(call, imports)).toBeNull();
-  });
-
-  it('detects namespace style: z.string()', () => {
-    const call = makeCall(makeME(makeIdent('z'), 'string'));
-    setOutermostParent(call);
-
-    const result = detectZodSchemaRootNode(call, imports);
-
-    expect(result).not.toBeNull();
-    expect(result?.schemaDecl).toBe('namespace');
-    expect(result?.schemaType).toBe('string');
-    expect(result?.methods).toStrictEqual(['string']);
-  });
-
-  it('detects namespace style with chain: z.number().min(1)', () => {
-    const numberCall = makeCall(makeME(makeIdent('z'), 'number'));
-    const minCall = makeCall(makeME(numberCall, 'min'), [
-      { type: AST_NODE_TYPES.Literal, value: 1 } as unknown as TSESTree.Literal,
-    ]);
-    setOutermostParent(minCall);
-
-    const result = detectZodSchemaRootNode(minCall, imports);
-
-    expect(result?.schemaDecl).toBe('namespace');
-    expect(result?.schemaType).toBe('number');
-    expect(result?.methods).toStrictEqual(['number', 'min']);
-  });
-
-  it('detects named import style: string()', () => {
-    const call = makeCall(makeIdent('string'));
-    setOutermostParent(call);
-
-    const result = detectZodSchemaRootNode(call, imports);
-
-    expect(result?.schemaDecl).toBe('named');
-    expect(result?.schemaType).toBe('string');
-    expect(result?.methods).toStrictEqual([]);
-  });
-
-  it('detects named import chain: string().optional()', () => {
-    const stringCall = makeCall(makeIdent('string'));
-    const optCall = makeCall(makeME(stringCall, 'optional'));
-    setOutermostParent(optCall);
-
-    const result = detectZodSchemaRootNode(optCall, imports);
-
-    expect(result?.schemaDecl).toBe('named');
-    expect(result?.schemaType).toBe('string');
-    expect(result?.methods).toStrictEqual(['optional']);
-  });
-
-  it('resolves aliased named import to original name: nativeEnum as zodNativeEnum', () => {
-    const aliased: ZodImports = { namespaces, named: new Map([['zodNativeEnum', 'nativeEnum']]) };
-    const call = makeCall(makeIdent('zodNativeEnum'));
-    setOutermostParent(call);
-
-    const result = detectZodSchemaRootNode(call, aliased);
-
-    expect(result?.schemaDecl).toBe('named');
-    expect(result?.schemaType).toBe('nativeEnum');
-    expect(result?.methods).toStrictEqual([]);
-  });
-
-  it('returns null when the call is the callee of another call: z.function().implement(fn)(input)', () => {
-    const functionCall = makeCall(makeME(makeIdent('z'), 'function'));
-    const implementCall = makeCall(makeME(functionCall, 'implement'), [makeIdent('fn')]);
-    const outerCall = makeCall(implementCall, [makeIdent('input')]);
-    (implementCall as unknown as Record<string, unknown>).parent = outerCall;
-
-    expect(detectZodSchemaRootNode(implementCall, imports)).toBeNull();
-  });
-
-  describe('computed property access', () => {
-    it("resolves a string literal property: z['string']()", () => {
-      const call = makeCall(makeComputedME(makeIdent('z'), makeLiteral('string')));
-      setOutermostParent(call);
-
-      const result = detectZodSchemaRootNode(call, imports);
-
-      expect(result?.schemaDecl).toBe('namespace');
-      expect(result?.schemaType).toBe('string');
-    });
-
-    it('resolves a simple template literal property: z[`string`]()', () => {
-      const call = makeCall(makeComputedME(makeIdent('z'), makeTemplateLiteral('string')));
-      setOutermostParent(call);
-
-      const result = detectZodSchemaRootNode(call, imports);
-
-      expect(result?.schemaDecl).toBe('namespace');
-      expect(result?.schemaType).toBe('string');
-    });
-
-    it('returns null for a template literal with interpolations', () => {
-      const call = makeCall(
-        makeComputedME(makeIdent('z'), makeTemplateLiteral('str', [makeIdent('x')])),
-      );
-      setOutermostParent(call);
-
-      expect(detectZodSchemaRootNode(call, imports)).toBeNull();
-    });
-
-    it('returns null for a null literal property: z[null]()', () => {
-      const call = makeCall(makeComputedME(makeIdent('z'), makeLiteral(null)));
-      setOutermostParent(call);
-
-      expect(detectZodSchemaRootNode(call, imports)).toBeNull();
-    });
-
-    it('returns null for a non-static property: z[a + b]()', () => {
-      const binary = {
-        type: AST_NODE_TYPES.BinaryExpression,
-        operator: '+',
-        left: makeIdent('a'),
-        right: makeIdent('b'),
-      } as unknown as TSESTree.Expression;
-      const call = makeCall(makeComputedME(makeIdent('z'), binary));
-      setOutermostParent(call);
-
-      expect(detectZodSchemaRootNode(call, imports)).toBeNull();
-    });
-
-    it('returns null when the leftmost node is not an identifier: (a + b).string()', () => {
-      const binary = {
-        type: AST_NODE_TYPES.BinaryExpression,
-        operator: '+',
-        left: makeIdent('a'),
-        right: makeIdent('b'),
-      } as unknown as TSESTree.Expression;
-      const call = makeCall(makeME(binary, 'string'));
-      setOutermostParent(call);
-
-      expect(detectZodSchemaRootNode(call, imports)).toBeNull();
-    });
+    expect(detect('z.object({}).shape;', 'CallExpression')?.schemaType).toBe('object');
   });
 });
 
 describe('detectZodSchemaRootNode with a root resolver', () => {
-  const base = { schemaDecl: 'namespace' as const, schemaType: 'string', methods: ['string'] };
-  const resolveRoot = (root: TSESTree.Identifier): typeof base | null =>
+  const base: ZodSchemaMeta = {
+    schemaDecl: 'namespace',
+    schemaType: 'string',
+    methods: ['string'],
+  };
+  const resolveRoot = (root: TSESTree.Identifier): ZodSchemaMeta | null =>
     root.name === 'base' ? base : null;
+  const resolve = (code: string): ZodSchemaMeta | null =>
+    detectZodSchemaRootNode(nodeOf(code), imports, resolveRoot);
 
   it('appends the chained methods to the schema the root is bound to', () => {
-    const call = makeCall(makeME(makeCall(makeME(makeIdent('base'), 'nullable')), 'isOptional'));
-    setOutermostParent(call);
-    expect(detectZodSchemaRootNode(call, imports, resolveRoot)).toStrictEqual({
+    expect(resolve('base.nullable().isOptional()')).toStrictEqual({
       ...base,
       methods: ['string', 'nullable', 'isOptional'],
     });
   });
 
   it('returns null for a bare call, or a root the resolver does not know', () => {
-    const bare = makeCall(makeIdent('base'));
-    const unknown = makeCall(makeME(makeIdent('other'), 'optional'));
-    setOutermostParent(bare);
-    setOutermostParent(unknown);
-    expect(detectZodSchemaRootNode(bare, imports, resolveRoot)).toBeNull();
-    expect(detectZodSchemaRootNode(unknown, imports, resolveRoot)).toBeNull();
+    expect(resolve('base()')).toBeNull();
+    expect(resolve('other.optional()')).toBeNull();
   });
 
   it('looks through a TS assertion only with a resolver', () => {
-    const asserted = {
-      type: AST_NODE_TYPES.TSAsExpression,
-      expression: makeCall(makeME(makeIdent('z'), 'string')),
-    } as unknown as TSESTree.Expression;
-    const call = makeCall(makeME(asserted, 'optional'));
-    setOutermostParent(call);
-    expect(detectZodSchemaRootNode(call, imports, resolveRoot)?.methods).toStrictEqual([
-      'string',
-      'optional',
-    ]);
-    expect(detectZodSchemaRootNode(call, imports)).toBeNull();
-  });
-
-  it('ignores local roots without a resolver', () => {
-    const call = makeCall(makeME(makeIdent('base'), 'optional'));
-    setOutermostParent(call);
-    expect(detectZodSchemaRootNode(call, imports)).toBeNull();
+    const code = '(z.string() as never).optional()';
+    expect(resolve(code)?.methods).toStrictEqual(['string', 'optional']);
+    expect(detect(code)).toBeNull();
   });
 });
 
 describe('isZodSchemaOfType', () => {
-  it('returns false for non-CallExpression', () => {
-    expect(isZodSchemaOfType(makeIdent('z'), 'number', imports)).toBe(false);
+  const isOfType = (code: string, schemaType: string, selector?: string): boolean =>
+    isZodSchemaOfType(nodeOf(code, selector), schemaType, imports);
+
+  it('matches the factory, for an inner call too', () => {
+    expect(isOfType('z.number()', 'number')).toBe(true);
+    expect(isOfType('number()', 'number')).toBe(true);
+    expect(isOfType('z.number().min(1)', 'number', INNER)).toBe(true);
+    expect(isOfType('z.string()', 'string')).toBe(true);
   });
 
-  it('returns true for z.number()', () => {
-    const call = makeCall(makeME(makeIdent('z'), 'number'));
-    expect(isZodSchemaOfType(call, 'number', imports)).toBe(true);
-  });
-
-  it('returns true for z.number().min(1) (inner call)', () => {
-    const numberCall = makeCall(makeME(makeIdent('z'), 'number'));
-    expect(isZodSchemaOfType(numberCall, 'number', imports)).toBe(true);
-  });
-
-  it('returns false when the factory is a different schema type', () => {
-    const call = makeCall(makeME(makeIdent('z'), 'string'));
-    expect(isZodSchemaOfType(call, 'number', imports)).toBe(false);
-  });
-
-  it('matches any schema type, not just number', () => {
-    const call = makeCall(makeME(makeIdent('z'), 'string'));
-    expect(isZodSchemaOfType(call, 'string', imports)).toBe(true);
-  });
-
-  it('returns true for named import number()', () => {
-    const call = makeCall(makeIdent('number'));
-    expect(isZodSchemaOfType(call, 'number', imports)).toBe(true);
+  it('returns false for another factory, or a node that is not a call', () => {
+    expect(isOfType('z.string()', 'number')).toBe(false);
+    expect(isOfType('z', 'number')).toBe(false);
   });
 });

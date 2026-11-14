@@ -270,18 +270,33 @@ importers:
       '@marcalexiei/prettier-config':
         specifier: catalog:dev
         version: 2.0.0(prettier@3.9.10)
+      '@types/esquery':
+        specifier: 1.5.4
+        version: 1.5.4
       '@typescript-eslint/rule-tester':
         specifier: catalog:dev
         version: 8.72.1(eslint@10.14.0)(supports-color@7.2.0)(typescript@6.0.3)
+      '@typescript-eslint/types':
+        specifier: catalog:deps
+        version: 8.72.1
+      eslint:
+        specifier: ^9 || ^10
+        version: 10.14.0(jiti@2.7.0)(supports-color@7.2.0)
       eslint-doc-generator:
         specifier: catalog:dev
         version: 3.7.1(eslint@10.14.0)(supports-color@7.2.0)(typescript@6.0.3)
+      esquery:
+        specifier: ^1.6.0
+        version: 1.7.0
       prettier:
         specifier: catalog:dev
         version: 3.9.10
       tsdown:
         specifier: catalog:dev
         version: 0.23.5(@arethetypeswrong/core@0.18.5)(oxc-resolver@11.24.2)(typescript@6.0.3)
+      typescript-eslint:
+        specifier: catalog:dev
+        version: 8.72.1(eslint@10.14.0)(supports-color@7.2.0)(typescript@6.0.3)
       vitest:
         specifier: catalog:dev
         version: 5.1.0(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(vite@8.3.5)

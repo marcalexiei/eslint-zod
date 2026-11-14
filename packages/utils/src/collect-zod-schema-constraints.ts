@@ -27,11 +27,11 @@ interface ZodSchemaConstraintBase {
   chainIndex: number;
 }
 
-export interface ZodChainedConstraint extends ZodSchemaConstraintBase {
+interface ZodChainedConstraint extends ZodSchemaConstraintBase {
   origin: 'chained';
 }
 
-export interface ZodCheckArgumentConstraint extends ZodSchemaConstraintBase {
+interface ZodCheckArgumentConstraint extends ZodSchemaConstraintBase {
   origin: 'check-argument';
 
   /** The `.check(...)` call expression containing this constraint. */

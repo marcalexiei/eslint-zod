@@ -1,227 +1,53 @@
-import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import { buildZodChainReplacementFix } from './build-zod-chain-replacement-fix.js';
-import type { RuleFixer, SourceCode } from './rule-types.js';
+import { track, trackChain } from './spec-helpers.js';
 
-function makeIdent(name: string): TSESTree.Identifier {
-  return {
-    type: AST_NODE_TYPES.Identifier,
-    name,
-    range: [0, 0],
-  } as unknown as TSESTree.Identifier;
-}
-
-function makeME(object: TSESTree.Expression, propertyName: string): TSESTree.MemberExpression {
-  return {
-    type: AST_NODE_TYPES.MemberExpression,
-    object,
-    property: makeIdent(propertyName),
-    range: [0, 0],
-  } as unknown as TSESTree.MemberExpression;
-}
-
-function makeCall(
-  callee: TSESTree.Expression,
-  args: Array<TSESTree.Expression> = [],
-  range: [number, number] = [0, 0],
-): TSESTree.CallExpression {
-  return {
-    type: AST_NODE_TYPES.CallExpression,
-    callee,
-    arguments: args,
-    range,
-  } as unknown as TSESTree.CallExpression;
-}
-
-function makeSourceCode(
-  textMap: Map<TSESTree.Node, string>,
-  comments: Array<{ range: [number, number] }> = [],
-): SourceCode {
-  return {
-    getText: (node: TSESTree.Node) => textMap.get(node) ?? '',
-    getAllComments: () => comments,
-  } as unknown as SourceCode;
-}
-
-function makeFixer(): {
-  fixer: RuleFixer;
-  calls: { replaceTextRange?: { range: [number, number]; text: string } };
-} {
-  const calls: {
-    replaceTextRange?: { range: [number, number]; text: string };
-  } = {};
-  const fixer = {
-    replaceTextRange(range: [number, number], text: string) {
-      calls.replaceTextRange = { range, text };
-      return { range, text };
-    },
-  } as unknown as RuleFixer;
-  return { fixer, calls };
+/** The fixed code, or `null` when there is no fix. */
+function replace(code: string, toIndex: number, toMethodName: string): string | null {
+  const { sourceCode, methods, applyFix } = trackChain(code);
+  return applyFix((fixer) =>
+    buildZodChainReplacementFix({ sourceCode, fixer, methods, toIndex, toMethodName }),
+  );
 }
 
 describe('buildZodChainReplacementFix', () => {
-  it('returns null when the factory node is missing', () => {
-    const { fixer } = makeFixer();
-    const sourceCode = makeSourceCode(new Map());
+  it.each([
+    ['z.number().int()', 'z.int()'],
+    ['z.number().min(1).int()', 'z.int().min(1)'],
+    ['z.number().min(1).max(5).int()', 'z.int().min(1).max(5)'],
+    ["z.string().email('Invalid email')", "z.email('Invalid email')"],
+  ])('rewrites %s up to its last call', (code, expected) => {
+    const { methods } = trackChain(code);
+    const last = methods.length - 1;
+    expect(replace(code, last, methods[last].name)).toBe(expected);
+  });
+
+  it('keeps the calls past toIndex: z.number().int().optional()', () => {
+    expect(replace('z.number().int().optional()', 1, 'int')).toBe('z.int().optional()');
+  });
+
+  it.each([
+    ['toIndex is past the chain', 'z.number()', 1],
+    ['a comment sits inside the rewritten range', 'z.number() /* c */ .int()', 1],
+    ['a receiver is parenthesized', '(z.number()).int()', 1],
+    ['an in-between receiver is parenthesized', '(z.number().min(1)).int()', 2],
+  ])('returns null when %s: %s', (_, code, toIndex) => {
+    expect(replace(code, toIndex, 'int')).toBeNull();
+  });
+
+  it('returns null for an empty chain', () => {
+    const { sourceCode, applyFix } = track('');
     expect(
-      buildZodChainReplacementFix({
-        sourceCode,
-        fixer,
-        methods: [],
-        toIndex: 1,
-        toMethodName: 'int',
-      }),
+      applyFix((fixer) =>
+        buildZodChainReplacementFix({
+          sourceCode,
+          fixer,
+          methods: [],
+          toIndex: 1,
+          toMethodName: 'int',
+        }),
+      ),
     ).toBeNull();
-  });
-
-  it('returns null when toIndex node is missing', () => {
-    const zIdent = makeIdent('z');
-    const numberCall = makeCall(makeME(zIdent, 'number'), [], [0, 10]);
-    const textMap = new Map<TSESTree.Node, string>([[zIdent, 'z']]);
-    const { fixer } = makeFixer();
-
-    expect(
-      buildZodChainReplacementFix({
-        sourceCode: makeSourceCode(textMap),
-        fixer,
-        methods: [{ name: 'number', node: numberCall }],
-        toIndex: 1,
-        toMethodName: 'int',
-      }),
-    ).toBeNull();
-  });
-
-  it('returns null when a comment sits inside the rewritten range: z.number() /* c */ .int()', () => {
-    const zIdent = makeIdent('z');
-    const numberCall = makeCall(makeME(zIdent, 'number'), [], [0, 10]);
-    const intCall = makeCall(makeME(numberCall, 'int'), [], [0, 25]);
-    const { fixer, calls } = makeFixer();
-
-    const fix = buildZodChainReplacementFix({
-      sourceCode: makeSourceCode(new Map([[zIdent, 'z']]), [{ range: [11, 18] }]),
-      fixer,
-      methods: [
-        { name: 'number', node: numberCall },
-        { name: 'int', node: intCall },
-      ],
-      toIndex: 1,
-      toMethodName: 'int',
-    });
-
-    expect(fix).toBeNull();
-    expect(calls.replaceTextRange).toBeUndefined();
-  });
-
-  it('returns null when a receiver is parenthesized: (z.number()).int()', () => {
-    const zIdent = makeIdent('z');
-    const numberCall = makeCall(makeME(zIdent, 'number'), [], [1, 11]);
-    // the member starts at the parenthesis, one character before its object
-    const intMember = { ...makeME(numberCall, 'int'), range: [0, 16] } as TSESTree.MemberExpression;
-    const intCall = makeCall(intMember, [], [0, 18]);
-    const { fixer, calls } = makeFixer();
-
-    const fix = buildZodChainReplacementFix({
-      sourceCode: makeSourceCode(new Map([[zIdent, 'z']])),
-      fixer,
-      methods: [
-        { name: 'number', node: numberCall },
-        { name: 'int', node: intCall },
-      ],
-      toIndex: 1,
-      toMethodName: 'int',
-    });
-
-    expect(fix).toBeNull();
-    expect(calls.replaceTextRange).toBeUndefined();
-  });
-
-  it('replaces z.number().int() → z.int() (no between methods, no args)', () => {
-    const zIdent = makeIdent('z');
-    const numberCall = makeCall(makeME(zIdent, 'number'), [], [0, 10]);
-    const intCall = makeCall(makeME(numberCall, 'int'), [], [0, 16]);
-
-    const textMap = new Map<TSESTree.Node, string>([[zIdent, 'z']]);
-    const { fixer, calls } = makeFixer();
-
-    buildZodChainReplacementFix({
-      sourceCode: makeSourceCode(textMap),
-      fixer,
-      methods: [
-        { name: 'number', node: numberCall },
-        { name: 'int', node: intCall },
-      ],
-      toIndex: 1,
-      toMethodName: 'int',
-    });
-
-    expect(calls.replaceTextRange?.text).toBe('z.int()');
-    expect(calls.replaceTextRange?.range).toStrictEqual([0, 16]);
-  });
-
-  it('replaces z.number().min(1).int() → z.int().min(1) (with between method)', () => {
-    const zIdent = makeIdent('z');
-    const numberCall = makeCall(makeME(zIdent, 'number'), [], [0, 10]);
-    const minArg = {
-      type: AST_NODE_TYPES.Literal,
-      value: 1,
-      raw: '1',
-    } as unknown as TSESTree.Literal;
-    const minCall = makeCall(makeME(numberCall, 'min'), [minArg], [0, 18]);
-    const intCall = makeCall(makeME(minCall, 'int'), [], [0, 24]);
-
-    const textMap = new Map<TSESTree.Node, string>([
-      [zIdent, 'z'],
-      [numberCall, 'z.number()'],
-      [minCall, 'z.number().min(1)'],
-      [minArg, '1'],
-    ]);
-    const { fixer, calls } = makeFixer();
-
-    buildZodChainReplacementFix({
-      sourceCode: makeSourceCode(textMap),
-      fixer,
-      methods: [
-        { name: 'number', node: numberCall },
-        { name: 'min', node: minCall },
-        { name: 'int', node: intCall },
-      ],
-      toIndex: 2,
-      toMethodName: 'int',
-    });
-
-    expect(calls.replaceTextRange?.text).toBe('z.int().min(1)');
-    expect(calls.replaceTextRange?.range).toStrictEqual([0, 24]);
-  });
-
-  it("preserves args on the replacement method: z.string().email('Invalid email') → z.email('Invalid email')", () => {
-    const zIdent = makeIdent('z');
-    const stringCall = makeCall(makeME(zIdent, 'string'), [], [0, 10]);
-    const emailArg = {
-      type: AST_NODE_TYPES.Literal,
-      value: 'Invalid email',
-      raw: "'Invalid email'",
-    } as unknown as TSESTree.Literal;
-    const emailCall = makeCall(makeME(stringCall, 'email'), [emailArg], [0, 34]);
-
-    const textMap = new Map<TSESTree.Node, string>([
-      [zIdent, 'z'],
-      [emailArg, "'Invalid email'"],
-    ]);
-    const { fixer, calls } = makeFixer();
-
-    buildZodChainReplacementFix({
-      sourceCode: makeSourceCode(textMap),
-      fixer,
-      methods: [
-        { name: 'string', node: stringCall },
-        { name: 'email', node: emailCall },
-      ],
-      toIndex: 1,
-      toMethodName: 'email',
-    });
-
-    expect(calls.replaceTextRange?.text).toBe("z.email('Invalid email')");
   });
 });
