@@ -4,6 +4,7 @@ import { PLUGIN_NAME, PLUGIN_VERSION } from './meta.js';
 import { arrayStyle } from './rules/array-style.js';
 import { consistentImportSource } from './rules/consistent-import-source.js';
 import { consistentImport } from './rules/consistent-import.js';
+import { consistentObjectPropertyKeyStyle } from './rules/consistent-object-property-key-style.js';
 import { consistentObjectSchemaType } from './rules/consistent-object-schema-type.js';
 import { consistentSchemaOutputTypeStyle } from './rules/consistent-schema-output-type-style.js';
 import { consistentSchemaVarName } from './rules/consistent-schema-var-name.js';
@@ -71,6 +72,7 @@ const eslintPluginZod = {
     'consistent-import': consistentImport,
     'consistent-object-schema-type': consistentObjectSchemaType,
     'consistent-schema-var-name': consistentSchemaVarName,
+    'consistent-object-property-key-style': consistentObjectPropertyKeyStyle,
     'consistent-schema-output-type-style': consistentSchemaOutputTypeStyle,
     'no-any-schema': noAnySchema,
     'no-coerce-boolean': noCoerceBoolean,
@@ -171,6 +173,7 @@ const strictRules = {
 const stylisticRules = {
   'zod/array-style': 'error',
   'zod/consistent-import-source': 'error',
+  'zod/consistent-object-property-key-style': 'error',
   'zod/consistent-schema-output-type-style': 'error',
   'zod/prefer-enum-over-literal-union': 'error',
   'zod/prefer-loose-object': 'error',
