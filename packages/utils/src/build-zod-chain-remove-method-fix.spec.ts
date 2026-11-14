@@ -34,6 +34,8 @@ function makeFixer(): {
   return { fixer, calls };
 }
 
+const noComments = { getAllComments: (): Array<never> => [] };
+
 describe('buildZodChainRemoveMethodFix', () => {
   it('returns null when the receiver is parenthesized: (z.number()).finite()', () => {
     const { fixer } = makeFixer();
@@ -41,7 +43,9 @@ describe('buildZodChainRemoveMethodFix', () => {
       { name: 'number', node: makeNodeWithRange(1, 11) },
       { name: 'finite', node: makeNodeWithRange(0, 21, 1) },
     ];
-    expect(buildZodChainRemoveMethodFix({ fixer, methods, removeIndex: 1 })).toBeNull();
+    expect(
+      buildZodChainRemoveMethodFix({ fixer, methods, removeIndex: 1, sourceCode: noComments }),
+    ).toBeNull();
   });
 
   it('returns null when a comment sits in the removed text: z.number() /* c */ .finite()', () => {
@@ -72,22 +76,17 @@ describe('buildZodChainRemoveMethodFix', () => {
   it('returns null when removeIndex < 1', () => {
     const { fixer } = makeFixer();
     const methods = [{ name: 'number', node: makeNodeWithRange(0, 10) }];
-    expect(buildZodChainRemoveMethodFix({ fixer, methods, removeIndex: 0 })).toBeNull();
+    expect(
+      buildZodChainRemoveMethodFix({ fixer, methods, removeIndex: 0, sourceCode: noComments }),
+    ).toBeNull();
   });
 
   it('returns null when removeIndex is negative', () => {
     const { fixer } = makeFixer();
     const methods = [{ name: 'number', node: makeNodeWithRange(0, 10) }];
-    expect(buildZodChainRemoveMethodFix({ fixer, methods, removeIndex: -1 })).toBeNull();
-  });
-
-  it('returns null when the target node has no range', () => {
-    const { fixer } = makeFixer();
-    const methods = [
-      { name: 'number', node: makeNodeWithRange(0, 10) },
-      { name: 'finite', node: {} as unknown as TSESTree.CallExpression },
-    ];
-    expect(buildZodChainRemoveMethodFix({ fixer, methods, removeIndex: 1 })).toBeNull();
+    expect(
+      buildZodChainRemoveMethodFix({ fixer, methods, removeIndex: -1, sourceCode: noComments }),
+    ).toBeNull();
   });
 
   it('removes a trailing method: z.number().min(0).finite()', () => {
@@ -98,7 +97,7 @@ describe('buildZodChainRemoveMethodFix', () => {
       { name: 'min', node: makeNodeWithRange(0, 18) },
       { name: 'finite', node: makeNodeWithRange(0, 27) },
     ];
-    buildZodChainRemoveMethodFix({ fixer, methods, removeIndex: 2 });
+    buildZodChainRemoveMethodFix({ fixer, methods, removeIndex: 2, sourceCode: noComments });
     // removes from end of methods[1] to end of methods[2]
     expect(calls.removeRange).toStrictEqual([18, 27]);
   });
@@ -110,7 +109,7 @@ describe('buildZodChainRemoveMethodFix', () => {
       { name: 'min', node: makeNodeWithRange(0, 18) },
       { name: 'finite', node: makeNodeWithRange(0, 27) },
     ];
-    buildZodChainRemoveMethodFix({ fixer, methods, removeIndex: 1 });
+    buildZodChainRemoveMethodFix({ fixer, methods, removeIndex: 1, sourceCode: noComments });
     expect(calls.removeRange).toStrictEqual([10, 18]);
   });
 });

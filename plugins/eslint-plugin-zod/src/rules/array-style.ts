@@ -97,17 +97,12 @@ export const arrayStyle = createZodPluginRule<[Options], MessageIds>({
                 }
                 // the fix keeps only the argument text, so a comment outside it would be dropped
                 if (
-                  sourceCode
-                    .getCommentsInside(arrayCall.node)
-                    .some(
-                      (comment) =>
-                        comment.range[0] < arg.range[0] || comment.range[1] > arg.range[1],
-                    )
+                  hasCommentInRange(sourceCode, [arrayCall.node.range[0], arg.range[0]]) ||
+                  hasCommentInRange(sourceCode, [arg.range[1], arrayCall.node.range[1]])
                 ) {
                   return null;
                 }
-                const argText = sourceCode.getText(arg);
-                return fixer.replaceText(arrayCall.node, `${argText}.array()`);
+                return fixer.replaceText(arrayCall.node, `${sourceCode.getText(arg)}.array()`);
               },
             });
           }
@@ -139,8 +134,10 @@ export const arrayStyle = createZodPluginRule<[Options], MessageIds>({
               if (hasCommentInRange(sourceCode, [callee.object.range[1], arrayNode.range[1]])) {
                 return null;
               }
-              const objText = sourceCode.getText(callee.object);
-              return fixer.replaceText(arrayNode, `${root.name}.array(${objText})`);
+              return fixer.replaceText(
+                arrayNode,
+                `${root.name}.array(${sourceCode.getText(callee.object)})`,
+              );
             },
           });
         }

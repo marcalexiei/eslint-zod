@@ -5,36 +5,27 @@ import { hasParenthesizedReceiver } from './has-parenthesized-receiver.js';
 import type { RuleFix, RuleFixer, SourceCode } from './rule-types.js';
 
 /**
- * Utility to generate a fixer for replacing a method chain like z.string().uuid() or z.number().int()
- * with z.uuid() or z.int(), preserving any intermediate methods.
- *
- * @param opts Object containing all options for the fixer
- * @returns Fixer replaceTextRange call
+ * Replaces the chain from its factory to `toIndex` with a top-level call, keeping the methods in between:
+ * `z.number().min(1).int()` → `z.int().min(1)`.
  */
 export function buildZodChainReplacementFix(opts: {
   sourceCode: SourceCode;
   fixer: RuleFixer;
   methods: Array<{ name: string; node: TSESTree.CallExpression }>;
-  fromIndex: number;
   toIndex: number;
   toMethodName: string;
 }): RuleFix | null {
-  const { sourceCode, fixer, methods, fromIndex, toIndex, toMethodName } = opts;
-  // prettier-ignore
-  const fromNode = methods[fromIndex]?.node as TSESTree.CallExpression | undefined;
-  // prettier-ignore
-  const toNode = methods[toIndex]?.node as TSESTree.CallExpression | undefined;
-
+  const { sourceCode, fixer, methods, toIndex, toMethodName } = opts;
+  const fromNode = methods.at(0)?.node;
+  const toNode = methods.at(toIndex)?.node;
   if (!fromNode || !toNode) {
     return null;
   }
 
   // The suffixes below are sliced by text, which a parenthesized receiver would throw off.
-  if (
-    methods
-      .slice(fromIndex + 1, toIndex + 1)
-      .some((m) => hasParenthesizedReceiver(m.node.callee as TSESTree.MemberExpression))
-  ) {
+  const memberOf = (node: TSESTree.CallExpression): TSESTree.MemberExpression =>
+    node.callee as TSESTree.MemberExpression;
+  if (methods.slice(1, toIndex + 1).some((it) => hasParenthesizedReceiver(memberOf(it.node)))) {
     return null;
   }
 
@@ -44,36 +35,14 @@ export function buildZodChainReplacementFix(opts: {
     return null;
   }
 
-  // prefix is the namespace (e.g. "z")
-  const fromCallee = fromNode.callee as TSESTree.MemberExpression;
-  const prefixObj = fromCallee.object;
-  const prefixText = sourceCode.getText(prefixObj);
+  const namespace = sourceCode.getText(memberOf(fromNode).object);
+  const args = toNode.arguments.map((arg) => sourceCode.getText(arg)).join(', ');
+  // Each method in between keeps its `.name(args)` suffix: its text past the receiver's.
+  const suffixes = methods
+    .slice(1, toIndex)
+    .map(({ node }) =>
+      sourceCode.getText(node).slice(sourceCode.getText(memberOf(node).object).length),
+    );
 
-  // Methods between number and int should be moved after .int()
-  // Example: z.number().min(1).int() -> methodsBetween = [min]
-  const methodsBetween = methods.slice(fromIndex + 1, toIndex);
-
-  // For each intermediate method, extract only its ".name(args…)" suffix.
-  // We do this by taking full text of the call expression and slicing off
-  // the text of its callee.object (the part before the dot).
-  const betweenSuffixes = methodsBetween.map((m) => {
-    const betweenCallee = m.node.callee as TSESTree.MemberExpression;
-    const objText = sourceCode.getText(betweenCallee.object);
-    const fullText = sourceCode.getText(m.node);
-    return fullText.slice(objText.length);
-  });
-
-  // Construct replacement: z.toMethodName() + betweenSuffixes
-  let replacement = `${prefixText}.${toMethodName}(`;
-
-  // Rebuild parameters
-  if (toNode.arguments.length) {
-    const argsText = toNode.arguments.map((arg) => sourceCode.getText(arg)).join(', ');
-
-    replacement += argsText;
-  }
-
-  replacement += `)${betweenSuffixes.join('')}`;
-
-  return fixer.replaceTextRange(range, replacement);
+  return fixer.replaceTextRange(range, `${namespace}.${toMethodName}(${args})${suffixes.join('')}`);
 }

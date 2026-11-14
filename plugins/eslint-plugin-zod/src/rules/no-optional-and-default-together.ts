@@ -53,12 +53,7 @@ export const noOptionalAndDefaultTogether = createZodPluginRule<[Options], Messa
 
     return createSchemaVisitor({
       onSchema(node): void {
-        // Collect all methods in the chain
         const methods = collectZodChainMethods(node);
-
-        if (methods.length === 0) {
-          return;
-        }
 
         // Pair the two only on the same schema:
         // in `z.string().optional().array().default([])` they sit on either side of a type change.
@@ -79,12 +74,11 @@ export const noOptionalAndDefaultTogether = createZodPluginRule<[Options], Messa
           }
         }
 
-        // If not both methods are present stop processing the expression
         if (!optionalMethod || !defaultMethod) {
           return;
         }
 
-        // Determine which node to report on (the one that appears later in the chain)
+        // Reported on whichever comes later.
         const reportNode =
           methods.indexOf(optionalMethod) > methods.indexOf(defaultMethod)
             ? optionalMethod.node
@@ -125,7 +119,6 @@ export const noOptionalAndDefaultTogether = createZodPluginRule<[Options], Messa
               return null;
             }
 
-            // Replace the entire call expression with just its object
             return fixer.replaceText(nodeToRemove, sourceCode.getText(calleeToRemove.object));
           },
         });
