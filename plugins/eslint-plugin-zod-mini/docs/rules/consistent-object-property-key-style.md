@@ -49,6 +49,22 @@ Spread elements (`...other`) and computed keys that are not string literals are 
 }
 ```
 
+### Different styles in different folders
+
+ESLint takes one set of options per rule and file, so a style cannot depend on the factory (`z.object()` versus `z.strictObject()`).
+Key style follows where the data comes from, so scope it by folder with flat config `files` instead:
+
+```js
+export default [
+  { rules: { 'zod-mini/consistent-object-property-key-style': ['error', { style: 'camelCase' }] } },
+  {
+    // Schemas mirroring a snake_case API
+    files: ['src/api/**'],
+    rules: { 'zod-mini/consistent-object-property-key-style': ['error', { style: 'snake_case' }] },
+  },
+];
+```
+
 ## Examples
 
 ### ❌ Invalid

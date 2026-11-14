@@ -8,7 +8,7 @@ type Case = InvalidTestCase<
   'invalidStyle' | 'renameKey',
   typeof consistentObjectPropertyKeyStyle.defaultOptions
 >;
-type Style = 'camelCase' | 'snake_case';
+type Style = NonNullable<Case['options']>[0]['style'];
 
 /** A case reporting `name`, whose suggestion renames it to `replacement`; no suggestion without `output`. */
 function rename(
@@ -19,6 +19,7 @@ function rename(
   return {
     name: `${name} → ${replacement}${output === undefined ? ' (no suggestion)' : ''}`,
     code,
+    output: null,
     options: [{ style }],
     errors: [
       {

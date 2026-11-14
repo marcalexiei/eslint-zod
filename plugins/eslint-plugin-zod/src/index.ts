@@ -195,7 +195,7 @@ Object.assign(plugin.configs, {
   all: createConfig('all', {
     ...strictRules,
     ...stylisticRules,
-    // A naming convention, like typescript-eslint's `naming-convention`, so no curated config carries it
+    // A naming convention, so no curated config carries it
     'zod/consistent-object-property-key-style': 'error',
     // overlaps `prefer-strict-object` / `prefer-loose-object`, so no curated config carries it
     'zod/consistent-object-schema-type': 'error',

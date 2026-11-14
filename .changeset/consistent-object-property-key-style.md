@@ -6,4 +6,4 @@
 
 feat: add `consistent-object-property-key-style` rule
 
-Enforce consistent Zod object property key style.
+Off by default: the rule is in `all` only.

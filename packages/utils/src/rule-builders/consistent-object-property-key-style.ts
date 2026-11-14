@@ -7,9 +7,8 @@ import { getStaticPropertyName } from '../get-static-property-name.js';
 import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
-
-import { ZOD_OBJECT_METHODS } from './consistent-object-schema-type.js';
-import type { ZodObjectMethod } from './consistent-object-schema-type.js';
+import { ZOD_OBJECT_METHODS } from '../zod-object-methods.js';
+import type { ZodObjectMethod } from '../zod-object-methods.js';
 
 export const ZOD_OBJECT_PROPERTY_KEY_STYLES = Object.freeze(['camelCase', 'snake_case'] as const);
 
@@ -71,12 +70,13 @@ export function buildConsistentObjectPropertyKeyStyleCreate(
       }
       checkedShapes.add(shape);
 
-      const properties = shape.properties.filter(
-        (property) => property.type === AST_NODE_TYPES.Property,
+      const keys = shape.properties.flatMap((property) =>
+        property.type === AST_NODE_TYPES.Property
+          ? [{ property, name: getStaticPropertyName(property) }]
+          : [],
       );
-      const names = new Set(properties.map(getStaticPropertyName));
-      for (const property of properties) {
-        const name = getStaticPropertyName(property);
+      const names = new Set(keys.map((key) => key.name));
+      for (const { property, name } of keys) {
         if (name === null || !pattern.test(name)) {
           continue;
         }
@@ -86,7 +86,6 @@ export function buildConsistentObjectPropertyKeyStyleCreate(
           node: property.key,
           messageId: 'invalidStyle',
           data: { name, style },
-          // Withheld when the new name is already a key of the shape.
           suggest: names.has(replacement)
             ? []
             : [
