@@ -1,5 +1,31 @@
 # eslint-plugin-zod
 
+## 5.3.0
+
+### Minor Changes
+
+- [#601](https://github.com/marcalexiei/eslint-zod/pull/601) [`aaf8604`](https://github.com/marcalexiei/eslint-zod/commit/aaf86041af5b408a944327815bed39f969c4e16f) - feat: follow `let` and `var` bindings that are never reassigned, as `const` bindings already are
+
+  Rules that read a schema or value through a variable now report the same code whichever keyword declares it.
+
+- [#612](https://github.com/marcalexiei/eslint-zod/pull/612) [`ed45068`](https://github.com/marcalexiei/eslint-zod/commit/ed4506886938de50c4721674c8f1bfd444bc9e74) - feat: add `consistent-object-property-key-style` rule
+
+  Off by default: the rule is in `all` only.
+
+- [#607](https://github.com/marcalexiei/eslint-zod/pull/607) [`a0c51b3`](https://github.com/marcalexiei/eslint-zod/commit/a0c51b33d9fb65fd1ae32a63d6a75becfcbc3ae3) - feat: report the deprecated number methods and properties on `z.coerce.number()`, and add `getZodSchemaFactoryName`
+
+- [#606](https://github.com/marcalexiei/eslint-zod/pull/606) [`64e4552`](https://github.com/marcalexiei/eslint-zod/commit/64e4552ebd627048b7eec0b5215eadd932529e50) - feat: report the deprecated number methods and properties on `z.int()`, `z.float32()` and the other number sub-types, as on `z.number()`
+
+- [#600](https://github.com/marcalexiei/eslint-zod/pull/600) [`0846e47`](https://github.com/marcalexiei/eslint-zod/commit/0846e47d2d3cb595fcbc6d39df8894e8add9490e) - feat: add `no-reshape-on-refined-object` rule
+
+  It reports reshaping calls that zod throws on once an object schema has a refinement.
+
+### Patch Changes
+
+- [#614](https://github.com/marcalexiei/eslint-zod/pull/614) [`9a6ff84`](https://github.com/marcalexiei/eslint-zod/commit/9a6ff84289b9846085c4895b96a6a8ad6fdc1056) - fix: follow a schema variable whose initializer carries `as`, `satisfies` or `!` in `prefer-validate`
+- Updated dependencies [[`aaf8604`](https://github.com/marcalexiei/eslint-zod/commit/aaf86041af5b408a944327815bed39f969c4e16f), [`ed45068`](https://github.com/marcalexiei/eslint-zod/commit/ed4506886938de50c4721674c8f1bfd444bc9e74), [`0d5746b`](https://github.com/marcalexiei/eslint-zod/commit/0d5746bafad4d02bd609133ca55b86a04986211d), [`a0c51b3`](https://github.com/marcalexiei/eslint-zod/commit/a0c51b33d9fb65fd1ae32a63d6a75becfcbc3ae3), [`64e4552`](https://github.com/marcalexiei/eslint-zod/commit/64e4552ebd627048b7eec0b5215eadd932529e50), [`0846e47`](https://github.com/marcalexiei/eslint-zod/commit/0846e47d2d3cb595fcbc6d39df8894e8add9490e), [`9a6ff84`](https://github.com/marcalexiei/eslint-zod/commit/9a6ff84289b9846085c4895b96a6a8ad6fdc1056)]:
+  - @eslint-zod/utils@7.0.0
+
 ## 5.2.2
 
 ### Patch Changes
