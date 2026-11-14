@@ -32,55 +32,36 @@ export function buildConsistentSchemaOutputTypeStyleCreate(
     return {
       ImportDeclaration: importDeclarationListener,
 
-      TSTypeReference(node: TSESTree.TSTypeReference): void {
-        const { typeName } = node;
-
+      TSTypeReference({ typeName }: TSESTree.TSTypeReference): void {
+        // `z.output` is rewritten as a member; a named `output` as the local name of the other import.
+        let target: TSESTree.Identifier;
+        let usedStyle: string | undefined;
+        let replacement: string | undefined;
         if (typeName.type === AST_NODE_TYPES.TSQualifiedName) {
           const { left, right } = typeName;
-
           if (left.type !== AST_NODE_TYPES.Identifier || !isZodNamespace(left.name)) {
             return;
           }
-
-          const usedStyle = right.name;
-
-          if ((usedStyle !== 'infer' && usedStyle !== 'output') || usedStyle === style) {
-            return;
-          }
-
-          context.report({
-            node: right,
-            messageId: style === 'infer' ? 'useInfer' : 'useOutput',
-            fix(fixer) {
-              return fixer.replaceText(right, style);
-            },
-          });
-
+          [target, usedStyle, replacement] = [right, right.name, style];
+        } else if (typeName.type === AST_NODE_TYPES.Identifier) {
+          const local = getNamedImportLocal(style);
+          // `infer` is a keyword, so it cannot stand alone as a type name.
+          [target, usedStyle, replacement] = [
+            typeName,
+            getNamedImportOriginal(typeName.name),
+            local === 'infer' ? undefined : local,
+          ];
+        } else {
           return;
         }
-
-        if (typeName.type === AST_NODE_TYPES.Identifier) {
-          const originalName = getNamedImportOriginal(typeName.name);
-
-          if ((originalName !== 'infer' && originalName !== 'output') || originalName === style) {
-            return;
-          }
-
-          const targetLocalName = getNamedImportLocal(style);
-
-          context.report({
-            node: typeName,
-            messageId: style === 'infer' ? 'useInfer' : 'useOutput',
-            fix(fixer) {
-              // 'infer' cannot be used as a standalone type name (TypeScript keyword),
-              // so only fix when the target local name is safe to use directly.
-              if (!targetLocalName || targetLocalName === 'infer') {
-                return null;
-              }
-              return fixer.replaceText(typeName, targetLocalName);
-            },
-          });
+        if ((usedStyle !== 'infer' && usedStyle !== 'output') || usedStyle === style) {
+          return;
         }
+        context.report({
+          node: target,
+          messageId: style === 'infer' ? 'useInfer' : 'useOutput',
+          fix: (fixer) => (replacement ? fixer.replaceText(target, replacement) : null),
+        });
       },
     };
   };

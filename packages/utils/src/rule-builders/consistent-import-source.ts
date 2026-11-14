@@ -17,11 +17,7 @@ export function buildConsistentImportSourceCreate<TSources extends ReadonlyArray
     return {
       ImportDeclaration(node): void {
         const sourceValue = node.source.value;
-        if (!scope.isAllowed(sourceValue)) {
-          return;
-        }
-
-        if (sources.includes(sourceValue)) {
+        if (!scope.isAllowed(sourceValue) || sources.includes(sourceValue)) {
           return;
         }
 

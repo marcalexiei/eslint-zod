@@ -1,3 +1,4 @@
+import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { hasCommentInRange } from '../has-comment-in-range.js';
@@ -11,6 +12,22 @@ export function buildPreferEnumOverLiteralUnionCreate(
   return function create(context) {
     const { createSchemaVisitor, detectZodSchemaRootNode, collectZodChainMethods } =
       scope.createTracker({ kind: 'value' });
+
+    /** A bare `z.literal('…')`'s source text: a chained method or a params argument would be lost. */
+    function literalText(element: TSESTree.ArrayExpression['elements'][number]): string | null {
+      if (
+        element?.type !== AST_NODE_TYPES.CallExpression ||
+        detectZodSchemaRootNode(element)?.schemaType !== 'literal' ||
+        collectZodChainMethods(element).length !== 1 ||
+        element.arguments.length !== 1
+      ) {
+        return null;
+      }
+      const [argument] = element.arguments;
+      return argument.type === AST_NODE_TYPES.Literal && typeof argument.value === 'string'
+        ? argument.raw
+        : null;
+    }
 
     return createSchemaVisitor({
       schemaType: 'union',
@@ -32,40 +49,7 @@ export function buildPreferEnumOverLiteralUnionCreate(
           return;
         }
 
-        const zodLiteralStrings = unionArgument.elements.map<string | null>((s) => {
-          if (!s) {
-            return null;
-          }
-
-          if (s.type !== AST_NODE_TYPES.CallExpression) {
-            return null;
-          }
-
-          const maybeLiteralSchema = detectZodSchemaRootNode(s);
-          if (maybeLiteralSchema?.schemaType !== 'literal') {
-            return null;
-          }
-
-          // Only a bare `literal(value)` maps onto an enum member:
-          // a chained method (`.describe()`) or a params argument would be lost,
-          // and `s` is then that outer call rather than the `literal()` one.
-          if (collectZodChainMethods(s).length !== 1 || s.arguments.length !== 1) {
-            return null;
-          }
-
-          const [literalArgument] = s.arguments;
-          if (
-            literalArgument.type === AST_NODE_TYPES.Literal &&
-            // Literal could be also a number
-            typeof literalArgument.value === 'string'
-          ) {
-            // Use raw to keep the string format consistent with the original source
-            return literalArgument.raw;
-          }
-
-          return null;
-        });
-
+        const zodLiteralStrings = unionArgument.elements.map(literalText);
         if (zodLiteralStrings.some((it) => it === null)) {
           return;
         }
@@ -90,7 +74,7 @@ export function buildPreferEnumOverLiteralUnionCreate(
 
             return [
               fixer.replaceText(union.member.property, 'enum'),
-              fixer.replaceText(unionNode.arguments[0], `[${zodLiteralStrings.join(', ')}]`),
+              fixer.replaceText(unionArgument, `[${zodLiteralStrings.join(', ')}]`),
             ];
           },
         });

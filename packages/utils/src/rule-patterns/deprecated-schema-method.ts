@@ -41,8 +41,9 @@ export function buildDeprecatedSchemaMethodCreate<TMessageIds extends string>(
           return;
         }
 
-        const precedingMethods = methods.slice(0, methodIndex);
-        if (precedingMethods.some((it) => ZOD_NON_SCHEMA_PRODUCING_METHODS.includes(it))) {
+        if (
+          methods.slice(0, methodIndex).some((it) => ZOD_NON_SCHEMA_PRODUCING_METHODS.includes(it))
+        ) {
           return;
         }
 

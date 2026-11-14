@@ -16,105 +16,58 @@ export function buildRequireErrorMessageCreate(
 
     return createSchemaVisitor({
       onSchema(node): void {
-        const refines = collectZodChainMethods(node).filter(
-          (it) => it.name === 'refine' || it.name === 'custom',
-        );
-
-        if (refines.length === 0) {
-          return;
-        }
-
-        // Check each refine/custom method in the chain
-        for (const refine of refines) {
-          const refineNode = refine.node;
-
-          // A valid error message requires 2 arguments; otherwise, it's missing
-          if (refineNode.arguments.length < 2) {
-            context.report({
-              messageId: 'requireErrorMessage',
-              node: refineNode,
-            });
+        for (const { name, node: call } of collectZodChainMethods(node)) {
+          if (name !== 'refine' && name !== 'custom') {
             continue;
           }
-
-          const [, params] = refineNode.arguments;
-
-          // Since the user passes a string, an error message is always included
-          if (params.type === AST_NODE_TYPES.Literal) {
+          const params = call.arguments.at(1);
+          if (!params) {
+            context.report({ messageId: 'requireErrorMessage', node: call });
             continue;
           }
-
-          // If the param isn't an object expression we bail the detection
+          // A string is the message itself; anything else but an object literal is not analyzed.
           if (params.type !== AST_NODE_TYPES.ObjectExpression) {
             continue;
           }
 
-          // If user is providing an object we search for error and message
-          let errorPropertyNode: TSESTree.Property | undefined;
-          let messagePropertyNode: TSESTree.Property | undefined;
-          for (const property of params.properties) {
-            if (property.type === AST_NODE_TYPES.Property) {
-              const keyName = getStaticPropertyName(property);
+          const findProperty = (key: string): TSESTree.Property | undefined =>
+            params.properties.findLast(
+              (property): property is TSESTree.Property =>
+                property.type === AST_NODE_TYPES.Property &&
+                getStaticPropertyName(property) === key,
+            );
+          const error = findProperty('error');
+          const message = findProperty('message');
 
-              if (keyName === 'error') {
-                errorPropertyNode = property;
-              }
-
-              if (keyName === 'message') {
-                messagePropertyNode = property;
-              }
-
-              if (errorPropertyNode && messagePropertyNode) {
-                break;
-              }
-            }
-          }
-
-          if (errorPropertyNode && messagePropertyNode) {
+          if (error && message) {
             context.report({
               messageId: 'removeMessage',
-              node: messagePropertyNode,
+              node: message,
               fix(fixer) {
                 const { sourceCode } = context;
-                const nextToken = sourceCode.getTokenAfter(messagePropertyNode);
-                let [, end] = messagePropertyNode.range;
-
-                // If there's a comma after the property, include it
-                if (nextToken?.value === ',') {
-                  end = nextToken.range[1];
-                }
-
-                const removal: TSESTree.Range = [messagePropertyNode.range[0], end];
+                const comma = sourceCode.getTokenAfter(message);
+                const removal: TSESTree.Range = [
+                  message.range[0],
+                  comma?.value === ',' ? comma.range[1] : message.range[1],
+                ];
                 return hasCommentInRange(sourceCode, removal) ? null : fixer.removeRange(removal);
               },
             });
-            continue;
-          }
-
-          if (messagePropertyNode && !errorPropertyNode) {
+          } else if (message) {
             context.report({
               messageId: 'preferError',
               node: params,
               fix(fixer) {
                 // Renaming the key of a shorthand would rename the variable it reads.
-                if (messagePropertyNode.shorthand) {
-                  return fixer.insertTextBefore(messagePropertyNode, 'error: ');
+                if (message.shorthand) {
+                  return fixer.insertTextBefore(message, 'error: ');
                 }
                 // Inside brackets (`['message']`) a bare name would be a reference.
-                return fixer.replaceText(
-                  messagePropertyNode.key,
-                  messagePropertyNode.computed ? "'error'" : 'error',
-                );
+                return fixer.replaceText(message.key, message.computed ? "'error'" : 'error');
               },
             });
-            continue;
-          }
-
-          if (!errorPropertyNode) {
-            context.report({
-              messageId: 'requireErrorMessage',
-              node: params,
-            });
+          } else if (!error) {
+            context.report({ messageId: 'requireErrorMessage', node: params });
           }
         }
       },
