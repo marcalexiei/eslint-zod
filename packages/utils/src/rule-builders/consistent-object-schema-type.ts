@@ -10,7 +10,7 @@ export const ZOD_OBJECT_METHODS = Object.freeze([
   'strictObject',
 ] as const satisfies ReadonlyArray<ZodExportName>);
 
-type ZodObjectMethod = (typeof ZOD_OBJECT_METHODS)[number];
+export type ZodObjectMethod = (typeof ZOD_OBJECT_METHODS)[number];
 
 export interface ConsistentObjectSchemaTypeOptions {
   allow: Array<ZodObjectMethod>;
