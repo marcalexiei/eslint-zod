@@ -3,6 +3,7 @@ import type { ESLint, Linter, Rule } from 'eslint';
 import { PLUGIN_NAME, PLUGIN_VERSION } from './meta.js';
 import { consistentImportSource } from './rules/consistent-import-source.js';
 import { consistentImport } from './rules/consistent-import.js';
+import { consistentObjectPropertyKeyStyle } from './rules/consistent-object-property-key-style.js';
 import { consistentObjectSchemaType } from './rules/consistent-object-schema-type.js';
 import { consistentSchemaOutputTypeStyle } from './rules/consistent-schema-output-type-style.js';
 import { consistentSchemaVarName } from './rules/consistent-schema-var-name.js';
@@ -52,6 +53,7 @@ const eslintPluginZodMini = {
   rules: {
     'consistent-import': consistentImport,
     'consistent-import-source': consistentImportSource,
+    'consistent-object-property-key-style': consistentObjectPropertyKeyStyle,
     'consistent-object-schema-type': consistentObjectSchemaType,
     'consistent-schema-output-type-style': consistentSchemaOutputTypeStyle,
     'consistent-schema-var-name': consistentSchemaVarName,
@@ -143,7 +145,12 @@ Object.assign(plugin.configs, {
   recommended: createConfig('recommended', recommendedRules),
   strict: createConfig('strict', strictRules),
   stylistic: createConfig('stylistic', stylisticRules),
-  all: createConfig('all', { ...strictRules, ...stylisticRules }),
+  all: createConfig('all', {
+    ...strictRules,
+    ...stylisticRules,
+    // A naming convention, so no curated config carries it
+    'zod-mini/consistent-object-property-key-style': 'error',
+  }),
 });
 
 export default plugin;

@@ -87,8 +87,14 @@ describe('config composition', () => {
     expect(strict.filter((ruleName) => stylistic.includes(ruleName))).toEqual([]);
   });
 
-  it('`all` is exactly `strict` and `stylistic`', () => {
-    expect(all).toEqual([...strict, ...stylistic].sort());
+  it('`all` is a superset of `strict` and `stylistic`', () => {
+    expect(all).toEqual(expect.arrayContaining([...strict, ...stylistic]));
+  });
+
+  it('no curated config carries the key naming convention', () => {
+    expect([...strict, ...stylistic]).not.toContain(
+      'zod-mini/consistent-object-property-key-style',
+    );
   });
 
   it('`all` contains every non-deprecated rule', () => {

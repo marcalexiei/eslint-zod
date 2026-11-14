@@ -96,6 +96,10 @@ describe('config composition', () => {
     expect(stylistic).not.toContain('zod/consistent-object-schema-type');
   });
 
+  it('no curated config carries the key naming convention', () => {
+    expect([...strict, ...stylistic]).not.toContain('zod/consistent-object-property-key-style');
+  });
+
   it('`all` contains every non-deprecated rule', () => {
     const nonDeprecated = getNonDeprecatedRuleNames(plugin).map((ruleName) => `zod/${ruleName}`);
     expect(all).toEqual(nonDeprecated);

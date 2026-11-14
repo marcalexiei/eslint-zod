@@ -1,16 +1,11 @@
-import type { ZodExportName } from '@eslint-zod/zod-api';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import type { ReportSuggestionArray, RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
+import { ZOD_OBJECT_METHODS } from '../zod-object-methods.js';
+import type { ZodObjectMethod } from '../zod-object-methods.js';
 
-export const ZOD_OBJECT_METHODS = Object.freeze([
-  'object',
-  'looseObject',
-  'strictObject',
-] as const satisfies ReadonlyArray<ZodExportName>);
-
-type ZodObjectMethod = (typeof ZOD_OBJECT_METHODS)[number];
+export { ZOD_OBJECT_METHODS };
 
 export interface ConsistentObjectSchemaTypeOptions {
   allow: Array<ZodObjectMethod>;

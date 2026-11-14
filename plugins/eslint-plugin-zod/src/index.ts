@@ -4,6 +4,7 @@ import { PLUGIN_NAME, PLUGIN_VERSION } from './meta.js';
 import { arrayStyle } from './rules/array-style.js';
 import { consistentImportSource } from './rules/consistent-import-source.js';
 import { consistentImport } from './rules/consistent-import.js';
+import { consistentObjectPropertyKeyStyle } from './rules/consistent-object-property-key-style.js';
 import { consistentObjectSchemaType } from './rules/consistent-object-schema-type.js';
 import { consistentSchemaOutputTypeStyle } from './rules/consistent-schema-output-type-style.js';
 import { consistentSchemaVarName } from './rules/consistent-schema-var-name.js';
@@ -69,6 +70,7 @@ const eslintPluginZod = {
     'array-style': arrayStyle,
     'consistent-import-source': consistentImportSource,
     'consistent-import': consistentImport,
+    'consistent-object-property-key-style': consistentObjectPropertyKeyStyle,
     'consistent-object-schema-type': consistentObjectSchemaType,
     'consistent-schema-var-name': consistentSchemaVarName,
     'consistent-schema-output-type-style': consistentSchemaOutputTypeStyle,
@@ -193,6 +195,8 @@ Object.assign(plugin.configs, {
   all: createConfig('all', {
     ...strictRules,
     ...stylisticRules,
+    // A naming convention, so no curated config carries it
+    'zod/consistent-object-property-key-style': 'error',
     // overlaps `prefer-strict-object` / `prefer-loose-object`, so no curated config carries it
     'zod/consistent-object-schema-type': 'error',
   }),

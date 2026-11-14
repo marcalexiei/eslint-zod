@@ -62,6 +62,7 @@ Each rule shared between `eslint-plugin-zod` and `eslint-plugin-zod-mini` (some 
 
 - `buildConsistentImportCreate(scope)` — also exports `ConsistentImportOptions`; its optional type argument narrows `syntax` to the choices a plugin offers
 - `buildConsistentImportSourceCreate(scope)` — also exports `ConsistentImportSourceOptions`
+- `buildConsistentObjectPropertyKeyStyleCreate(scope)` — also exports `ConsistentObjectPropertyKeyStyleOptions` and `ZOD_OBJECT_PROPERTY_KEY_STYLES`
 - `buildConsistentObjectSchemaTypeCreate(scope)` — also exports `ConsistentObjectSchemaTypeOptions` and `ZOD_OBJECT_METHODS`
 - `buildConsistentSchemaOutputTypeStyleCreate(scope)` — also exports `ConsistentSchemaOutputTypeStyleOptions` and `ZOD_SCHEMA_TYPE_STYLES`
 - `buildConsistentSchemaVarNameCreate(scope)` — also exports `ConsistentSchemaVarNameOptions`
