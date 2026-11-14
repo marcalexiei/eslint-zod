@@ -129,7 +129,6 @@ const strictRules = {
 
 const stylisticRules = {
   'zod-mini/consistent-import-source': 'error',
-  'zod-mini/consistent-object-property-key-style': 'error',
   'zod-mini/consistent-object-schema-type': 'error',
   'zod-mini/consistent-schema-output-type-style': 'error',
   'zod-mini/prefer-enum-over-literal-union': 'error',
@@ -146,7 +145,12 @@ Object.assign(plugin.configs, {
   recommended: createConfig('recommended', recommendedRules),
   strict: createConfig('strict', strictRules),
   stylistic: createConfig('stylistic', stylisticRules),
-  all: createConfig('all', { ...strictRules, ...stylisticRules }),
+  all: createConfig('all', {
+    ...strictRules,
+    ...stylisticRules,
+    // A naming convention, like typescript-eslint's `naming-convention`, so no curated config carries it
+    'zod-mini/consistent-object-property-key-style': 'error',
+  }),
 });
 
 export default plugin;

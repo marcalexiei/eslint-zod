@@ -1,9 +1,9 @@
 import { zodMiniImportScope } from '@eslint-zod/utils';
 import {
-  ZOD_OBJECT_METHODS,
   ZOD_OBJECT_PROPERTY_KEY_STYLES,
   buildConsistentObjectPropertyKeyStyleCreate,
 } from '@eslint-zod/utils/rule-builders/consistent-object-property-key-style';
+import { ZOD_OBJECT_METHODS } from '@eslint-zod/utils/rule-builders/consistent-object-schema-type';
 
 import { createZodMiniPluginRule } from '../meta.js';
 
@@ -14,9 +14,10 @@ export const consistentObjectPropertyKeyStyle = createZodMiniPluginRule({
     docs: {
       description: 'Enforce consistent Zod Mini object property key style',
     },
-    fixable: 'code',
+    hasSuggestions: true,
     messages: {
       invalidStyle: 'Property key "{{name}}" should be {{style}}.',
+      renameKey: 'Rename the key to "{{replacement}}".',
     },
     schema: [
       {

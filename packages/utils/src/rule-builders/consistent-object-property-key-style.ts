@@ -4,110 +4,121 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import { findVariable } from '../find-variable.js';
 import { getBindingInitializer } from '../get-binding-initializer.js';
 import { getStaticPropertyName } from '../get-static-property-name.js';
+import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
 import { ZOD_OBJECT_METHODS } from './consistent-object-schema-type.js';
 import type { ZodObjectMethod } from './consistent-object-schema-type.js';
 
-export { ZOD_OBJECT_METHODS };
-export type { ZodObjectMethod };
-
 export const ZOD_OBJECT_PROPERTY_KEY_STYLES = Object.freeze(['camelCase', 'snake_case'] as const);
 
-export type ZodObjectPropertyKeyStyle = (typeof ZOD_OBJECT_PROPERTY_KEY_STYLES)[number];
-
 export interface ConsistentObjectPropertyKeyStyleOptions {
-  style?: ZodObjectPropertyKeyStyle;
+  style?: (typeof ZOD_OBJECT_PROPERTY_KEY_STYLES)[number];
   allow?: ReadonlyArray<ZodObjectMethod>;
 }
 
-type MessageIds = 'invalidStyle';
+type MessageIds = 'invalidStyle' | 'renameKey';
 
-const CAMEL_CASE_PATTERN = /^[a-z][a-zA-Z0-9]*$/u;
-const SNAKE_CASE_PATTERN = /^[a-z][a-z0-9_]*$/u;
-const SNAKE_TO_CAMEL_PATTERN = /_[a-z0-9]/gu;
-const CAMEL_TO_SNAKE_PATTERN = /[A-Z]/gu;
+// Two words or more, so a one-word key fits both styles.
+const CAMEL_CASE = /^[a-z][a-z0-9]*(?:[A-Z][a-z0-9]+)+$/u;
+const SNAKE_CASE = /^[a-z][a-z0-9]*(?:_[a-z0-9]+)+$/u;
 
-function isCamelCase(name: string): boolean {
-  return CAMEL_CASE_PATTERN.test(name);
+function toCamelCase(name: string): string {
+  return name.replace(/_[a-z0-9]/gu, (match) => match.charAt(1).toUpperCase());
 }
 
-function isSnakeCase(name: string): boolean {
-  return SNAKE_CASE_PATTERN.test(name);
+function toSnakeCase(name: string): string {
+  return name.replace(/[A-Z]/gu, (char) => `_${char.toLowerCase()}`);
 }
 
-function toCamelCase(s: string): string {
-  return s.replace(SNAKE_TO_CAMEL_PATTERN, (match: string) => match.slice(1).toUpperCase());
-}
-
-function toSnakeCase(s: string): string {
-  return s.replace(CAMEL_TO_SNAKE_PATTERN, (match: string) => `_${match.toLowerCase()}`);
-}
-
+/**
+ * Reports a schema shape key written in the other style than `style`, inline or bound to a local variable.
+ * Keys in neither style (`_id`, `Content-Type`, `userID`) are left alone.
+ * The rename is a suggestion: it changes which input key the schema reads.
+ */
 export function buildConsistentObjectPropertyKeyStyleCreate(
   scope: ZodImportScope,
 ): (
   context: Readonly<RuleContext<MessageIds, [ConsistentObjectPropertyKeyStyleOptions]>>,
   options: readonly [ConsistentObjectPropertyKeyStyleOptions],
 ) => RuleListener {
-  return function create(context, [options = {}]) {
-    const { style = 'camelCase', allow = ZOD_OBJECT_METHODS } = options;
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({
+  return function create(context, [{ style = 'camelCase', allow = ZOD_OBJECT_METHODS }]) {
+    const { createSchemaVisitor, collectZodChainMethods, isZodImportName } = scope.createTracker({
       kind: 'value',
       sourceCode: context.sourceCode,
     });
+    // Each style reports the keys written in the other one.
+    const [pattern, rename] =
+      style === 'camelCase' ? [SNAKE_CASE, toCamelCase] : [CAMEL_CASE, toSnakeCase];
+    // A shape shared by several schemas is reported once.
+    const checkedShapes = new WeakSet<TSESTree.ObjectExpression>();
 
-    const checkCasing = style === 'camelCase' ? isCamelCase : isSnakeCase;
-    const toStyle = style === 'camelCase' ? toCamelCase : toSnakeCase;
-    const checkedObjects = new WeakSet<TSESTree.ObjectExpression>();
+    function renamedKeyText(property: TSESTree.Property, replacement: string): string {
+      if (property.shorthand) {
+        return `${replacement}: ${context.sourceCode.getText(property.value)}`;
+      }
+      if (property.key.type === AST_NODE_TYPES.Literal) {
+        const quote = context.sourceCode.getText(property.key).charAt(0);
+        return `${quote}${replacement}${quote}`;
+      }
+      return replacement;
+    }
 
-    function checkObjectExpression(objectExpression: TSESTree.ObjectExpression): void {
-      if (checkedObjects.has(objectExpression)) {
+    function checkShape(shape: TSESTree.ObjectExpression): void {
+      if (checkedShapes.has(shape)) {
         return;
       }
-      checkedObjects.add(objectExpression);
+      checkedShapes.add(shape);
 
-      for (const property of objectExpression.properties) {
-        if (property.type !== AST_NODE_TYPES.Property) {
+      const properties = shape.properties.filter(
+        (property) => property.type === AST_NODE_TYPES.Property,
+      );
+      const names = new Set(properties.map(getStaticPropertyName));
+      for (const property of properties) {
+        const name = getStaticPropertyName(property);
+        if (name === null || !pattern.test(name)) {
           continue;
         }
-        const name = getStaticPropertyName(property);
-        if (name && !checkCasing(name)) {
-          context.report({
-            node: property.key,
-            messageId: 'invalidStyle',
-            data: { name, style },
-            fix(fixer): RuleFix {
-              const replacement = toStyle(name);
-              return fixer.replaceText(
-                property.key,
-                property.key.type === AST_NODE_TYPES.Literal ? `'${replacement}'` : replacement,
-              );
-            },
-          });
-        }
+
+        const replacement = rename(name);
+        context.report({
+          node: property.key,
+          messageId: 'invalidStyle',
+          data: { name, style },
+          // Withheld when the new name is already a key of the shape.
+          suggest: names.has(replacement)
+            ? []
+            : [
+                {
+                  messageId: 'renameKey',
+                  data: { replacement },
+                  fix: (fixer): RuleFix =>
+                    fixer.replaceText(property.key, renamedKeyText(property, replacement)),
+                },
+              ],
+        });
       }
     }
 
     return createSchemaVisitor({
       schemaType: allow,
-      onSchema(node, meta): void {
-        const factoryCall =
-          meta.methods.length > 1 ? (collectZodChainMethods(node).at(0)?.node ?? node) : node;
-        const arg = factoryCall.arguments.at(0);
-        if (!arg) {
+      onSchema(node): void {
+        // The outermost call may be a method (`.optional()`); the shape is the factory's argument.
+        const factory = collectZodChainMethods(node).at(0);
+        if (!factory || !isZodFactoryChainItem(factory, isZodImportName)) {
           return;
         }
 
-        if (arg.type === AST_NODE_TYPES.ObjectExpression) {
-          checkObjectExpression(arg);
-        } else if (arg.type === AST_NODE_TYPES.Identifier) {
-          const variable = findVariable(context.sourceCode.getScope(arg), arg.name);
-          const initializer = getBindingInitializer(variable);
-          if (initializer?.type === AST_NODE_TYPES.ObjectExpression) {
-            checkObjectExpression(initializer);
-          }
+        const argument = factory.node.arguments.at(0);
+        const shape =
+          argument?.type === AST_NODE_TYPES.Identifier
+            ? getBindingInitializer(
+                findVariable(context.sourceCode.getScope(argument), argument.name),
+              )
+            : argument;
+        if (shape?.type === AST_NODE_TYPES.ObjectExpression) {
+          checkShape(shape);
         }
       },
     });
