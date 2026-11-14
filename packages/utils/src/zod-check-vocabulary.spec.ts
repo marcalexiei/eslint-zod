@@ -1,91 +1,73 @@
-import { AST_NODE_TYPES } from '@typescript-eslint/types';
-import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import type { ZodSchemaConstraint } from './collect-zod-schema-constraints.js';
+import { trackChain } from './spec-helpers.js';
 import { canonicalizeZodConstraintName, getZodCheckDescriptor } from './zod-check-vocabulary.js';
 import { ZOD_IMMUTABLE_SCHEMA_TYPES } from './zod-immutable-schema-types.js';
+import { zodMiniImportScope } from './zod-import-scope.js';
 import { ZOD_MUTATING_CHECK_NAMES } from './zod-mutating-check-names.js';
 import { ZOD_NON_SCHEMA_PRODUCING_METHODS } from './zod-non-schema-producing-methods.js';
 import { ZOD_STRING_FORMAT_METHODS } from './zod-string-format-methods.js';
 import { ZOD_STRING_FORMAT_NAMES } from './zod-string-format-names.js';
 
-function chained(name: string): ZodSchemaConstraint {
-  return {
-    name,
-    origin: 'chained',
-    chainIndex: 1,
-    node: { arguments: [] } as unknown as TSESTree.CallExpression,
-  };
+/** The first constraint of a `zod` chain. */
+function chained(code: string): ZodSchemaConstraint {
+  const { tracker, call } = trackChain(code);
+  return tracker.collectZodSchemaConstraints(call)[0];
 }
 
-function checkArgument(name: string, memberName?: string): ZodSchemaConstraint {
-  const callee = memberName
-    ? {
-        type: AST_NODE_TYPES.MemberExpression,
-        property: { type: AST_NODE_TYPES.Identifier, name: memberName },
-      }
-    : { type: AST_NODE_TYPES.Identifier, name };
-
-  return {
-    name,
-    origin: 'check-argument',
-    chainIndex: 1,
-    argumentIndex: 0,
-    argumentCount: 1,
-    checkNode: {} as TSESTree.CallExpression,
-    node: { callee, arguments: [] } as unknown as TSESTree.CallExpression,
-  };
+/** The constraint a `zod/mini` check adds to `z.string()`. */
+function checkArgument(check: string): ZodSchemaConstraint {
+  const { tracker, call } = trackChain(`z.string().check(${check})`, zodMiniImportScope);
+  return tracker.collectZodSchemaConstraints(call)[0];
 }
 
 describe('canonicalizeZodConstraintName', () => {
   it.each([
-    ['min', 'string', 'minLength'],
-    ['min', 'array', 'minLength'],
-    ['min', 'number', 'gte'],
-    ['min', 'bigint', 'gte'],
-    ['min', 'date', 'gte'],
-    ['min', 'set', 'minSize'],
-    ['max', 'map', 'maxSize'],
-  ] as const)('resolves chained `%s` on a %s to `%s`', (name, baseType, canonical) => {
-    expect(canonicalizeZodConstraintName(chained(name), baseType)).toBe(canonical);
+    ['z.string().min(1)', 'string', 'minLength'],
+    ['z.array(z.string()).min(1)', 'array', 'minLength'],
+    ['z.number().min(1)', 'number', 'gte'],
+    ['z.bigint().min(BigInt(1))', 'bigint', 'gte'],
+    ['z.date().min(new Date())', 'date', 'gte'],
+    ['z.set(z.string()).min(1)', 'set', 'minSize'],
+    ['z.map(z.string(), z.number()).max(1)', 'map', 'maxSize'],
+  ] as const)('resolves %s on a %s to `%s`', (code, baseType, canonical) => {
+    expect(canonicalizeZodConstraintName(chained(code), baseType)).toBe(canonical);
   });
 
-  it('maps deprecated chained spellings to their replacement', () => {
-    expect(canonicalizeZodConstraintName(chained('step'), 'number')).toBe('multipleOf');
-    expect(canonicalizeZodConstraintName(chained('date'), 'string')).toBe('iso.date');
-    expect(canonicalizeZodConstraintName(chained('datetime'), 'string')).toBe('iso.datetime');
+  it.each([
+    ['z.number().step(2)', 'number', 'multipleOf'],
+    ['z.string().date()', 'string', 'iso.date'],
+    ['z.string().datetime()', 'string', 'iso.datetime'],
+  ] as const)('maps the deprecated %s to `%s`', (code, baseType, canonical) => {
+    expect(canonicalizeZodConstraintName(chained(code), baseType)).toBe(canonical);
   });
 
   it('canonicalizes every chained string format to its top-level factory', () => {
     for (const { sourceMethodName, replacementMethodName } of ZOD_STRING_FORMAT_METHODS) {
-      expect(canonicalizeZodConstraintName(chained(sourceMethodName), 'string')).toBe(
-        replacementMethodName,
-      );
+      expect(
+        canonicalizeZodConstraintName(chained(`z.string().${sourceMethodName}()`), 'string'),
+      ).toBe(replacementMethodName);
     }
   });
 
-  it('passes `.check(...)` arguments through, resolving `iso` members', () => {
-    expect(canonicalizeZodConstraintName(checkArgument('minLength'), 'string')).toBe('minLength');
-    expect(canonicalizeZodConstraintName(checkArgument('minimum'), 'number')).toBe('gte');
-    expect(canonicalizeZodConstraintName(checkArgument('maximum'), 'number')).toBe('lte');
-    expect(canonicalizeZodConstraintName(checkArgument('iso', 'datetime'), 'string')).toBe(
-      'iso.datetime',
-    );
+  it.each([
+    ['z.minLength(1)', 'string', 'minLength'],
+    ['z.minimum(1)', 'number', 'gte'],
+    ['z.maximum(1)', 'number', 'lte'],
+    ['z.iso.datetime()', 'string', 'iso.datetime'],
+  ] as const)('resolves the check %s to `%s`', (check, baseType, canonical) => {
+    expect(canonicalizeZodConstraintName(checkArgument(check), baseType)).toBe(canonical);
   });
 
-  it('returns null for an unmodelled spelling or an unreadable `iso` member', () => {
-    expect(canonicalizeZodConstraintName(chained('brand'), 'string')).toBeNull();
-    expect(canonicalizeZodConstraintName(chained('min'), 'boolean')).toBeNull();
-
-    const computedIso: ZodSchemaConstraint = {
-      ...checkArgument('iso'),
-      node: {
-        callee: { type: AST_NODE_TYPES.Identifier, name: 'iso' },
-        arguments: [],
-      } as unknown as TSESTree.CallExpression,
-    };
-    expect(canonicalizeZodConstraintName(computedIso, 'string')).toBeNull();
+  it('returns null for a check it does not model', () => {
+    expect(canonicalizeZodConstraintName(chained('z.string().brand()'), 'string')).toBeNull();
+    // A base type with no chained bounds.
+    expect(canonicalizeZodConstraintName(chained('z.string().min(1)'), 'boolean')).toBeNull();
+    // Computed, so the ISO format cannot be read.
+    expect(
+      canonicalizeZodConstraintName(checkArgument("z.iso['datetime']()"), 'string'),
+    ).toBeNull();
   });
 });
 
@@ -143,9 +125,7 @@ describe('vocabulary tables agree with each other', () => {
   });
 
   it('treats every top-level string format as an immutable schema type', () => {
-    // All of them parse to `string`, so `.readonly()` is a no-op on each.
-    // Asserted as a set relation rather than by eye: the immutable table used
-    // to hand-copy this list and had already dropped `mac`.
+    // They all parse to `string`. A hand-copied list once dropped `mac`.
     for (const formatName of ZOD_STRING_FORMAT_NAMES) {
       expect(ZOD_IMMUTABLE_SCHEMA_TYPES).toContain(formatName);
     }

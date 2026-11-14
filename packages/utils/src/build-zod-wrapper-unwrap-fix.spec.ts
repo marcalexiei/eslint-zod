@@ -1,156 +1,41 @@
-import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import { buildZodWrapperUnwrapFix } from './build-zod-wrapper-unwrap-fix.js';
-import type { RuleFixer, SourceCode } from './rule-types.js';
+import { track } from './spec-helpers.js';
 
-function makeFixer(): {
-  fixer: RuleFixer;
-  calls: { replaced?: { node: TSESTree.Node; text: string } };
-} {
-  const calls: { replaced?: { node: TSESTree.Node; text: string } } = {};
-  const fixer = {
-    replaceText(node: TSESTree.Node, text: string) {
-      calls.replaced = { node, text };
-      return { range: node.range, text };
-    },
-  } as unknown as RuleFixer;
-  return { fixer, calls };
-}
-
-function makeSourceCode(
-  text: string,
-  comments: Array<{ range: [number, number] }> = [],
-): Readonly<SourceCode> {
-  return {
-    getText: () => text,
-    getAllComments: () => comments,
-  } as unknown as Readonly<SourceCode>;
-}
-
-function makeCall(
-  args: Array<TSESTree.CallExpressionArgument>,
-  { asArgument = false } = {},
-): TSESTree.CallExpression {
-  const call = {
-    type: AST_NODE_TYPES.CallExpression,
-    arguments: args,
-    range: [0, 20],
-  } as unknown as TSESTree.CallExpression;
-  call.parent = (
-    asArgument
-      ? { type: AST_NODE_TYPES.CallExpression, arguments: [call] }
-      : { type: AST_NODE_TYPES.ExpressionStatement }
-  ) as TSESTree.Node;
-  return call;
-}
-
-function makeArgument(type: AST_NODE_TYPES): TSESTree.CallExpressionArgument {
-  return { type, range: [11, 19] } as unknown as TSESTree.CallExpressionArgument;
+/** The fixed code, or `null` when there is no fix. */
+function unwrap(code: string): string | null {
+  const { find, applyFix, sourceCode } = track(code);
+  const wrapperCall = find<TSESTree.CallExpression>(
+    'CallExpression[callee.property.name=/^(readonly|nullable)$/]',
+  );
+  return applyFix((fixer) => buildZodWrapperUnwrapFix({ fixer, sourceCode, wrapperCall }));
 }
 
 describe('buildZodWrapperUnwrapFix', () => {
-  it('replaces the wrapper call with its argument text', () => {
-    const inner = makeArgument(AST_NODE_TYPES.CallExpression);
-    const wrapperCall = makeCall([inner]);
-    const { fixer, calls } = makeFixer();
-
-    const fix = buildZodWrapperUnwrapFix({
-      fixer,
-      sourceCode: makeSourceCode('z.string()'),
-      wrapperCall,
-    });
-
-    expect(fix).not.toBeNull();
-    expect(calls.replaced).toStrictEqual({ node: wrapperCall, text: 'z.string()' });
+  it.each([
+    ['z.readonly(z.string())', 'z.string()'],
+    ['z.readonly(z.string()).check(z.minLength(1))', 'z.string().check(z.minLength(1))'],
+    ['z.readonly(schema)', 'schema'],
+    ['z.readonly(schemas.name)', 'schemas.name'],
+  ])('unwraps %s', (code, expected) => {
+    expect(unwrap(code)).toBe(expected);
   });
 
   it('keeps any expression when the wrapper is itself an argument: z.optional(z.nullable(a ? b : c))', () => {
-    const { fixer, calls } = makeFixer();
-    const wrapperCall = makeCall([makeArgument(AST_NODE_TYPES.ConditionalExpression)], {
-      asArgument: true,
-    });
-
-    buildZodWrapperUnwrapFix({ fixer, sourceCode: makeSourceCode('a ? b : c'), wrapperCall });
-
-    expect(calls.replaced).toStrictEqual({ node: wrapperCall, text: 'a ? b : c' });
+    expect(unwrap('z.optional(z.nullable(a ? b : c))')).toBe('z.optional(a ? b : c)');
   });
 
-  it('returns null for a sequence argument, whose parentheses would be lost', () => {
-    const { fixer } = makeFixer();
-
-    const fix = buildZodWrapperUnwrapFix({
-      fixer,
-      sourceCode: makeSourceCode('a, b'),
-      wrapperCall: makeCall([makeArgument(AST_NODE_TYPES.SequenceExpression)], {
-        asArgument: true,
-      }),
-    });
-
-    expect(fix).toBeNull();
-  });
-
-  it('returns null when the argument could need parentheses: z.readonly(a ? b : c)', () => {
-    const { fixer } = makeFixer();
-
-    const fix = buildZodWrapperUnwrapFix({
-      fixer,
-      sourceCode: makeSourceCode('a ? b : c'),
-      wrapperCall: makeCall([makeArgument(AST_NODE_TYPES.ConditionalExpression)]),
-    });
-
-    expect(fix).toBeNull();
-  });
-
-  it('returns null when a comment sits between the wrapper and its argument', () => {
-    const { fixer } = makeFixer();
-
-    const fix = buildZodWrapperUnwrapFix({
-      fixer,
-      sourceCode: makeSourceCode('z.string()', [{ range: [2, 9] }]),
-      wrapperCall: makeCall([makeArgument(AST_NODE_TYPES.CallExpression)]),
-    });
-
-    expect(fix).toBeNull();
-  });
-
-  it('returns null when the call has no arguments', () => {
-    const { fixer } = makeFixer();
-
-    const fix = buildZodWrapperUnwrapFix({
-      fixer,
-      sourceCode: makeSourceCode(''),
-      wrapperCall: makeCall([]),
-    });
-
-    expect(fix).toBeNull();
-  });
-
-  it('returns null when the call has more than one argument', () => {
-    const { fixer } = makeFixer();
-
-    const fix = buildZodWrapperUnwrapFix({
-      fixer,
-      sourceCode: makeSourceCode(''),
-      wrapperCall: makeCall([
-        makeArgument(AST_NODE_TYPES.CallExpression),
-        makeArgument(AST_NODE_TYPES.Literal),
-      ]),
-    });
-
-    expect(fix).toBeNull();
-  });
-
-  it('returns null for a spread argument', () => {
-    const { fixer } = makeFixer();
-
-    const fix = buildZodWrapperUnwrapFix({
-      fixer,
-      sourceCode: makeSourceCode(''),
-      wrapperCall: makeCall([makeArgument(AST_NODE_TYPES.SpreadElement)]),
-    });
-
-    expect(fix).toBeNull();
+  it.each([
+    ['a sequence argument, whose parentheses would be lost', 'z.optional(z.nullable((a, b)))'],
+    ['an argument that could need parentheses', 'z.readonly(a ? b : c)'],
+    ['a comment before the argument', 'z.readonly(/* c */ z.string())'],
+    ['a comment after the argument', 'z.readonly(z.string() /* c */)'],
+    ['no arguments', 'z.readonly()'],
+    ['more than one argument', 'z.readonly(a, b)'],
+    ['a spread argument', 'z.readonly(...args)'],
+  ])('returns null for %s: %s', (_, code) => {
+    expect(unwrap(code)).toBeNull();
   });
 });

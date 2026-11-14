@@ -20,13 +20,14 @@ pnpm monorepo containing three ESLint plugins and a shared utilities package for
 
 `@eslint-zod/tooling` is a private workspace package holding everything tool-related that would otherwise be duplicated per package: one directory per tool, and one export per entry.
 
-| Export                                         | File                                | Contents                                                                 |
-| ---------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------ |
-| `@eslint-zod/tooling/vitest`                   | `src/vitest/index.js`               | `definePluginTestProject(name)`                                          |
-| `@eslint-zod/tooling/vitest/spec-helpers`      | `src/vitest/spec-helpers.ts`        | data helpers for the plugins' `index.spec.ts` consistency specs          |
-| `@eslint-zod/tooling/vitest/rule-tester-cases` | `src/vitest/rule-tester-cases.ts`   | `createSuggestionCases(rule, { messageId, suggestionMessageId, data? })` |
-| `@eslint-zod/tooling/tsdown`                   | `src/tsdown/index.ts`               | `definePluginTsdownConfig(overrides?)`                                   |
-| `@eslint-zod/tooling/eslint-doc-generator`     | `src/eslint-doc-generator/index.ts` | `eslintDocGeneratorConfig`                                               |
+| Export                                         | File                                | Contents                                                                          |
+| ---------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------------------- |
+| `@eslint-zod/tooling/vitest`                   | `src/vitest/index.js`               | `definePluginTestProject(name)`                                                   |
+| `@eslint-zod/tooling/vitest/spec-helpers`      | `src/vitest/spec-helpers.ts`        | data helpers for the plugins' `index.spec.ts` consistency specs                   |
+| `@eslint-zod/tooling/vitest/rule-tester-cases` | `src/vitest/rule-tester-cases.ts`   | `createSuggestionCases(rule, { messageId, suggestionMessageId, data? })`          |
+| `@eslint-zod/tooling/vitest/parse-code`        | `src/vitest/parse-code.ts`          | `parseCode(code)`: real nodes with parents and scopes, picked by esquery selector |
+| `@eslint-zod/tooling/tsdown`                   | `src/tsdown/index.ts`               | `definePluginTsdownConfig(overrides?)`                                            |
+| `@eslint-zod/tooling/eslint-doc-generator`     | `src/eslint-doc-generator/index.ts` | `eslintDocGeneratorConfig`                                                        |
 
 Every one of those tools is invoked per package, so each package keeps its own config file — reduced to a call or a re-export. Two constraints shape the package, both learned from CI:
 
@@ -36,6 +37,10 @@ Every one of those tools is invoked per package, so each package keeps its own c
 `createSuggestionCases` builds the `InvalidTestCase` objects for a rule whose invalid cases all report one messageId and offer at most one suggestion, so a case is written as its code pair rather than a dozen lines of scaffolding.
 Both ids and the options tuple are inferred from the rule passed in, so a messageId it does not declare is a type error.
 Reach for it when a spec has more than a handful of suggestion cases; `prefer-validate` has forty-odd per plugin and was almost entirely boilerplate before.
+
+`parseCode` parses through ESLint with the typescript-eslint parser, so a spec of a utils helper works on the nodes a rule would see rather than hand-built mocks.
+`find`/`findAll` pick nodes by esquery selector, and `applyFix` returns the code after a fix, so a fix helper is asserted on its output text.
+In `@eslint-zod/utils`, `src/spec-helpers.ts` adds `track(code)` and `trackChain(code)`, which feed a tracker the file's imports.
 
 Every entry uses **named exports only** — the per-package config file is where the tool's expected `export default` is written. The spec helpers return data only: all `describe`/`it` blocks and `expect` assertions stay in each plugin's own spec. The package is consumed source-only and is never built or published; changes to it need no changeset.
 
@@ -116,7 +121,7 @@ AST helpers in `@eslint-zod/utils` (most are internal, imported by relative path
 - `getZodSchemaBaseType()` — maps a schema factory name (`detectZodSchemaRootNode`'s `schemaType`) to its base type category (`string` — including the top-level string formats —, `number`, `bigint`, `array`, `object`, `literal`, `any`/`unknown`/`never`, …); returns `null` for factories rules should not reason about
 - `collectZodSchemaConstraints()` (tracker method) — flattens a schema chain into a normalized list of constraints (`ZodSchemaConstraint`), covering both API styles: chained methods (`.min(2)`, `zod`) become `origin: 'chained'` items and recognized zod calls among `.check(...)` arguments (`z.minLength(2)`, `zod/mini`) become `origin: 'check-argument'` items. **This is the standard way to navigate a schema's checks in rules shared between plugins** — detection differs per API style, but rule logic written against the constraint list works unchanged in `zod` and `zod-mini`. Names are left as written (chained `.min()` means `gte` on numbers but `minLength` on strings) — pass them through `canonicalizeZodConstraintName` below rather than mapping them per rule.
 - `buildZodChainRemoveMethodFix` / `buildZodChainReplacementFix` — fixer helpers
-- `hasCommentInRange(sourceCode, range)` — whether a comment sits inside a range. A fixer that removes or rewrites text must check it and withhold the fix rather than drop the comment; the chain fixer helpers do so when given a `sourceCode`
+- `hasCommentInRange(sourceCode, range)` — whether a comment sits inside a range. A fixer that removes or rewrites text must check it and withhold the fix rather than drop the comment; the chain fixer helpers always do, so they take a required `sourceCode`
 - `hasParenthesizedReceiver(member)` — whether a member's object is parenthesized (`(z.string()).min(1)`). A fixer that cuts at `member.object.range[1]` must check it and withhold the fix, or it leaves the closing parenthesis behind; both helpers above already do
 - `buildZodConstraintsRemoveFix` — removes a set of `ZodSchemaConstraint`s from a chain, whatever their origin: chained constraints are removed as methods; check-argument constraints remove the whole containing `.check(...)`, but only when every argument of that call is targeted (never orphans an unrelated check). Returns `null` when removal is unsafe, so callers report without fixing.
 - `buildZodWrapperUnwrapFix` — replaces a single-argument wrapper call with its argument (e.g. `z.readonly(z.string())` → `z.string()`), preserving any chain on the wrapper; returns `null` when the call doesn't have exactly one non-spread argument, when that argument is not an identifier, member or call and the wrapper is not itself an argument (it could need parentheses), or when a comment would be dropped.

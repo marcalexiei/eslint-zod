@@ -10,18 +10,26 @@
     "./eslint-doc-generator": "./src/eslint-doc-generator/index.ts",
     "./tsdown": "./src/tsdown/index.ts",
     "./vitest": "./src/vitest/index.js",
+    "./vitest/parse-code": "./src/vitest/parse-code.ts",
     "./vitest/rule-tester-cases": "./src/vitest/rule-tester-cases.ts",
     "./vitest/spec-helpers": "./src/vitest/spec-helpers.ts"
   },
   "dependencies": {
     "@marcalexiei/prettier-config": "catalog:dev",
+    "@types/esquery": "1.5.4",
     "@typescript-eslint/rule-tester": "catalog:dev",
+    "@typescript-eslint/types": "catalog:deps",
     "eslint-doc-generator": "catalog:dev",
+    "esquery": "^1.6.0",
     "prettier": "catalog:dev",
     "tsdown": "catalog:dev",
+    "typescript-eslint": "catalog:dev",
     "vitest": "catalog:dev"
   },
   "engines": {
     "node": "^20 || ^22 || >=24"
+  },
+  "peerDependencies": {
+    "eslint": "^9 || ^10"
   }
 }
