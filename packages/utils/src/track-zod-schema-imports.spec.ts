@@ -92,6 +92,30 @@ describe('collectZodChainMethods', () => {
   });
 });
 
+describe('getZodChainFactory', () => {
+  it.each([
+    ["import * as z from 'zod'; z.string().optional();", '[callee.property.name="string"]'],
+    [
+      "import * as z from 'zod'; z.coerce.boolean().optional();",
+      '[callee.property.name="boolean"]',
+    ],
+    ["import { string } from 'zod'; string().optional();", '[callee.name="string"]'],
+  ])('returns the factory call: %s', (code, factory) => {
+    const { tracker, find } = track(code);
+    expect(tracker.getZodChainFactory(find<Call>(LAST_CALL))?.node).toBe(
+      find(`CallExpression${factory}`),
+    );
+  });
+
+  it.each([
+    ["import * as z from 'zod'; z.object({}).shape.a.optional();"],
+    ["import * as z from 'zod'; z['string']().optional();"],
+  ])('returns null for a chain that starts at a method, or is empty: %s', (code) => {
+    const { tracker, call } = chainOf(code);
+    expect(tracker.getZodChainFactory(call)).toBeNull();
+  });
+});
+
 describe('findZodChainedMethod', () => {
   function find(code: string, methodName: string | Array<string>): unknown {
     const { tracker, call } = chainOf(code);

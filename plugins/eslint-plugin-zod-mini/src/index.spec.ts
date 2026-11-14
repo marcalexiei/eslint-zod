@@ -91,10 +91,10 @@ describe('config composition', () => {
     expect(all).toEqual(expect.arrayContaining([...strict, ...stylistic]));
   });
 
-  it('no curated config carries the key naming convention', () => {
-    expect([...strict, ...stylistic]).not.toContain(
-      'zod-mini/consistent-object-property-key-style',
-    );
+  it('only `all` carries the naming rule', () => {
+    expect(
+      all.filter((ruleName) => !strict.includes(ruleName) && !stylistic.includes(ruleName)),
+    ).toEqual(['zod-mini/consistent-object-property-key-style']);
   });
 
   it('`all` contains every non-deprecated rule', () => {

@@ -1,5 +1,6 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
+import type { OptionsWithDefaults } from '../create-rule-creator.js';
 import type { ReportSuggestionArray, RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_OBJECT_METHODS } from '../zod-object-methods.js';
@@ -17,10 +18,10 @@ export function buildConsistentObjectSchemaTypeCreate(
   scope: ZodImportScope,
 ): (
   context: Readonly<RuleContext<MessageIds, [ConsistentObjectSchemaTypeOptions]>>,
-  options: readonly [ConsistentObjectSchemaTypeOptions],
+  options: Readonly<OptionsWithDefaults<[ConsistentObjectSchemaTypeOptions]>>,
 ) => RuleListener {
   return function create(context, [{ allow: allowedList }]) {
-    const { createSchemaVisitor, collectZodChainMethods } = scope.createTracker({ kind: 'value' });
+    const { createSchemaVisitor, getZodChainFactory } = scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: ZOD_OBJECT_METHODS,
@@ -41,7 +42,7 @@ export function buildConsistentObjectSchemaTypeCreate(
 
         // The factory, not `node.callee`: that is the outermost call (`.optional` in `z.object({}).optional()`).
         // Only `<namespace>.<factory>` can be renamed in place.
-        const factory = collectZodChainMethods(node).at(0)?.member;
+        const factory = getZodChainFactory(node)?.member;
         const factoryName =
           factory?.object.type === AST_NODE_TYPES.Identifier ? factory.property : null;
 

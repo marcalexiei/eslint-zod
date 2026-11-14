@@ -188,18 +188,19 @@ const stylisticRules = {
   'zod/schema-error-property-style': 'error',
 } satisfies Linter.RulesRecord;
 
+// Rules no curated config carries.
+const allOnlyRules = {
+  // a naming convention, which a project picks for itself
+  'zod/consistent-object-property-key-style': 'error',
+  // overlaps `prefer-strict-object` / `prefer-loose-object`
+  'zod/consistent-object-schema-type': 'error',
+} satisfies Linter.RulesRecord;
+
 Object.assign(plugin.configs, {
   recommended: createConfig('recommended', recommendedRules),
   strict: createConfig('strict', strictRules),
   stylistic: createConfig('stylistic', stylisticRules),
-  all: createConfig('all', {
-    ...strictRules,
-    ...stylisticRules,
-    // A naming convention, so no curated config carries it
-    'zod/consistent-object-property-key-style': 'error',
-    // overlaps `prefer-strict-object` / `prefer-loose-object`, so no curated config carries it
-    'zod/consistent-object-schema-type': 'error',
-  }),
+  all: createConfig('all', { ...strictRules, ...stylisticRules, ...allOnlyRules }),
 });
 
 export default plugin;

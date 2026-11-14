@@ -3,8 +3,7 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { parseZodCallExpression } from './detect-zod-schema-root-node.js';
 import type { ZodImports, ZodSchemaMeta } from './detect-zod-schema-root-node.js';
-import { findVariable } from './find-variable.js';
-import { getBindingInitializer } from './get-binding-initializer.js';
+import { getIdentifierValue } from './get-binding-initializer.js';
 import type { SourceCode } from './rule-types.js';
 import { chainsZodNonSchemaMethod } from './zod-non-schema-producing-methods.js';
 import { isZodSchemaFactoryCall } from './zod-schema-factory-names.js';
@@ -33,7 +32,7 @@ export function createZodSchemaResolver(
         break;
 
       case AST_NODE_TYPES.Identifier: {
-        const init = getBindingInitializer(findVariable(sourceCode.getScope(node), node.name));
+        const init = getIdentifierValue(sourceCode, node);
         result = init ? resolve(init) : null;
         break;
       }

@@ -1,13 +1,11 @@
 import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
-import { findVariable } from '../find-variable.js';
-import { getBindingInitializer } from '../get-binding-initializer.js';
+import type { OptionsWithDefaults } from '../create-rule-creator.js';
+import { getIdentifierValue, skipTypeAssertions } from '../get-binding-initializer.js';
 import { getStaticPropertyName } from '../get-static-property-name.js';
-import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
-import { ZOD_OBJECT_METHODS } from '../zod-object-methods.js';
 import type { ZodObjectMethod } from '../zod-object-methods.js';
 
 export const ZOD_OBJECT_PROPERTY_KEY_STYLES = Object.freeze(['camelCase', 'snake_case'] as const);
@@ -40,10 +38,10 @@ export function buildConsistentObjectPropertyKeyStyleCreate(
   scope: ZodImportScope,
 ): (
   context: Readonly<RuleContext<MessageIds, [ConsistentObjectPropertyKeyStyleOptions]>>,
-  options: readonly [ConsistentObjectPropertyKeyStyleOptions],
+  options: Readonly<OptionsWithDefaults<[ConsistentObjectPropertyKeyStyleOptions]>>,
 ) => RuleListener {
-  return function create(context, [{ style = 'camelCase', allow = ZOD_OBJECT_METHODS }]) {
-    const { createSchemaVisitor, collectZodChainMethods, isZodImportName } = scope.createTracker({
+  return function create(context, [{ style, allow }]) {
+    const { createSchemaVisitor, getZodChainFactory } = scope.createTracker({
       kind: 'value',
       sourceCode: context.sourceCode,
     });
@@ -104,18 +102,15 @@ export function buildConsistentObjectPropertyKeyStyleCreate(
       schemaType: allow,
       onSchema(node): void {
         // The outermost call may be a method (`.optional()`); the shape is the factory's argument.
-        const factory = collectZodChainMethods(node).at(0);
-        if (!factory || !isZodFactoryChainItem(factory, isZodImportName)) {
-          return;
-        }
-
-        const argument = factory.node.arguments.at(0);
+        const argument = getZodChainFactory(node)?.node.arguments.at(0);
+        const value =
+          argument && argument.type !== AST_NODE_TYPES.SpreadElement
+            ? skipTypeAssertions(argument)
+            : null;
         const shape =
-          argument?.type === AST_NODE_TYPES.Identifier
-            ? getBindingInitializer(
-                findVariable(context.sourceCode.getScope(argument), argument.name),
-              )
-            : argument;
+          value?.type === AST_NODE_TYPES.Identifier
+            ? getIdentifierValue(context.sourceCode, value)
+            : value;
         if (shape?.type === AST_NODE_TYPES.ObjectExpression) {
           checkShape(shape);
         }

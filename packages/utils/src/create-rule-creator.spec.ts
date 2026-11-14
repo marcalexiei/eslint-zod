@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createPluginMeta, createRuleCreator } from './create-rule-creator.js';
+import type { OptionsWithDefaults } from './create-rule-creator.js';
 import type { RuleContext } from './rule-types.js';
 
 interface Options {
@@ -23,7 +24,8 @@ function createOptionsRule(defaultOptions: [Options, string]): {
       messages: { message: '' },
       schema: [],
     },
-    defaultOptions,
+    // Partial defaults, to exercise the merge itself.
+    defaultOptions: defaultOptions as OptionsWithDefaults<[Options, string]>,
     create(_context, options) {
       received.push(options);
       return {};

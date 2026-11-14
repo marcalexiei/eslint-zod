@@ -1,4 +1,3 @@
-import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
@@ -14,7 +13,7 @@ export function buildNoNativeEnumCreate(
   scope: ZodImportScope,
 ): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods, isZodImportName } = scope.createTracker({
+    const { createSchemaVisitor, getZodChainFactory } = scope.createTracker({
       kind: 'value',
     });
 
@@ -24,9 +23,7 @@ export function buildNoNativeEnumCreate(
         // Empty for a computed factory (`z['nativeEnum'](Foo)`), which detection still resolves,
         // and resumed at a method after a property access (`z.nativeEnum(Foo).options.map(…)`) —
         // report it, just without a fix.
-        const head = collectZodChainMethods(node).at(0);
-        const factoryCallee =
-          head && isZodFactoryChainItem(head, isZodImportName) ? head.member : null;
+        const factoryCallee = getZodChainFactory(node)?.member ?? null;
 
         context.report({
           node,

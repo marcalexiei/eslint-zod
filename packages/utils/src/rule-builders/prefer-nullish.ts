@@ -4,7 +4,6 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import { buildZodWrapperUnwrapFix } from '../build-zod-wrapper-unwrap-fix.js';
 import type { ZodSchemaMeta } from '../detect-zod-schema-root-node.js';
 import { hasCommentInRange } from '../has-comment-in-range.js';
-import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import { readsZodSchemaProperty } from '../reads-zod-schema-property.js';
 import type { RuleContext, RuleFix, RuleFixer, RuleListener } from '../rule-types.js';
 import type { ZodChainItem } from '../track-zod-schema-imports.js';
@@ -35,7 +34,7 @@ export function buildPreferNullishCreate(
       detectZodSchemaRootNode,
       collectZodChainMethods,
       getNamedImportLocal,
-      isZodImportName,
+      getZodChainFactory,
     } = scope.createTracker({ kind: 'value' });
 
     /**
@@ -72,13 +71,8 @@ export function buildPreferNullishCreate(
 
     /** Wrapper form (`zod/mini`): `z.optional(z.nullable(inner))`. */
     function handleWrapper(node: TSESTree.CallExpression, meta: ZodSchemaMeta): void {
-      const wrapper = collectZodChainMethods(node).at(0);
-      // The head is the wrapper call unless the chain resumes after a property access; guard extra args.
-      if (
-        !wrapper ||
-        !isZodFactoryChainItem(wrapper, isZodImportName) ||
-        wrapper.node.arguments.length !== 1
-      ) {
+      const wrapper = getZodChainFactory(node);
+      if (wrapper?.node.arguments.length !== 1) {
         return;
       }
       const wrapperCall = wrapper.node;

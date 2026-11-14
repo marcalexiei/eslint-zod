@@ -1,5 +1,6 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
+import type { OptionsWithDefaults } from '../create-rule-creator.js';
 import { getZodChainedMethodNames } from '../get-zod-chained-method-names.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
@@ -22,9 +23,9 @@ export function buildConsistentSchemaVarNameCreate(
   scope: ZodImportScope,
 ): (
   context: Readonly<RuleContext<'invalidName', [ConsistentSchemaVarNameOptions]>>,
-  options: readonly [ConsistentSchemaVarNameOptions],
+  options: Readonly<OptionsWithDefaults<[ConsistentSchemaVarNameOptions]>>,
 ) => RuleListener {
-  return function create(context, [{ before = '', after = '' }]) {
+  return function create(context, [{ before, after }]) {
     const { importDeclarationListener, detectZodSchemaRootNode } = scope.createTracker({
       kind: 'value',
     });

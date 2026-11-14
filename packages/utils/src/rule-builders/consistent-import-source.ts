@@ -1,3 +1,4 @@
+import type { OptionsWithDefaults } from '../create-rule-creator.js';
 import type { ReportSuggestionArray, RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
@@ -11,7 +12,7 @@ export function buildConsistentImportSourceCreate<TSources extends ReadonlyArray
   scope: ZodImportScope<TSources>,
 ): (
   context: Readonly<RuleContext<MessageIds, [ConsistentImportSourceOptions<TSources[number]>]>>,
-  options: readonly [ConsistentImportSourceOptions<TSources[number]>],
+  options: Readonly<OptionsWithDefaults<[ConsistentImportSourceOptions<TSources[number]>]>>,
 ) => RuleListener {
   return function create(context, [{ sources }]) {
     return {

@@ -6,7 +6,6 @@ import type { ZodSchemaConstraint } from '../collect-zod-schema-constraints.js';
 import { getZodSchemaBaseType } from '../get-zod-schema-base-type.js';
 import type { ZodSchemaBaseType } from '../get-zod-schema-base-type.js';
 import { CALLBACK_CHECK_NAMES, getOpaqueCheckChainIndexes } from '../has-opaque-zod-check.js';
-import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodCheckBound, ZodCheckDescriptor, ZodCheckDomain } from '../zod-check-vocabulary.js';
 import { canonicalizeZodConstraintName, getZodCheckDescriptor } from '../zod-check-vocabulary.js';
@@ -214,7 +213,7 @@ export function buildNoConflictingChecksCreate(
       createSchemaVisitor,
       collectZodChainMethods,
       collectZodSchemaConstraints,
-      isZodImportName,
+      isZodFactoryChainItem,
     } = scope.createTracker({ kind: 'value' });
 
     function describe(check: AnalyzedCheck): string {
@@ -587,7 +586,7 @@ export function buildNoConflictingChecksCreate(
         // leaving `chain` empty.
         // Bail rather than deref `chain[0]`.
         // After a property access (`z.array(x).element.min(1)`) the checks are another schema's.
-        if (chain.length === 0 || !isZodFactoryChainItem(chain[0], isZodImportName)) {
+        if (chain.length === 0 || !isZodFactoryChainItem(chain[0])) {
           return;
         }
         if (chain.slice(1).some((item) => ZOD_TYPE_CHANGING_METHODS.includes(item.name))) {

@@ -4,7 +4,6 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import { findVariable } from '../find-variable.js';
 import { getBindingInitializer } from '../get-binding-initializer.js';
 import { getZodChainedMethodNames } from '../get-zod-chained-method-names.js';
-import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { isZodNonSchemaHelperCall } from '../zod-non-schema-helper-names.js';
@@ -33,7 +32,7 @@ export function buildNoDynamicSchemaValueCreate(
       createSchemaVisitor,
       detectZodSchemaRootNode,
       collectZodChainMethods,
-      isZodImportName,
+      isZodFactoryChainItem,
       resolveZodSchema,
     } = scope.createTracker({ kind: 'value', sourceCode: context.sourceCode });
 
@@ -153,7 +152,7 @@ export function buildNoDynamicSchemaValueCreate(
         const end = names.findIndex((name) => ZOD_NON_SCHEMA_PRODUCING_METHODS.includes(name));
         // The chain may resume after a property access (`….parse(x).tags.split(sep)`),
         // so its methods are the last ones named.
-        const chainedItems = chain.filter((item) => !isZodFactoryChainItem(item, isZodImportName));
+        const chainedItems = chain.filter((item) => !isZodFactoryChainItem(item));
         const offset = names.length - chainedItems.length;
         const schemaChain = chain.filter((item) => {
           const position = chainedItems.indexOf(item);

@@ -8,6 +8,7 @@ import type { ZodImports, ZodSchemaMeta } from './detect-zod-schema-root-node.js
 import { findVariable } from './find-variable.js';
 import { getStaticPropertyName } from './get-static-property-name.js';
 import { getZodChainedMethodNames } from './get-zod-chained-method-names.js';
+import { isZodFactoryChainItem } from './is-zod-factory-chain-item.js';
 import { createZodSchemaResolver } from './resolve-zod-schema.js';
 import type { RuleListener, SourceCode } from './rule-types.js';
 import type { ZodImportScope } from './zod-import-scope.js';
@@ -199,6 +200,15 @@ export interface ZodSchemaImportTracker {
    * `null` means not chained: do not report.
    * A match with `member: null` means chained but unnameable: report without a fix.
    */
+  /** Whether a chain item is the schema factory rather than a method called on a schema. */
+  isZodFactoryChainItem: (item: Pick<ZodChainItem, 'member'>) => boolean;
+
+  /**
+   * The factory call `collectZodChainMethods` starts at.
+   * `null` when the chain is empty, or starts at a method: after a property access, or on a local schema.
+   */
+  getZodChainFactory: (node: TSESTree.CallExpression) => ZodChainItem | null;
+
   findZodChainedMethod: (
     node: TSESTree.CallExpression,
     meta: ZodSchemaMeta,
@@ -481,6 +491,13 @@ export function trackZodSchemaImports(
     collectZodChainMethods,
 
     findZodChainedMethod,
+
+    isZodFactoryChainItem: (item) => isZodFactoryChainItem(item, isZodImportName),
+
+    getZodChainFactory: (node): ZodChainItem | null => {
+      const head = collectZodChainMethods(node).at(0);
+      return head && isZodFactoryChainItem(head, isZodImportName) ? head : null;
+    },
 
     collectZodSchemaConstraints: (node) =>
       collectZodSchemaConstraints({

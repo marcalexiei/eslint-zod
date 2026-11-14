@@ -2,7 +2,7 @@ import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { findVariable } from '../find-variable.js';
-import { getBindingInitializer } from '../get-binding-initializer.js';
+import { getIdentifierValue } from '../get-binding-initializer.js';
 import { getStaticPropertyName } from '../get-static-property-name.js';
 import { hasCommentInRange } from '../has-comment-in-range.js';
 import type { RuleContext, RuleFix, RuleListener, ScopeVariable } from '../rule-types.js';
@@ -57,15 +57,14 @@ export function buildPreferValidateCreate(
 
     function schemaSource(
       node: TSESTree.Node,
-      seen = new Set<ScopeVariable>(),
+      seen = new Set<TSESTree.Node>(),
     ): TSESTree.ImportDeclaration | undefined {
       if (node.type === AST_NODE_TYPES.Identifier) {
-        const found = variable(node);
-        const init = getBindingInitializer(found);
-        if (!found || !init || seen.has(found)) {
+        const init = getIdentifierValue(sourceCode, node);
+        if (!init || seen.has(init)) {
           return undefined;
         }
-        seen.add(found);
+        seen.add(init);
         return schemaSource(init, seen);
       }
       if (node.type !== AST_NODE_TYPES.CallExpression || node.optional) {

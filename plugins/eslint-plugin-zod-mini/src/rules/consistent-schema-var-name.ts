@@ -30,6 +30,6 @@ export const consistentSchemaVarName = createZodMiniPluginRule({
       },
     ],
   },
-  defaultOptions: [{ after: 'Schema' }],
+  defaultOptions: [{ before: '', after: 'Schema' }],
   create: buildConsistentSchemaVarNameCreate(zodMiniImportScope),
 });

@@ -1,6 +1,7 @@
 import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
+import type { OptionsWithDefaults } from '../create-rule-creator.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
@@ -18,7 +19,7 @@ export function buildConsistentSchemaOutputTypeStyleCreate(
   scope: ZodImportScope,
 ): (
   context: Readonly<RuleContext<MessageIds, [ConsistentSchemaOutputTypeStyleOptions]>>,
-  options: readonly [ConsistentSchemaOutputTypeStyleOptions],
+  options: Readonly<OptionsWithDefaults<[ConsistentSchemaOutputTypeStyleOptions]>>,
 ) => RuleListener {
   return function create(context, [{ style }]) {
     const {

@@ -2,7 +2,6 @@ import type { ZodMethodName } from '@eslint-zod/zod-api';
 
 import { buildZodChainRemoveMethodFix } from '../build-zod-chain-remove-method-fix.js';
 import { buildZodChainReplacementFix } from '../build-zod-chain-replacement-fix.js';
-import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_MUTATING_CHECK_NAMES } from '../zod-mutating-check-names.js';
@@ -86,9 +85,10 @@ export function buildPreferTopLevelFactoryCreate<
   return function create(context) {
     const { sourceCode } = context;
 
-    const { createSchemaVisitor, findZodChainedMethod, isZodImportName } = scope.createTracker({
-      kind: 'value',
-    });
+    const { createSchemaVisitor, findZodChainedMethod, isZodFactoryChainItem } =
+      scope.createTracker({
+        kind: 'value',
+      });
 
     return createSchemaVisitor({
       schemaType,
@@ -100,7 +100,7 @@ export function buildPreferTopLevelFactoryCreate<
 
         // A chain that does not start at the factory resumes after a property access
         // (`z.string().foo.email()`), so its methods are not chained on `<factoryName>()`.
-        if (found.methods.length > 0 && !isZodFactoryChainItem(found.methods[0], isZodImportName)) {
+        if (found.methods.length > 0 && !isZodFactoryChainItem(found.methods[0])) {
           return;
         }
 

@@ -1,7 +1,6 @@
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { hasCommentInRange } from '../has-comment-in-range.js';
-import { isZodFactoryChainItem } from '../is-zod-factory-chain-item.js';
 import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
@@ -11,7 +10,7 @@ export function buildNoCoerceBooleanCreate(
   scope: ZodImportScope,
 ): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods, isZodImportName } = scope.createTracker({
+    const { createSchemaVisitor, getZodChainFactory } = scope.createTracker({
       kind: 'value',
     });
 
@@ -35,9 +34,7 @@ export function buildNoCoerceBooleanCreate(
         // Empty for a computed factory (`z.coerce['boolean']()`), which detection still resolves,
         // and resumed at a method after a property access (`z.coerce.boolean().def.type.toString()`) —
         // report it, just without the suggestion.
-        const head = collectZodChainMethods(node).at(0);
-        const factoryCallee =
-          head && isZodFactoryChainItem(head, isZodImportName) ? head.member : null;
+        const factoryCallee = getZodChainFactory(node)?.member;
 
         if (
           zodSchemaMeta.schemaDecl !== 'namespace' ||
