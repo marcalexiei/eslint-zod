@@ -5,7 +5,7 @@ description: Translation table and checklist for keeping shared rules in sync be
 
 # Syncing shared rules across plugins
 
-When a rule that exists in both `eslint-plugin-zod` and `eslint-plugin-zod-mini` changes, the counterpart must change in the same PR. A rule is shared when the same file name exists in both plugins' `src/rules/`. `consistent-import` and `consistent-schema-output-type-style` additionally exist in `eslint-plugin-zod-core`.
+When a rule that exists in both `eslint-plugin-zod` and `eslint-plugin-zod-mini` changes, the counterpart must change in the same PR. A rule is shared when the same file name exists in both plugins' `src/rules/`. `consistent-import`, `consistent-schema-output-type-style` and `no-duplicate-union-members` additionally exist in `eslint-plugin-zod-core`.
 
 ## Files to keep in sync (per rule)
 

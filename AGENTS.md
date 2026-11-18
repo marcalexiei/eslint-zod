@@ -145,7 +145,7 @@ Four conventions the utils package holds to:
 - **Lookup misses return `null`**, not `undefined` — `getZodSchemaBaseType`, `getZodCheckDescriptor`, `canonicalizeZodConstraintName`. Chosen for explicitness over matching `Map.get`; `?? null` the map lookup.
 - **The `ZOD_*` tables are `Object.freeze`d** at runtime, not just typed `readonly`, and a spec asserts it. Do not deep-freeze entries with a module-level loop — a bare statement conflicts with `sideEffects: false` and a bundler may drop it.
 - **A table of zod names is checked against zod's own declarations**, so a name zod does not have is a type error.
-  The types (`ZodMethodName`, `ZodMiniMethodName`, `ZodExportName`, `ZodIsoMemberName`) come from `@eslint-zod/zod-api`, a private types-only package, and are used in utils and the plugins alike.
+  The types (`ZodMethodName`, `ZodMiniMethodName`, `ZodExportName`, `ZodCoreExportName`, `ZodIsoMemberName`) come from `@eslint-zod/zod-api`, a private types-only package, and are used in utils and the plugins alike.
   They must never reach published declarations, so an exported table keeps `ReadonlyArray<string>` and checks its entries with a type argument: `Object.freeze<ReadonlyArray<ZodMethodName>>([…])`.
   A lookup does the same, since it is queried with any string: `const X: ReadonlySet<string> = new Set<ZodExportName>([…])`, or `ReadonlyMap` and `new Map<…>`.
   A module-local list that is only iterated or spread takes the annotation directly (`ReadonlyArray<ZodExportName>`); name the literal part of a mixed table that way and spread it.
@@ -238,7 +238,8 @@ The exception is `prefer-meta` in `eslint-plugin-zod-mini`: since `z.describe()`
 
 A rule is shared when the same file name exists in both plugins' `src/rules/` (the list is derived from the filesystem, not maintained here). When updating any shared rule, its counterpart's docs, specs, and metadata must change in the same PR — follow the **`sync-zod-mini` skill** (`.agents/skills/sync-zod-mini/SKILL.md`), which has the zod → zod/mini translation table, the per-file sync checklist, and the cross-contamination greps.
 
-`eslint-plugin-zod-core` additionally shares `consistent-import` and `consistent-schema-output-type-style` (built from the same rule builders with `zodCoreImportScope`). When updating either of those rules, keep the core counterpart's docs and specs in sync too, adapting examples to `zod/v4/core` imports.
+`eslint-plugin-zod-core` additionally shares `consistent-import`, `consistent-schema-output-type-style` and `no-duplicate-union-members` (built from the same rule builders with `zodCoreImportScope`). When updating any of those rules, keep the core counterpart's docs and specs in sync too, adapting examples to `zod/v4/core` imports.
+`zod/v4/core` has no `union`/`enum` factories, only `_union(Class, members)` and friends, so `no-duplicate-union-members` reads each factory's member list at the index its table gives.
 Core's `consistent-import` offers only the `namespace` syntax: `named` means `import { z }`, and `zod/v4/core` has no `z` export.
 `default` is offered by `eslint-plugin-zod` only: `zod/mini`, `zod/v4-mini` and `zod/v4/core` have no default export.
 

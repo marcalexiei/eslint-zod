@@ -31,11 +31,12 @@ Find out more about [Oxlint's `jsPlugins`](https://oxc.rs/docs/guide/usage/linte
 🔧 Automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/user-guide/command-line-interface#--fix).\
 💡 Manually fixable by [editor suggestions](https://eslint.org/docs/latest/use/core-concepts#rule-suggestions).
 
-| Name                                                                                     | Description                                                                   | 💼  | 🔧  | 💡  |
-| :--------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- | :-- | :-- | :-- |
-| [consistent-import](docs/rules/consistent-import.md)                                     | Enforce a consistent import style for Zod core                                | ✅  | 🔧  |     |
-| [consistent-schema-output-type-style](docs/rules/consistent-schema-output-type-style.md) | Enforce consistent use of core.infer or core.output for schema type inference |     | 🔧  |     |
-| [prefer-validate](docs/rules/prefer-validate.md)                                         | Prefer boolean validation when only the success of parsing is used            |     |     | 💡  |
+| Name                                                                                     | Description                                                                                                      | 💼  | 🔧  | 💡  |
+| :--------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------- | :-- | :-- | :-- |
+| [consistent-import](docs/rules/consistent-import.md)                                     | Enforce a consistent import style for Zod core                                                                   | ✅  | 🔧  |     |
+| [consistent-schema-output-type-style](docs/rules/consistent-schema-output-type-style.md) | Enforce consistent use of core.infer or core.output for schema type inference                                    |     | 🔧  |     |
+| [no-duplicate-union-members](docs/rules/no-duplicate-union-members.md)                   | Disallow repeated members in `core._union()`, `core._discriminatedUnion()`, `core._enum()` and `core._literal()` | ✅  | 🔧  | 💡  |
+| [prefer-validate](docs/rules/prefer-validate.md)                                         | Prefer boolean validation when only the success of parsing is used                                               |     |     | 💡  |
 
 <!-- end auto-generated rules list -->
 
