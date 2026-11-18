@@ -11,6 +11,7 @@ import { noAnySchema } from './rules/no-any-schema.js';
 import { noCoerceBoolean } from './rules/no-coerce-boolean.js';
 import { noConflictingChecks } from './rules/no-conflicting-checks.js';
 import { noDuplicateSchemaMethods } from './rules/no-duplicate-schema-methods.js';
+import { noDuplicateUnionMembers } from './rules/no-duplicate-union-members.js';
 import { noDynamicSchemaValue } from './rules/no-dynamic-schema-value.js';
 import { noEmptyCustomSchema } from './rules/no-empty-custom-schema.js';
 import { noFunctionScopedSchema } from './rules/no-function-scoped-schema.js';
@@ -61,6 +62,7 @@ const eslintPluginZodMini = {
     'no-coerce-boolean': noCoerceBoolean,
     'no-conflicting-checks': noConflictingChecks,
     'no-duplicate-schema-methods': noDuplicateSchemaMethods,
+    'no-duplicate-union-members': noDuplicateUnionMembers,
     'no-dynamic-schema-value': noDynamicSchemaValue,
     'no-empty-custom-schema': noEmptyCustomSchema,
     'no-function-scoped-schema': noFunctionScopedSchema,
@@ -108,6 +110,7 @@ const recommendedRules = {
   'zod-mini/no-coerce-boolean': 'error',
   'zod-mini/no-conflicting-checks': 'error',
   'zod-mini/no-duplicate-schema-methods': 'error',
+  'zod-mini/no-duplicate-union-members': 'error',
   'zod-mini/no-empty-custom-schema': 'error',
   'zod-mini/no-native-enum': 'error',
   'zod-mini/no-promise-schema': 'error',
