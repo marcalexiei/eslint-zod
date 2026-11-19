@@ -47,7 +47,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@4a51d6dfcaac0c263c6f2efd97249eafe0076721 # v2.5.0
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@0ac3ea042e173813ebc7b086c174705c5bfc0fb6 # v2.6.2
         with:
           node-version: ${{ matrix.node }}
           # Both ESLint legs of a Node.js version share a cache key.
@@ -79,7 +79,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@4a51d6dfcaac0c263c6f2efd97249eafe0076721 # v2.5.0
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@0ac3ea042e173813ebc7b086c174705c5bfc0fb6 # v2.6.2
         with:
           save-cache: false # shares its cache key with Code checks
 
@@ -104,7 +104,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@4a51d6dfcaac0c263c6f2efd97249eafe0076721 # v2.5.0
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@0ac3ea042e173813ebc7b086c174705c5bfc0fb6 # v2.6.2
 
       # Before Typecheck: without `tsc -b` output a leaked `zod-api` type builds as `any`, which `lint:dts` catches.
       - name: Build
@@ -172,6 +172,6 @@ jobs:
       contents: read # required to read the workflow file
     steps:
       - name: Check needed jobs
-        uses: marcalexiei/github-actions/check-needs@4a51d6dfcaac0c263c6f2efd97249eafe0076721 # v2.5.0
+        uses: marcalexiei/github-actions/check-needs@0ac3ea042e173813ebc7b086c174705c5bfc0fb6 # v2.6.2
         with:
           needs: ${{ toJSON(needs) }}
