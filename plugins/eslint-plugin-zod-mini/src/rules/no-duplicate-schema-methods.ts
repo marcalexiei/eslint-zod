@@ -33,9 +33,13 @@ export const noDuplicateSchemaMethods = createZodMiniPluginRule({
     messages: {
       noDuplicateSchemaMethod:
         'Method `.{{method}}()` is called more than once in this schema chain.',
+      noDuplicateCheckArgument:
+        'Check `{{check}}()` is applied more than once in this schema chain.',
     },
     schema: [],
   },
   defaultOptions: [],
-  create: buildNoDuplicateSchemaMethodsCreate(zodMiniImportScope, EXCLUDED_METHODS),
+  create: buildNoDuplicateSchemaMethodsCreate(zodMiniImportScope, EXCLUDED_METHODS, {
+    checkArguments: true,
+  }),
 });
