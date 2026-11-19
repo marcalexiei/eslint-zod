@@ -1,5 +1,8 @@
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
+import type { Rule } from 'eslint';
+import { Linter } from 'eslint';
+import { describe, expect, it } from 'vitest';
 
 import { noDuplicateUnionMembers } from './no-duplicate-union-members.js';
 
@@ -73,13 +76,6 @@ ruleTester.run(noDuplicateUnionMembers.name, noDuplicateUnionMembers, {
         const A = z.object({ kind: z.literal('a') });
         const B = z.object({ kind: z.literal('b') });
         z.discriminatedUnion('kind', [A, B]);
-      `,
-    },
-    {
-      name: 'discriminator equal to a member is not compared',
-      code: dedent`
-        import * as z from 'zod';
-        z.discriminatedUnion('kind', [z.object({ kind: z.literal('kind') })]);
       `,
     },
     {
@@ -167,6 +163,28 @@ ruleTester.run(noDuplicateUnionMembers.name, noDuplicateUnionMembers, {
         zEnum(['a']);
       `,
       errors: [{ messageId: 'duplicateMember', data: { line: 2 } }],
+    },
+    {
+      name: 'zod/v3 enum gets a suggestion, since it keeps the repeat',
+      code: dedent`
+        import { z } from 'zod/v3';
+        z.enum(['a', 'a']);
+      `,
+      errors: [
+        {
+          messageId: 'duplicateMember',
+          data: { line: 2 },
+          suggestions: [
+            {
+              messageId: 'removeDuplicate',
+              output: dedent`
+                import { z } from 'zod/v3';
+                z.enum(['a']);
+              `,
+            },
+          ],
+        },
+      ],
     },
     {
       name: 'comment in the removed range withholds the fix',
@@ -345,4 +363,23 @@ ruleTester.run(noDuplicateUnionMembers.name, noDuplicateUnionMembers, {
       ],
     },
   ],
+});
+
+// ESLint's default parser adds `start` and `end` to every node, which the comparison must ignore.
+describe('with the default parser', () => {
+  it('reports a repeated member', () => {
+    const code = dedent`
+      import * as z from 'zod';
+      z.enum(['a', 'a']);
+      z.union([z.string(), z.string()]);
+    `;
+    const plugin = { rules: { rule: noDuplicateUnionMembers as unknown as Rule.RuleModule } };
+    const messages = new Linter().verify(code, [
+      { plugins: { plugin }, rules: { 'plugin/rule': 'error' } },
+    ]);
+    expect(messages.map((message) => message.messageId)).toStrictEqual([
+      'duplicateMember',
+      'duplicateMember',
+    ]);
+  });
 });

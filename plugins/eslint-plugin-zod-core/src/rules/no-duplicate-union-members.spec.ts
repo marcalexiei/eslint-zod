@@ -1,5 +1,8 @@
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
+import type { Rule } from 'eslint';
+import { Linter } from 'eslint';
+import { describe, expect, it } from 'vitest';
 
 import { noDuplicateUnionMembers } from './no-duplicate-union-members.js';
 
@@ -137,4 +140,23 @@ ruleTester.run(noDuplicateUnionMembers.name, noDuplicateUnionMembers, {
       ],
     },
   ],
+});
+
+// ESLint's default parser adds `start` and `end` to every node, which the comparison must ignore.
+describe('with the default parser', () => {
+  it('reports a repeated member', () => {
+    const code = dedent`
+      import * as core from 'zod/v4/core';
+      core._enum(core.$ZodEnum, ['a', 'a']);
+      core._union(core.$ZodUnion, [A, A]);
+    `;
+    const plugin = { rules: { rule: noDuplicateUnionMembers as unknown as Rule.RuleModule } };
+    const messages = new Linter().verify(code, [
+      { plugins: { plugin }, rules: { 'plugin/rule': 'error' } },
+    ]);
+    expect(messages.map((message) => message.messageId)).toStrictEqual([
+      'duplicateMember',
+      'duplicateMember',
+    ]);
+  });
 });

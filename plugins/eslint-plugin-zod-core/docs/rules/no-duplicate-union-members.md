@@ -10,16 +10,16 @@
 
 ## Rule Details
 
-Reports a member listed twice in `core._union()`, `core._discriminatedUnion()`, `core._enum()` or `core._literal([...])`.
+Reports a member listed twice in `core._union()`, `core._discriminatedUnion()`, `core._enum()` or `core._literal()` with an array of values.
 A repeat is almost always a copy-paste leftover hiding the member that was meant,
 and TypeScript collapses the repeat in the inferred type, so nothing else reports it.
 
 The member list is the argument after the schema class (and, for `core._discriminatedUnion()`, after the discriminator).
 Members are compared as written:
 
-- `core._enum()` and `core._literal([...])` compare literal values, so `'a'` and `"a"` match and `1` and `1n` do not.
+- `core._enum()` and `core._literal()` compare literal values, so `'a'` and `"a"` match and `1` and `1n` do not.
   An identifier or any other expression is never compared.
-- `core._union()` and `core._discriminatedUnion()` compare the members' syntax, ignoring whitespace and comments.
+- `core._union()` and `core._discriminatedUnion()` compare the members token by token, ignoring whitespace, comments and trailing commas.
 
 The rule skips a member list that is not an array literal, or that holds a spread or a hole.
 Schemas built with `new` (`new core.$ZodUnion({ … })`) are not analyzed.
@@ -53,7 +53,7 @@ core._discriminatedUnion(core.$ZodDiscriminatedUnion, 'kind', [Circle, Square]);
 Removing a repeat changes nothing that parses, but only `core._enum()` dedupes everything else too, so only `core._enum()` is autofixed.
 The other builders get a suggestion:
 
-- `core._literal([...])` keeps the repeat in its error message and in its JSON Schema `enum`.
+- `core._literal()` with an array keeps the repeat in its error message and in its JSON Schema `enum`.
 - `core._union()` tries every member, so its `invalid_union` issue has one `errors` entry per member, repeats included.
 - `core._discriminatedUnion()` throws `Duplicate discriminator value` on its first parse.
   Removing the repeat makes the schema usable, which is a change of behavior.

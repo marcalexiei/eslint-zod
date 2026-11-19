@@ -16,7 +16,7 @@ export const noDuplicateUnionMembers = createZodPluginRule({
     messages: {
       duplicateMember: 'Duplicate member: it repeats the one on line {{line}}.',
       duplicateDiscriminatedUnionMember:
-        'Duplicate member: it repeats the one on line {{line}}, and the schema throws when it parses.',
+        'Duplicate member: it repeats the one on line {{line}}, which makes the schema throw.',
       removeDuplicate: 'Remove the duplicate member.',
     },
     schema: [],

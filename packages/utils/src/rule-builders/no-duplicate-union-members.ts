@@ -44,14 +44,17 @@ const DISCRIMINATED_FACTORIES: ReadonlySet<string> = new Set<ZodCoreExportName |
   '_discriminatedUnion',
 ]);
 
-/** The member's AST without positions, so whitespace and comments do not tell two members apart. */
-function structuralKey(node: TSESTree.Node): string {
-  return JSON.stringify(node, (key, value: unknown) => {
-    if (key === 'parent' || key === 'range' || key === 'loc' || key === 'raw') {
-      return undefined;
-    }
-    return typeof value === 'bigint' ? `${value}n` : value;
-  });
+const CLOSING_BRACKETS: ReadonlySet<string> = new Set([')', ']', '}']);
+
+/** A literal's value, keyed by type so `1` and `'1'` differ; `null` for a regular expression. */
+function literalKey(node: TSESTree.Literal): string | null {
+  if ('bigint' in node) {
+    return `bigint:${node.bigint}`;
+  }
+  if ('regex' in node) {
+    return null;
+  }
+  return `${typeof node.value}:${String(node.value)}`;
 }
 
 /**
@@ -59,8 +62,8 @@ function structuralKey(node: TSESTree.Node): string {
  *
  * Reports a member repeated in `union`, `discriminatedUnion`, `enum` or array `literal`,
  * or in their `zod/v4/core` builders (`_union`, …):
- * a literal value for the last two, any textually equal expression for the unions.
- * Only an enum is autofixed; the rest get a suggestion.
+ * a literal value for the last two, the same tokens for the unions.
+ * Only a v4 enum is autofixed; the rest get a suggestion.
  * Bails on a spread or a hole in the member list.
  */
 export function buildNoDuplicateUnionMembersCreate(
@@ -68,7 +71,26 @@ export function buildNoDuplicateUnionMembersCreate(
 ): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
   return function create(context) {
     const { sourceCode } = context;
-    const { createSchemaVisitor, getZodChainFactory } = scope.createTracker({ kind: 'value' });
+    const { createSchemaVisitor, getZodChainFactory, resolveZodExport } = scope.createTracker({
+      kind: 'value',
+      sourceCode,
+    });
+
+    /** The member's tokens, so whitespace, comments and trailing commas do not tell two members apart. */
+    function tokenKey(element: TSESTree.Expression): string | null {
+      const tokens: Array<[string, string]> = [];
+      const before = sourceCode.getTokenBefore(element);
+      let token = before && sourceCode.getTokenAfter(before);
+      while (token && token.range[1] <= element.range[1]) {
+        const next = sourceCode.getTokenAfter(token);
+        const trailingComma = token.value === ',' && CLOSING_BRACKETS.has(next?.value ?? '');
+        if (!trailingComma) {
+          tokens.push([token.type, token.value]);
+        }
+        token = next;
+      }
+      return tokens.length > 0 ? JSON.stringify(tokens) : null;
+    }
 
     /** Removes the element and the comma before it; `null` when that would drop a comment or a parenthesis. */
     function buildRemoveFix(element: TSESTree.Expression): ReportFixFunction | null {
@@ -88,7 +110,7 @@ export function buildNoDuplicateUnionMembersCreate(
       onSchema(node, { schemaType }): void {
         const factory = getZodChainFactory(node);
         const list = factory?.node.arguments.at(MEMBER_LIST_INDEX.get(schemaType) ?? 0);
-        if (list?.type !== AST_NODE_TYPES.ArrayExpression) {
+        if (!factory || list?.type !== AST_NODE_TYPES.ArrayExpression) {
           return;
         }
 
@@ -101,12 +123,21 @@ export function buildNoDuplicateUnionMembersCreate(
         }
 
         const isValueList = VALUE_FACTORIES.has(schemaType);
+        // `zod/v3` keeps a repeated enum value in `options` and in its issues.
+        const source = resolveZodExport(factory.node.callee)?.declaration.source.value;
+        const fixable =
+          FIXABLE_FACTORIES.has(schemaType) && source !== undefined && source !== 'zod/v3';
         const seen = new Map<string, TSESTree.Expression>();
         for (const element of elements) {
-          if (isValueList && element.type !== AST_NODE_TYPES.Literal) {
+          let key: string | null;
+          if (isValueList) {
+            key = element.type === AST_NODE_TYPES.Literal ? literalKey(element) : null;
+          } else {
+            key = tokenKey(element);
+          }
+          if (key === null) {
             continue;
           }
-          const key = structuralKey(element);
           const first = seen.get(key);
           if (!first) {
             seen.set(key, element);
@@ -120,11 +151,8 @@ export function buildNoDuplicateUnionMembersCreate(
               ? 'duplicateDiscriminatedUnionMember'
               : 'duplicateMember',
             data: { line: first.loc.start.line },
-            fix: FIXABLE_FACTORIES.has(schemaType) ? fix : null,
-            suggest:
-              !FIXABLE_FACTORIES.has(schemaType) && fix
-                ? [{ messageId: 'removeDuplicate', fix }]
-                : [],
+            fix: fixable ? fix : null,
+            suggest: !fixable && fix ? [{ messageId: 'removeDuplicate', fix }] : [],
           });
         }
       },
