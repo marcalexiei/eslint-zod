@@ -118,6 +118,68 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
     },
     {
+      name: 'check arguments - overwrite between repeats rewrites the value',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.trim(), z.overwrite((s) => \` \${s}\`), z.trim());
+      `,
+    },
+    {
+      name: 'check arguments - custom check between repeats may rewrite the value',
+      code: dedent`
+        import * as z from 'zod/mini';
+        declare const padCheck: z.core.$ZodCheck<string>;
+        z.string().check(z.trim()).check(padCheck).check(z.trim());
+      `,
+    },
+    {
+      name: 'check arguments - callback check between repeats may rewrite the value',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.toLowerCase(), z.superRefine(() => {}), z.toLowerCase());
+      `,
+    },
+    {
+      name: 'check arguments - opposite case between repeats',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.toUpperCase(), z.toLowerCase(), z.toUpperCase());
+      `,
+    },
+    {
+      name: 'check arguments - other normalize form between repeats',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.normalize('NFD'), z.normalize('NFC'), z.normalize('NFD'));
+      `,
+    },
+    {
+      name: 'check arguments - unknown normalize form between repeats',
+      code: dedent`
+        import * as z from 'zod/mini';
+        declare const form: () => 'NFC';
+        z.string().check(z.normalize('NFD'), z.normalize(form()), z.normalize('NFD'));
+      `,
+    },
+    {
+      name: 'check arguments - normalize forms read through calls are not compared',
+      code: dedent`
+        import * as z from 'zod/mini';
+        declare const nextForm: () => 'NFC' | 'NFD';
+        z.string().check(z.normalize(nextForm()), z.normalize(nextForm()));
+      `,
+    },
+    {
+      name: 'check arguments - apply() may return another schema',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string()
+          .check(z.trim())
+          .apply((schema) => z.pipe(schema, z.string()))
+          .check(z.trim());
+      `,
+    },
+    {
       name: 'non-zod code is not flagged',
       code: dedent`
         const obj = { brand: () => obj };
@@ -126,6 +188,38 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
     },
   ],
   invalid: [
+    {
+      name: 'check arguments - overwrite does not reset describe',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.describe('a'), z.overwrite((s) => s), z.describe('b'));
+      `,
+      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'describe' } }],
+    },
+    {
+      name: 'check arguments - case and trim are independent',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.trim(), z.toUpperCase(), z.normalize(), z.trim());
+      `,
+      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'trim' } }],
+    },
+    {
+      name: 'check arguments - normalize with a template literal form',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.normalize(\`NFD\`), z.normalize('NFD'));
+      `,
+      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'normalize' } }],
+    },
+    {
+      name: 'check arguments - refine does not rewrite the value',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.trim(), z.refine(() => true), z.trim());
+      `,
+      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'trim' } }],
+    },
     {
       name: 'check arguments - trim repeated in one check',
       code: dedent`

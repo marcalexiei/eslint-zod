@@ -17,13 +17,18 @@ the rule also reports a check argument that repeats an earlier one in the same s
 whether within one `.check()` call or across several.
 Only checks whose second application is redundant are compared:
 `trim()`, `toLowerCase()`, `toUpperCase()`, `describe()`, and `normalize()` with the same form (no argument means `'NFC'`).
+A form read from a call or a property is not compared, since two reads may differ.
+
+A repeat is reported only while the earlier check is still in effect.
+It is not when a check between the two may undo it:
+the opposite case (`z.toUpperCase()` after `z.toLowerCase()`), another `normalize()` form,
+`overwrite()`, a callback check, a custom check that is not a zod call, or `.apply()`.
 
 Accumulating checks are left alone, because each call adds an independent constraint:
 `regex()`, `includes()`, `startsWith()`, `endsWith()`, `overwrite()`, `refine()`, `superRefine()`, `multipleOf()` and `meta()`.
 Repeated bounds such as `z.minLength(1)` are reported by [`no-conflicting-checks`](./no-conflicting-checks.md).
 
-The rule reports without a fix: removing a repeat changes the output when another check sits between the two,
-as in `z.toUpperCase(), z.toLowerCase(), z.toUpperCase()`, and the last `describe()` wins.
+The rule reports without a fix: the last `describe()` wins, so removing either one changes the description.
 
 ## Examples
 
@@ -57,6 +62,13 @@ const cSchema = z.string().check(z.normalize('NFD'), z.normalize('NFC'));
 
 // accumulating checks: both patterns must match
 const dSchema = z.string().check(z.regex(/^a/), z.regex(/z$/));
+
+// overwrite() may add whitespace back, so the second trim() is needed
+const eSchema = z.string().check(
+  z.trim(),
+  z.overwrite((s) => ` ${s} `),
+  z.trim(),
+);
 ```
 
 ## When Not To Use It
