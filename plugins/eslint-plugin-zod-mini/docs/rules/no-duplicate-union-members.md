@@ -18,7 +18,7 @@ Members are compared as written:
 
 - `z.enum()` and `z.literal([...])` compare literal values, so `'a'` and `"a"` match and `1` and `1n` do not.
   An identifier or any other expression is never compared.
-- `z.union()` and `z.discriminatedUnion()` compare the members' syntax, ignoring whitespace and comments.
+- `z.union()` and `z.discriminatedUnion()` compare the members token by token, ignoring whitespace, comments and trailing commas.
   `z.string()` matches `z.string()`, and `A` matches `A`.
   Members that accept the same values but are written differently (`z.literal('a')` and `z.enum(['a'])`) are not reported.
 

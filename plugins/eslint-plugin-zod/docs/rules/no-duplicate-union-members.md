@@ -18,7 +18,7 @@ Members are compared as written:
 
 - `z.enum()` and `z.literal([...])` compare literal values, so `'a'` and `"a"` match and `1` and `1n` do not.
   An identifier or any other expression is never compared.
-- `z.union()` and `z.discriminatedUnion()` compare the members' syntax, ignoring whitespace and comments.
+- `z.union()` and `z.discriminatedUnion()` compare the members token by token, ignoring whitespace, comments and trailing commas.
   `z.string()` matches `z.string()`, and `A` matches `A`.
   Members that accept the same values but are written differently (`z.literal('a')` and `z.enum(['a'])`) are not reported.
 
@@ -58,6 +58,9 @@ The other factories get a suggestion:
 - `z.union()` tries every member, so its `invalid_union` issue has one `errors` entry per member, repeats included.
 - `z.discriminatedUnion()` throws `Duplicate discriminator value` on its first parse.
   Removing the repeat makes the schema usable, which is a change of behavior.
+
+With a `zod/v3` import, `z.enum()` keeps the repeat in `options` and in its issues, so it gets a suggestion too,
+and `z.discriminatedUnion()` throws as soon as it is built.
 
 Neither the fix nor the suggestion is offered when a comment sits between the repeat and the member before it, or when the repeat is parenthesized.
 

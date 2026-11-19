@@ -1,6 +1,7 @@
 import type * as z from 'zod';
 import type * as zm from 'zod/mini';
 import type * as z3 from 'zod/v3';
+import type * as zc from 'zod/v4/core';
 
 type AnyFunction = (...args: never) => unknown;
 type IsAny<T> = 0 extends 1 & T ? true : false;
@@ -52,6 +53,9 @@ export type ZodExportName = Checked<
   Extract<keyof typeof z | keyof typeof z3 | keyof typeof zm, string>,
   'ZodExportName'
 >;
+
+/** A top-level export of `zod/v4/core`: classes, checks and the `_`-prefixed schema builders. */
+export type ZodCoreExportName = Checked<Extract<keyof typeof zc, string>, 'ZodCoreExportName'>;
 
 /** A member of the `iso` namespace, dotted the way the check vocabulary spells it (`iso.date`). */
 export type ZodIsoMemberName = Checked<

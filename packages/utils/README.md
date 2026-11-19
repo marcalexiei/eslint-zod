@@ -70,7 +70,7 @@ Each rule shared between `eslint-plugin-zod` and `eslint-plugin-zod-mini` (some 
 - `buildNoCoerceBooleanCreate(scope)`
 - `buildNoConflictingChecksCreate(scope)` — also exports the `NoConflictingChecksOptions` and `NoConflictingChecksMessageIds` contracts
 - `buildNoDuplicateSchemaMethodsCreate(scope, excludedMethods)` — an `as const` list naming a type-changing method is a type error, since the rule never reaches it; also exports `NoDuplicateSchemaMethodsExclusions`
-- `buildNoDuplicateUnionMembersCreate(scope)`
+- `buildNoDuplicateUnionMembersCreate(scope)` — also covers `zod/v4/core`'s `_union`, `_discriminatedUnion`, `_enum` and `_literal` builders
 - `buildNoDynamicSchemaValueCreate(scope)`
 - `buildNoEmptyCustomSchemaCreate(scope)`
 - `buildNoFunctionScopedSchemaCreate(scope)`
