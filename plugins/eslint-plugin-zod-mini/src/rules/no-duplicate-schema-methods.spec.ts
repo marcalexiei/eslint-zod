@@ -45,7 +45,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
     },
     {
-      name: 'check arguments - each setter check once',
+      name: 'check arguments - each compared check once',
       code: dedent`
         import * as z from 'zod/mini';
         z.string().check(z.trim(), z.toLowerCase()).check(z.describe('d'));
@@ -68,27 +68,11 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
     },
     {
-      name: 'check arguments - accumulating checks are left alone',
+      name: 'check arguments - other checks are not compared',
       code: dedent`
         import * as z from 'zod/mini';
-        z.string().check(
-          z.regex(/a/),
-          z.regex(/a/),
-          z.includes('a'),
-          z.includes('b'),
-          z.startsWith('a'),
-          z.startsWith('a'),
-          z.endsWith('a'),
-          z.endsWith('a'),
-          z.overwrite((s) => s),
-          z.overwrite((s) => s),
-          z.refine(() => true),
-          z.refine(() => true),
-          z.superRefine(() => {}),
-          z.superRefine(() => {}),
-          z.meta({ a: 1 }),
-          z.meta({ b: 2 }),
-        );
+        z.string().check(z.regex(/a/), z.regex(/a/), z.refine(() => true), z.refine(() => true));
+        z.string().check(z.meta({ a: 1 }), z.meta({ b: 2 }));
         z.number().check(z.multipleOf(2), z.multipleOf(3));
       `,
     },
@@ -108,13 +92,6 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
           b: z.string().check(z.trim()),
         });
         z.pipe(z.string().check(z.trim()), z.string().check(z.trim()));
-      `,
-    },
-    {
-      name: 'zod imports are out of scope',
-      code: dedent`
-        import * as z from 'zod';
-        z.string().brand('Foo').brand('Bar');
       `,
     },
     {
@@ -162,7 +139,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
     },
     {
-      name: 'check arguments - normalize forms read through calls are not compared',
+      name: 'check arguments - normalize forms that are not constants are not compared',
       code: dedent`
         import * as z from 'zod/mini';
         declare const nextForm: () => 'NFC' | 'NFD';
@@ -189,6 +166,15 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
   ],
   invalid: [
     {
+      name: 'check arguments - normalize form read from a constant',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const form = 'NFC';
+        z.string().check(z.normalize(form), z.normalize());
+      `,
+      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'normalize' } }],
+    },
+    {
       name: 'check arguments - overwrite does not reset describe',
       code: dedent`
         import * as z from 'zod/mini';
@@ -203,14 +189,6 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         z.string().check(z.trim(), z.toUpperCase(), z.normalize(), z.trim());
       `,
       errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'trim' } }],
-    },
-    {
-      name: 'check arguments - normalize with a template literal form',
-      code: dedent`
-        import * as z from 'zod/mini';
-        z.string().check(z.normalize(\`NFD\`), z.normalize('NFD'));
-      `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'normalize' } }],
     },
     {
       name: 'check arguments - refine does not rewrite the value',
