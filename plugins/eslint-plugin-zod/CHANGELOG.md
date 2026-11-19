@@ -1,5 +1,16 @@
 # eslint-plugin-zod
 
+## 5.4.0
+
+### Minor Changes
+
+- [#617](https://github.com/marcalexiei/eslint-zod/pull/617) [`ad06b6a`](https://github.com/marcalexiei/eslint-zod/commit/ad06b6ae22ff271ecc009336f813cdc860b26c0e) - feat: add `no-duplicate-union-members` rule, reporting a member repeated in `z.union()`, `z.discriminatedUnion()`, `z.enum()` or `z.literal([...])`.
+
+### Patch Changes
+
+- Updated dependencies [[`e153c5f`](https://github.com/marcalexiei/eslint-zod/commit/e153c5fe7041723dd0ccc1ce96be6fcfc37b98d5), [`ad06b6a`](https://github.com/marcalexiei/eslint-zod/commit/ad06b6ae22ff271ecc009336f813cdc860b26c0e)]:
+  - @eslint-zod/utils@7.1.0
+
 ## 5.3.0
 
 ### Minor Changes

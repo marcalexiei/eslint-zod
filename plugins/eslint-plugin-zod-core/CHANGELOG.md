@@ -1,5 +1,16 @@
 # eslint-plugin-zod-core
 
+## 2.2.0
+
+### Minor Changes
+
+- [#618](https://github.com/marcalexiei/eslint-zod/pull/618) [`e153c5f`](https://github.com/marcalexiei/eslint-zod/commit/e153c5fe7041723dd0ccc1ce96be6fcfc37b98d5) - feat: add `no-duplicate-union-members` to `eslint-plugin-zod-core`, reporting a member repeated in `_union()`, `_discriminatedUnion()`, `_enum()` or `_literal([...])`.
+
+### Patch Changes
+
+- Updated dependencies [[`e153c5f`](https://github.com/marcalexiei/eslint-zod/commit/e153c5fe7041723dd0ccc1ce96be6fcfc37b98d5), [`ad06b6a`](https://github.com/marcalexiei/eslint-zod/commit/ad06b6ae22ff271ecc009336f813cdc860b26c0e)]:
+  - @eslint-zod/utils@7.1.0
+
 ## 2.1.4
 
 ### Patch Changes
