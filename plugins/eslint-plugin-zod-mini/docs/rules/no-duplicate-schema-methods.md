@@ -20,9 +20,10 @@ Only checks whose second application is redundant are compared:
 A form that is neither a string nor a constant bound to one is not compared.
 
 A repeat is reported only while the earlier check is still in effect.
-It is not when a check between the two may undo it:
-the opposite case (`z.toUpperCase()` after `z.toLowerCase()`), another `normalize()` form,
-`overwrite()`, a callback check, a custom check that is not a zod call, or `.apply()`.
+It is not when a check between the two may change the value:
+one of those checks other than `trim()` and `describe()`,
+`overwrite()`, a callback check, or a custom check that is not a zod call.
+`describe()` sets metadata, so only `.apply()` undoes it, along with the others.
 
 Other checks, such as `regex()`, add an independent constraint each time, so they are not compared.
 Repeated bounds such as `z.minLength(1)` are reported by [`no-conflicting-checks`](./no-conflicting-checks.md).
@@ -37,8 +38,8 @@ import * as z from 'zod/mini';
 const aSchema = z.string().brand('Foo').brand('Bar');
 //                                     ^^^^^^^^^^^^^ duplicate .brand()
 
-const bSchema = z.string().check(z.trim(), z.toLowerCase(), z.trim());
-//                                                          ^^^^^^^^ duplicate trim()
+const bSchema = z.string().check(z.toLowerCase(), z.trim(), z.toLowerCase());
+//                                                          ^^^^^^^^^^^^^^^ duplicate toLowerCase()
 
 const cSchema = z.string().check(z.normalize()).check(z.normalize('NFC'));
 //                                                    ^^^^^^^^^^^^^^^^^^ duplicate normalize()

@@ -5,7 +5,7 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import type { ZodSchemaConstraint } from '../collect-zod-schema-constraints.js';
 import { getZodSchemaBaseType } from '../get-zod-schema-base-type.js';
 import type { ZodSchemaBaseType } from '../get-zod-schema-base-type.js';
-import { CALLBACK_CHECK_NAMES, getOpaqueCheckChainIndexes } from '../has-opaque-zod-check.js';
+import { getOpaqueCheckChainIndexes, mayRewriteZodValue } from '../has-opaque-zod-check.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodCheckBound, ZodCheckDescriptor, ZodCheckDomain } from '../zod-check-vocabulary.js';
 import { canonicalizeZodConstraintName, getZodCheckDescriptor } from '../zod-check-vocabulary.js';
@@ -630,11 +630,7 @@ export function buildNoConflictingChecksCreate(
             (opaque) => opaque === chainIndex || (opaque > after && opaque < chainIndex),
           );
 
-          if (
-            crossesOpaqueCheck ||
-            ZOD_MUTATING_CHECK_NAMES.includes(constraint.name) ||
-            CALLBACK_CHECK_NAMES.has(constraint.name)
-          ) {
+          if (crossesOpaqueCheck || mayRewriteZodValue(constraint.name)) {
             segmentStarts.push(checks.length);
           }
           if (ZOD_MUTATING_CHECK_NAMES.includes(constraint.name)) {

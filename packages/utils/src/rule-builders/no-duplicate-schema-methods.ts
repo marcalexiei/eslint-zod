@@ -2,11 +2,10 @@ import type { ZodExportName, ZodMethodName } from '@eslint-zod/zod-api';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import type { ZodSchemaConstraint } from '../collect-zod-schema-constraints.js';
-import { getIdentifierValue } from '../get-binding-initializer.js';
-import { CALLBACK_CHECK_NAMES } from '../has-opaque-zod-check.js';
+import { getIdentifierValue, skipTypeAssertions } from '../get-binding-initializer.js';
+import { mayRewriteZodValue } from '../has-opaque-zod-check.js';
 import type { RuleContext, RuleListener, SourceCode } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
-import { ZOD_MUTATING_CHECK_NAMES } from '../zod-mutating-check-names.js';
 import type { ZodTypeChangingMethod } from '../zod-type-changing-methods.js';
 import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
 
@@ -39,11 +38,27 @@ function getCheckKey(check: AppliedCheck, sourceCode: Readonly<SourceCode>): str
   if (!form) {
     return 'NFC';
   }
+  const expression = form.type === AST_NODE_TYPES.SpreadElement ? null : skipTypeAssertions(form);
   const value =
-    form.type === AST_NODE_TYPES.Identifier ? getIdentifierValue(sourceCode, form) : form;
+    expression?.type === AST_NODE_TYPES.Identifier
+      ? getIdentifierValue(sourceCode, expression)
+      : expression;
   return value?.type === AST_NODE_TYPES.Literal && typeof value.value === 'string'
     ? value.value
     : null;
+}
+
+function isCheckMethod(name: string): boolean {
+  return name === 'check' || name === 'with';
+}
+
+/** Forgets the value checks in effect; `describe` sets metadata, so it stays. */
+function forgetValueChecks(inEffect: Map<string, string | null>): void {
+  for (const family of inEffect.keys()) {
+    if (family !== 'describe') {
+      inEffect.delete(family);
+    }
+  }
 }
 
 /**
@@ -63,19 +78,16 @@ function trackChecks(
       const key = getCheckKey(check, sourceCode);
       if (key !== null && inEffect.get(family) === key) {
         repeats.push(check);
+        continue;
+      }
+      // A case change or `normalize()` may undo the others; `trim()` only drops whitespace.
+      if (family !== 'trim' && family !== 'describe') {
+        forgetValueChecks(inEffect);
       }
       inEffect.set(family, key);
-    } else if (
-      !check ||
-      CALLBACK_CHECK_NAMES.has(check.name) ||
-      ZOD_MUTATING_CHECK_NAMES.includes(check.name)
-    ) {
-      // A check that may rewrite the value, a custom one included, undoes the value checks in effect.
-      for (const inEffectFamily of inEffect.keys()) {
-        if (inEffectFamily !== 'describe') {
-          inEffect.delete(inEffectFamily);
-        }
-      }
+    } else if (!check || mayRewriteZodValue(check.name)) {
+      // A custom check may rewrite the value too.
+      forgetValueChecks(inEffect);
     }
   }
   return repeats;
@@ -101,9 +113,12 @@ export function buildNoDuplicateSchemaMethodsCreate<const TExcluded extends Read
         const seen = new Set<string>();
         // Checks still in effect: family → key.
         const inEffect = new Map<string, string | null>();
-        const constraints = collectZodSchemaConstraints(node);
+        const chain = collectZodChainMethods(node);
+        const constraints = chain.some((it) => isCheckMethod(it.name))
+          ? collectZodSchemaConstraints(node)
+          : [];
 
-        for (const method of collectZodChainMethods(node)) {
+        for (const method of chain) {
           // A type-changing method starts a new segment: what follows constrains a different schema.
           if (ZOD_TYPE_CHANGING_METHODS.includes(method.name)) {
             seen.clear();
@@ -115,7 +130,7 @@ export function buildNoDuplicateSchemaMethodsCreate<const TExcluded extends Read
             inEffect.clear();
           }
 
-          const isCheck = method.name === 'check' || method.name === 'with';
+          const isCheck = isCheckMethod(method.name);
           const checks = isCheck
             ? method.node.arguments.map((argument) =>
                 constraints.find((it) => it.node === argument),

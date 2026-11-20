@@ -183,6 +183,9 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         z.string().trim().apply((schema) => schema).trim();
         z.string().toLowerCase().toUpperCase().toLowerCase();
         z.string().normalize('NFC').normalize('NFD').normalize('NFC');
+        z.string().normalize().toUpperCase().normalize();
+        z.string().trim().normalize('NFKC').trim();
+        z.string().toLowerCase().normalize('NFKD').toLowerCase();
       `,
     },
     {
@@ -286,6 +289,14 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         z.string().toLowerCase().trim().refine((s) => s.length > 0).toLowerCase();
       `,
       errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'toLowerCase' } }],
+    },
+    {
+      name: 'normalize form with a type assertion',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().normalize('NFD' as const).normalize('NFD');
+      `,
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'normalize' } }],
     },
     {
       name: 'overwrite does not undo describe',

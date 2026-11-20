@@ -143,7 +143,18 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       code: dedent`
         import * as z from 'zod/mini';
         declare const nextForm: () => 'NFC' | 'NFD';
+        declare const forms: ['NFC'];
         z.string().check(z.normalize(nextForm()), z.normalize(nextForm()));
+        z.string().check(z.normalize(...forms), z.normalize(...forms));
+      `,
+    },
+    {
+      name: 'check arguments - a case change or normalize() between repeats may undo the others',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.normalize(), z.toUpperCase(), z.normalize());
+        z.string().check(z.trim(), z.normalize('NFKC'), z.trim());
+        z.string().check(z.toLowerCase(), z.normalize('NFKD'), z.toLowerCase());
       `,
     },
     {
@@ -183,12 +194,12 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'describe' } }],
     },
     {
-      name: 'check arguments - case and trim are independent',
+      name: 'check arguments - trim does not undo the others',
       code: dedent`
         import * as z from 'zod/mini';
-        z.string().check(z.trim(), z.toUpperCase(), z.normalize(), z.trim());
+        z.string().check(z.toUpperCase(), z.trim(), z.toUpperCase());
       `,
-      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'trim' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'toUpperCase' } }],
     },
     {
       name: 'check arguments - refine does not rewrite the value',
@@ -202,7 +213,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       name: 'check arguments - trim repeated in one check',
       code: dedent`
         import * as z from 'zod/mini';
-        z.string().check(z.trim(), z.toLowerCase(), z.trim());
+        z.string().check(z.trim(), z.describe('a'), z.trim());
       `,
       errors: [
         {
@@ -271,6 +282,14 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         import * as z from 'zod/mini';
         const form = 'NFKC';
         z.string().check(z.normalize(form), z.normalize(form));
+      `,
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'normalize' } }],
+    },
+    {
+      name: 'check arguments - normalize form with a type assertion',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.normalize('NFD' as const), z.normalize('NFD'));
       `,
       errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'normalize' } }],
     },

@@ -15,9 +15,10 @@ The object reshaping methods (`.extend()`, `.safeExtend()`, `.merge()`, `.omit()
 
 `.trim()`, `.toLowerCase()`, `.toUpperCase()`, `.describe()`, and `.normalize()` with the same form (no argument means `'NFC'`)
 are reported only while the earlier call is still in effect.
-They are not when a method between the two may undo it:
-the opposite case (`.toUpperCase()` after `.toLowerCase()`), another `.normalize()` form,
-`.overwrite()`, `.slugify()`, `.superRefine()`, `.check()` or `.apply()`.
+They are not when a method between the two may change the value:
+one of those methods other than `.trim()` and `.describe()`,
+`.overwrite()`, `.slugify()`, `.superRefine()`, or `.check()` with a function.
+`.describe()` sets metadata, so only `.apply()` undoes it, along with the others.
 A form that is neither a string nor a constant bound to one is not compared.
 
 A type-changing method (`.or()`, `.and()`, `.array()`, `.pipe()`, `.transform()`) wraps the schema in a new one:
