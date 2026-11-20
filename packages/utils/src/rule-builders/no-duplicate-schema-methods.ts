@@ -17,8 +17,6 @@ export type NoDuplicateSchemaMethodsExclusions<TExcluded extends ReadonlyArray<s
     : TExcluded[K];
 };
 
-type MessageIds = 'noDuplicateSchemaMethod' | 'noDuplicateCheckArgument';
-
 /** Checks whose repeat is redundant, by family: a later member of a family overrides an earlier one. */
 const CHECK_FAMILIES: ReadonlyMap<string, string> = new Map<ZodExportName, string>([
   ['describe', 'describe'],
@@ -28,16 +26,16 @@ const CHECK_FAMILIES: ReadonlyMap<string, string> = new Map<ZodExportName, strin
   ['trim', 'trim'],
 ]);
 
+/** A chained method or a `.check(...)` argument. */
+type AppliedCheck = Pick<ZodSchemaConstraint, 'name' | 'node'>;
+
 /** What a check sets within its family; `null` when it cannot be known statically. */
-function getCheckArgumentKey(
-  constraint: ZodSchemaConstraint,
-  sourceCode: Readonly<SourceCode>,
-): string | null {
-  if (constraint.name !== 'normalize') {
-    return constraint.name;
+function getCheckKey(check: AppliedCheck, sourceCode: Readonly<SourceCode>): string | null {
+  if (check.name !== 'normalize') {
+    return check.name;
   }
   // `normalize()` defaults to `NFC`, as `String.prototype.normalize` does.
-  const form = constraint.node.arguments.at(0);
+  const form = check.node.arguments.at(0);
   if (!form) {
     return 'NFC';
   }
@@ -49,28 +47,28 @@ function getCheckArgumentKey(
 }
 
 /**
- * Records a `.check(...)` call's arguments in `inEffect` (family → key), in order;
- * `undefined` stands for an argument that is not a zod call.
- * Returns the arguments repeating one still in effect.
+ * Records checks in `inEffect` (family → key), in order;
+ * `undefined` stands for a `.check(...)` argument that is not a zod call.
+ * Returns the checks repeating one still in effect.
  */
-function trackCheckArguments(
+function trackChecks(
   inEffect: Map<string, string | null>,
-  checkArguments: ReadonlyArray<ZodSchemaConstraint | undefined>,
+  checks: ReadonlyArray<AppliedCheck | undefined>,
   sourceCode: Readonly<SourceCode>,
-): Array<ZodSchemaConstraint> {
-  const repeats: Array<ZodSchemaConstraint> = [];
-  for (const constraint of checkArguments) {
-    const family = constraint && CHECK_FAMILIES.get(constraint.name);
-    if (constraint && family) {
-      const key = getCheckArgumentKey(constraint, sourceCode);
+): Array<AppliedCheck> {
+  const repeats: Array<AppliedCheck> = [];
+  for (const check of checks) {
+    const family = check && CHECK_FAMILIES.get(check.name);
+    if (check && family) {
+      const key = getCheckKey(check, sourceCode);
       if (key !== null && inEffect.get(family) === key) {
-        repeats.push(constraint);
+        repeats.push(check);
       }
       inEffect.set(family, key);
     } else if (
-      !constraint ||
-      CALLBACK_CHECK_NAMES.has(constraint.name) ||
-      ZOD_MUTATING_CHECK_NAMES.includes(constraint.name)
+      !check ||
+      CALLBACK_CHECK_NAMES.has(check.name) ||
+      ZOD_MUTATING_CHECK_NAMES.includes(check.name)
     ) {
       // A check that may rewrite the value, a custom one included, undoes the value checks in effect.
       for (const inEffectFamily of inEffect.keys()) {
@@ -85,23 +83,14 @@ function trackCheckArguments(
 
 /**
  * Reports a method called twice in one chain segment, the excluded ones aside.
- * With `checkArguments`, a `.check(...)` argument repeating one still in effect is reported too.
+ * The checks in `CHECK_FAMILIES`, chained or passed to `.check(...)`,
+ * are reported only when repeating one still in effect.
  */
 export function buildNoDuplicateSchemaMethodsCreate<const TExcluded extends ReadonlyArray<string>>(
   scope: ZodImportScope,
   excludedMethods: NoDuplicateSchemaMethodsExclusions<TExcluded>,
-): (context: Readonly<RuleContext<'noDuplicateSchemaMethod'>>) => RuleListener;
-export function buildNoDuplicateSchemaMethodsCreate<const TExcluded extends ReadonlyArray<string>>(
-  scope: ZodImportScope,
-  excludedMethods: NoDuplicateSchemaMethodsExclusions<TExcluded>,
-  options: { readonly checkArguments: true },
-): (context: Readonly<RuleContext<MessageIds>>) => RuleListener;
-export function buildNoDuplicateSchemaMethodsCreate(
-  scope: ZodImportScope,
-  excludedMethods: ReadonlyArray<string>,
-  options?: { readonly checkArguments: true },
-): (context: Readonly<RuleContext<MessageIds>>) => RuleListener {
-  const checkArguments = options !== undefined;
+): (context: Readonly<RuleContext<'noDuplicateSchemaMethod'>>) => RuleListener {
+  const excluded: ReadonlyArray<string> = excludedMethods;
 
   return function create(context) {
     const { createSchemaVisitor, collectZodChainMethods, collectZodSchemaConstraints } =
@@ -110,9 +99,9 @@ export function buildNoDuplicateSchemaMethodsCreate(
     return createSchemaVisitor({
       onSchema(node): void {
         const seen = new Set<string>();
-        // Check arguments still in effect: family → key.
+        // Checks still in effect: family → key.
         const inEffect = new Map<string, string | null>();
-        const constraints = checkArguments ? collectZodSchemaConstraints(node) : [];
+        const constraints = collectZodSchemaConstraints(node);
 
         for (const method of collectZodChainMethods(node)) {
           // A type-changing method starts a new segment: what follows constrains a different schema.
@@ -126,24 +115,21 @@ export function buildNoDuplicateSchemaMethodsCreate(
             inEffect.clear();
           }
 
-          if (checkArguments && (method.name === 'check' || method.name === 'with')) {
-            const repeats = trackCheckArguments(
-              inEffect,
-              method.node.arguments.map((argument) =>
+          const isCheck = method.name === 'check' || method.name === 'with';
+          const checks = isCheck
+            ? method.node.arguments.map((argument) =>
                 constraints.find((it) => it.node === argument),
-              ),
-              context.sourceCode,
-            );
-            for (const repeat of repeats) {
-              context.report({
-                node: repeat.node,
-                messageId: 'noDuplicateCheckArgument',
-                data: { check: repeat.name },
-              });
-            }
+              )
+            : [method];
+          for (const repeat of trackChecks(inEffect, checks, context.sourceCode)) {
+            context.report({
+              node: isCheck ? repeat.node : node,
+              messageId: 'noDuplicateSchemaMethod',
+              data: { method: repeat.name },
+            });
           }
 
-          if (excludedMethods.includes(method.name)) {
+          if (excluded.includes(method.name) || CHECK_FAMILIES.has(method.name)) {
             continue;
           }
 

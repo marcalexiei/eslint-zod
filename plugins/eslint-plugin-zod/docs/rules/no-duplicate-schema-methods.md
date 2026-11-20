@@ -13,6 +13,13 @@ This rule disallows calling the same Zod schema method more than once within a s
 Methods that are designed to be chained multiple times are excluded from this check: `.regex()`, `.includes()`, `.startsWith()`, `.endsWith()`, and `.overwrite()`, since each call applies an independent constraint or transformation — matching a string against two different patterns is common, unlike calling `.min()` twice with different values.
 The object reshaping methods (`.extend()`, `.safeExtend()`, `.merge()`, `.omit()`, `.pick()`), `.meta()`, `.multipleOf()` and `.check()` / `.with()` are excluded for the same reason.
 
+`.trim()`, `.toLowerCase()`, `.toUpperCase()`, `.describe()`, and `.normalize()` with the same form (no argument means `'NFC'`)
+are reported only while the earlier call is still in effect.
+They are not when a method between the two may undo it:
+the opposite case (`.toUpperCase()` after `.toLowerCase()`), another `.normalize()` form,
+`.overwrite()`, `.slugify()`, `.superRefine()`, `.check()` or `.apply()`.
+A form that is neither a string nor a constant bound to one is not compared.
+
 A type-changing method (`.or()`, `.and()`, `.array()`, `.pipe()`, `.transform()`) wraps the schema in a new one:
 the methods after it constrain the new schema, not the one before.
 `z.string().min(1).array().min(1)` bounds the string's length and then the array's, so it is not a duplicate.
@@ -63,6 +70,13 @@ const eSchema = z
   .string()
   .regex(/^[ -~]*$/)
   .regex(/^W/);
+
+// .overwrite() may add whitespace back, so the second .trim() is needed
+const gSchema = z
+  .string()
+  .trim()
+  .overwrite((s) => ` ${s} `)
+  .trim();
 ```
 
 ## When Not To Use It

@@ -172,7 +172,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         const form = 'NFC';
         z.string().check(z.normalize(form), z.normalize());
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'normalize' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'normalize' } }],
     },
     {
       name: 'check arguments - overwrite does not reset describe',
@@ -180,7 +180,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         import * as z from 'zod/mini';
         z.string().check(z.describe('a'), z.overwrite((s) => s), z.describe('b'));
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'describe' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'describe' } }],
     },
     {
       name: 'check arguments - case and trim are independent',
@@ -188,7 +188,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         import * as z from 'zod/mini';
         z.string().check(z.trim(), z.toUpperCase(), z.normalize(), z.trim());
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'trim' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'trim' } }],
     },
     {
       name: 'check arguments - refine does not rewrite the value',
@@ -196,7 +196,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         import * as z from 'zod/mini';
         z.string().check(z.trim(), z.refine(() => true), z.trim());
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'trim' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'trim' } }],
     },
     {
       name: 'check arguments - trim repeated in one check',
@@ -206,8 +206,8 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
       errors: [
         {
-          messageId: 'noDuplicateCheckArgument',
-          data: { check: 'trim' },
+          messageId: 'noDuplicateSchemaMethod',
+          data: { method: 'trim' },
           line: 2,
           column: 45,
           endColumn: 53,
@@ -220,7 +220,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         import * as z from 'zod/mini';
         z.string().check(z.trim()).check(z.trim());
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'trim' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'trim' } }],
     },
     {
       name: 'check arguments - with() is the alias of check()',
@@ -228,7 +228,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         import * as z from 'zod/mini';
         z.string().with(z.toUpperCase()).check(z.toUpperCase());
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'toUpperCase' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'toUpperCase' } }],
     },
     {
       name: 'check arguments - toLowerCase repeated three times',
@@ -237,8 +237,8 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         z.string().check(z.toLowerCase(), z.toLowerCase(), z.toLowerCase());
       `,
       errors: [
-        { messageId: 'noDuplicateCheckArgument', data: { check: 'toLowerCase' } },
-        { messageId: 'noDuplicateCheckArgument', data: { check: 'toLowerCase' } },
+        { messageId: 'noDuplicateSchemaMethod', data: { method: 'toLowerCase' } },
+        { messageId: 'noDuplicateSchemaMethod', data: { method: 'toLowerCase' } },
       ],
     },
     {
@@ -247,7 +247,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         import * as z from 'zod/mini';
         z.string().check(z.describe('a')).check(z.describe('b'));
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'describe' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'describe' } }],
     },
     {
       name: 'check arguments - normalize with the same form',
@@ -255,7 +255,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         import * as z from 'zod/mini';
         z.string().check(z.normalize('NFD'), z.normalize('NFD'));
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'normalize' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'normalize' } }],
     },
     {
       name: 'check arguments - normalize() defaults to NFC',
@@ -263,7 +263,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         import * as z from 'zod/mini';
         z.string().check(z.normalize(), z.normalize('NFC'));
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'normalize' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'normalize' } }],
     },
     {
       name: 'check arguments - normalize with the same identifier',
@@ -272,7 +272,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         const form = 'NFKC';
         z.string().check(z.normalize(form), z.normalize(form));
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'normalize' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'normalize' } }],
     },
     {
       name: 'check arguments - named imports',
@@ -280,7 +280,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         import { string, trim } from 'zod/mini';
         string().check(trim(), trim());
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'trim' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'trim' } }],
     },
     {
       name: 'check arguments - inside a wrapper',
@@ -288,7 +288,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         import * as z from 'zod/mini';
         z.optional(z.string().check(z.trim(), z.trim()));
       `,
-      errors: [{ messageId: 'noDuplicateCheckArgument', data: { check: 'trim' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'trim' } }],
     },
     {
       name: 'namespace - brand called twice',

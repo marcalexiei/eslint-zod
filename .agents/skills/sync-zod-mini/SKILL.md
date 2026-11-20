@@ -60,7 +60,6 @@ There is **no** `z.min`/`z.max` in zod/mini — the check name depends on the sc
 - **Never mix styles** in any example, spec, doc, or changeset: chained validation methods are `zod`-only; standalone checks inside `.check(...)` are `zod/mini`-only. `z.string().check(z.minLength(1))` under a `'zod'` import is invalid, as is `z.string().min(1)` under `'zod/mini'`.
 - One known asymmetry: `prefer-meta` detection in mini uses `isZodNamespace`/`getNamedImportOriginal` directly because `z.describe()` is not a chain method.
 - Rule _names, message ids, and option shapes_ stay identical across plugins; only spellings inside human-readable text and code examples differ.
-  The one exception is a message for behavior only one API style has: `noDuplicateCheckArgument` exists in `zod-mini` alone, since `zod` chains its checks.
 - Chained-name semantics differ by schema type (`.min()` = `gte` on numbers but `minLength` on strings). Do **not** write a per-rule spelling table: call `canonicalizeZodConstraintName(constraint, baseType)` from `@eslint-zod/utils`, which reduces both API styles to one canonical name. Add missing spellings to `packages/utils/src/zod-check-vocabulary.ts` so every rule gains them at once.
 - Deprecated chained string formats canonicalize to their top-level factory (`z.string().datetime()` → `iso.datetime`, `.guid()` → `guid`) via `ZOD_STRING_FORMAT_METHODS`. These are `zod`-only spellings — zod/mini uses the top-level factory directly — so a shared rule sees them only through canonicalization.
 
