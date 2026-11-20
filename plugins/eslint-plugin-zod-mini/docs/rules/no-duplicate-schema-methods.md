@@ -21,11 +21,9 @@ A form that is neither a string nor a constant bound to one is not compared.
 
 A repeat is reported only while the earlier check is still in effect.
 It is not when a check between the two may change the value:
-one of those checks other than `trim()` and `describe()`,
-`overwrite()`, a callback check, or a custom check that is not a zod call.
-`describe()` sets metadata, so only `.apply()` undoes it, along with the others.
+`toLowerCase()`, `toUpperCase()`, `normalize()`, `overwrite()`, a callback check, or a custom check that is not a zod call.
+`describe()` sets metadata, so only `.apply()` resets it.
 
-Other checks, such as `regex()`, add an independent constraint each time, so they are not compared.
 Repeated bounds such as `z.minLength(1)` are reported by [`no-conflicting-checks`](./no-conflicting-checks.md).
 
 ## Examples

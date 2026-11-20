@@ -4,6 +4,7 @@ import type { TSESTree } from '@typescript-eslint/types';
 import { describe, expect, it } from 'vitest';
 
 import {
+  getArgumentValue,
   getBindingInitializer,
   getIdentifierValue,
   skipTypeAssertions,
@@ -72,5 +73,22 @@ describe('getIdentifierValue', () => {
   it('is null for a name with no binding', () => {
     const { find, sourceCode } = parseCode('a;');
     expect(getIdentifierValue(sourceCode as unknown as SourceCode, find('Identifier'))).toBeNull();
+  });
+});
+
+describe('getArgumentValue', () => {
+  it('follows an identifier argument, assertions skipped', () => {
+    const { find, sourceCode } = parseCode("const a = 'NFD'; f(a as string);");
+    const call = find<TSESTree.CallExpression>('CallExpression');
+    expect(getArgumentValue(sourceCode as unknown as SourceCode, call.arguments[0])).toBe(
+      find('VariableDeclarator > Literal'),
+    );
+  });
+
+  it('is null for a spread or a missing argument', () => {
+    const { find, sourceCode } = parseCode('f(...a);');
+    const call = find<TSESTree.CallExpression>('CallExpression');
+    expect(getArgumentValue(sourceCode as unknown as SourceCode, call.arguments[0])).toBeNull();
+    expect(getArgumentValue(sourceCode as unknown as SourceCode, undefined)).toBeNull();
   });
 });

@@ -2,7 +2,7 @@ import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import type { OptionsWithDefaults } from '../create-rule-creator.js';
-import { getIdentifierValue, skipTypeAssertions } from '../get-binding-initializer.js';
+import { getArgumentValue } from '../get-binding-initializer.js';
 import { getStaticPropertyName } from '../get-static-property-name.js';
 import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
@@ -102,15 +102,10 @@ export function buildConsistentObjectPropertyKeyStyleCreate(
       schemaType: allow,
       onSchema(node): void {
         // The outermost call may be a method (`.optional()`); the shape is the factory's argument.
-        const argument = getZodChainFactory(node)?.node.arguments.at(0);
-        const value =
-          argument && argument.type !== AST_NODE_TYPES.SpreadElement
-            ? skipTypeAssertions(argument)
-            : null;
-        const shape =
-          value?.type === AST_NODE_TYPES.Identifier
-            ? getIdentifierValue(context.sourceCode, value)
-            : value;
+        const shape = getArgumentValue(
+          context.sourceCode,
+          getZodChainFactory(node)?.node.arguments.at(0),
+        );
         if (shape?.type === AST_NODE_TYPES.ObjectExpression) {
           checkShape(shape);
         }

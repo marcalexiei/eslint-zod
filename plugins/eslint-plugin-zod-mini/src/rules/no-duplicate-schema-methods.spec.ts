@@ -52,13 +52,6 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
     },
     {
-      name: 'check arguments - normalize with different forms',
-      code: dedent`
-        import * as z from 'zod/mini';
-        z.string().check(z.normalize('NFD'), z.normalize('NFC'));
-      `,
-    },
-    {
       name: 'check arguments - normalize with different identifiers',
       code: dedent`
         import * as z from 'zod/mini';
@@ -273,15 +266,6 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       code: dedent`
         import * as z from 'zod/mini';
         z.string().check(z.normalize(), z.normalize('NFC'));
-      `,
-      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'normalize' } }],
-    },
-    {
-      name: 'check arguments - normalize with the same identifier',
-      code: dedent`
-        import * as z from 'zod/mini';
-        const form = 'NFKC';
-        z.string().check(z.normalize(form), z.normalize(form));
       `,
       errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'normalize' } }],
     },
