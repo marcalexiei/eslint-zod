@@ -107,8 +107,9 @@ AST helpers in `@eslint-zod/utils` (most are internal, imported by relative path
   It requires a tracker built with `sourceCode` and throws otherwise.
   What counts as such a binding is decided by the module-local `getBindingInitializer` (`src/get-binding-initializer.ts`):
   declared once, with a plain name, and never reassigned, whether `const`, `let` or `var`.
-  `getIdentifierValue(sourceCode, identifier)` in the same file is that initializer with `as`, `satisfies` and `!` skipped.
-  `prefer-validate`, `no-dynamic-schema-value`, `no-reshape-on-refined-object` and `consistent-object-property-key-style` follow variables through them too, so all rules agree.
+  `getIdentifierValue(sourceCode, identifier)` in the same file is that initializer with `as`, `satisfies` and `!` skipped,
+  and `getArgumentValue(sourceCode, argument)` is a call argument's value read the same way (`null` for a spread).
+  `prefer-validate`, `no-dynamic-schema-value`, `no-reshape-on-refined-object`, `consistent-object-property-key-style` and `no-duplicate-schema-methods` follow variables through them too, so all rules agree.
 - `createTracker({ kind })` — **required**: which specifiers the tracker records.
   `'value'` skips `import type { … }` and `{ type … }`; those bindings are erased at runtime, so a rule resolving a call site must not see them — that is every rule but one.
   `'type'` keeps only those, and `'all'` keeps both, which is what a rule reading a **type position** needs, since either import form can put a name there (`consistent-schema-output-type-style` is the one such rule).
