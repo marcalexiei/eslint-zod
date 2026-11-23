@@ -99,6 +99,14 @@ ruleTester.run(preferTrimBeforeStringLengthChecks.name, preferTrimBeforeStringLe
         record(string().min(1).trim(), number());
       `,
     },
+    {
+      name: 'native trim() on a parsed value',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().min(1).parse(' a ').trim();
+        z.string().max(5).safeParse(' a ').data?.trim();
+      `,
+    },
   ],
 
   invalid: [
