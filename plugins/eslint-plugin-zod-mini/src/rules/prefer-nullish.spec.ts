@@ -60,6 +60,27 @@ ruleTester.run(preferNullish.name, preferNullish, {
   ],
   invalid: [
     {
+      name: 'no fix before apply() when the wrappers nest differently from nullish',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.nullable(z.optional(z.string())).apply((s) => s);
+      `,
+      errors: [{ messageId: 'preferNullish' }],
+      output: null,
+    },
+    {
+      name: 'fixed before apply() when the wrappers nest as nullish does',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.optional(z.nullable(z.string())).apply((s) => s);
+      `,
+      errors: [{ messageId: 'preferNullish' }],
+      output: dedent`
+        import * as z from 'zod/mini';
+        z.nullish(z.string()).apply((s) => s);
+      `,
+    },
+    {
       name: 'wrapped argument that is not a plain schema call — still fixed inside the argument slot',
       code: dedent`
         import * as z from 'zod/mini';

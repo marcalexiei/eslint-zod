@@ -59,6 +59,37 @@ ruleTester.run(preferNullish.name, preferNullish, {
   ],
   invalid: [
     {
+      name: 'fixed before unwrap() when the wrappers nest as nullish does',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().nullable().optional().unwrap();
+      `,
+      errors: [{ messageId: 'preferNullish' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.string().nullish().unwrap();
+      `,
+    },
+    {
+      name: 'no fix when a variable holding the differently nested schema is unwrapped',
+      code: dedent`
+        import * as z from 'zod';
+        const n = z.string().optional().nullable();
+        n.unwrap();
+      `,
+      errors: [{ messageId: 'preferNullish' }],
+      output: null,
+    },
+    {
+      name: 'no fix before unwrap(), which depends on the nesting',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().optional().nullable().unwrap();
+      `,
+      errors: [{ messageId: 'preferNullish' }],
+      output: null,
+    },
+    {
       name: 'property read from the schema — reported without a fix',
       code: dedent`
         import * as z from 'zod';

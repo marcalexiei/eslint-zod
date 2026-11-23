@@ -114,6 +114,25 @@ ruleTester.run(preferEnumOverLiteralUnion.name, preferEnumOverLiteralUnion, {
   ],
   invalid: [
     {
+      name: 'no fix when a variable holding the union reads its options',
+      code: dedent`
+        import * as z from 'zod';
+        const u = z.union([z.literal('a'), z.literal('b')]);
+        u.options;
+      `,
+      errors: [{ messageId: 'useEnum' }],
+      output: null,
+    },
+    {
+      name: 'no fix before apply(), whose callback can read the union',
+      code: dedent`
+        import * as z from 'zod';
+        z.union([z.literal('a'), z.literal('b')]).apply((s) => s);
+      `,
+      errors: [{ messageId: 'useEnum' }],
+      output: null,
+    },
+    {
       name: 'property read from the schema — reported without a fix',
       code: dedent`
         import * as z from 'zod';

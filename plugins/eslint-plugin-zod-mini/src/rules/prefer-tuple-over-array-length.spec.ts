@@ -8,6 +8,13 @@ const ruleTester = new RuleTester();
 ruleTester.run(preferTupleOverArrayLength.name, preferTupleOverArrayLength, {
   valid: [
     {
+      name: 'checks after apply() bound another schema',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.array(z.string()).apply((schema) => schema).check(z.length(2));
+      `,
+    },
+    {
       name: 'already a tuple',
       code: dedent`
         import * as z from 'zod/mini';
@@ -51,6 +58,15 @@ ruleTester.run(preferTupleOverArrayLength.name, preferTupleOverArrayLength, {
     },
   ],
   invalid: [
+    {
+      name: 'no fix before apply(), whose callback can read the array',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.array(z.string()).check(z.length(2)).apply((s) => s);
+      `,
+      errors: [{ messageId: 'preferTuple' }],
+      output: null,
+    },
     {
       name: 'property read from the schema — reported without a fix',
       code: dedent`

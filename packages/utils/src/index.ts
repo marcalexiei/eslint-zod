@@ -12,6 +12,7 @@ export { getZodSchemaFactoryName } from './get-zod-schema-factory-name.js';
 
 export { buildZodChainRemoveMethodFix } from './build-zod-chain-remove-method-fix.js';
 export { hasCommentInRange } from './has-comment-in-range.js';
+export { readsZodSchemaKind } from './reads-zod-schema-kind.js';
 export { hasParenthesizedReceiver } from './has-parenthesized-receiver.js';
 
 export { ZOD_MUTATING_CHECK_NAMES } from './zod-mutating-check-names.js';

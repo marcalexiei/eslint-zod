@@ -6,7 +6,7 @@ import { buildZodConstraintsRemoveFix } from '../build-zod-constraints-remove-fi
 import type { ZodSchemaConstraint } from '../collect-zod-schema-constraints.js';
 import { hasOpaqueZodCheck } from '../has-opaque-zod-check.js';
 import { readIntegerLiteralValue } from '../read-integer-literal-value.js';
-import { readsZodSchemaProperty } from '../reads-zod-schema-property.js';
+import { readsZodSchemaKind } from '../reads-zod-schema-kind.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import { canonicalizeZodConstraintName } from '../zod-check-vocabulary.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
@@ -70,7 +70,7 @@ export function buildPreferTupleOverArrayLengthCreate(
         const methods = collectZodChainMethods(node);
         // After a property access (`z.array(x).element.length(2)`) the checks are another schema's.
         const head = methods.at(0);
-        if (head && !isZodFactoryChainItem(head)) {
+        if (!head || !isZodFactoryChainItem(head)) {
           return;
         }
 
@@ -155,8 +155,8 @@ export function buildPreferTupleOverArrayLengthCreate(
           node,
           messageId: 'preferTuple',
           fix(fixer) {
-            // The property being read may not exist on the schema the fix builds.
-            if (readsZodSchemaProperty(node, zodSchemaMeta)) {
+            // What follows may not exist on the tuple the fix builds.
+            if (readsZodSchemaKind(context.sourceCode, head.node)) {
               return null;
             }
 

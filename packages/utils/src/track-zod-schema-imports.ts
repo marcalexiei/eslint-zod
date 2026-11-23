@@ -12,6 +12,7 @@ import { isZodFactoryChainItem } from './is-zod-factory-chain-item.js';
 import { createZodSchemaResolver } from './resolve-zod-schema.js';
 import type { RuleListener, SourceCode } from './rule-types.js';
 import type { ZodImportScope } from './zod-import-scope.js';
+import { restoresZodMetadata } from './zod-metadata.js';
 
 /** One zod import: the export it names, its local identifier, and the declaration carrying it. */
 interface ZodImportBinding {
@@ -222,6 +223,12 @@ export interface ZodSchemaImportTracker {
    * recognized zod calls among `.check(...)` arguments (`z.string().check(z.minLength(2))`, `zod/mini`) become `check-argument` constraints.
    */
   collectZodSchemaConstraints: (node: TSESTree.CallExpression) => Array<ZodSchemaConstraint>;
+
+  /**
+   * Whether removing the call at `chainIndex` would bring back metadata it dropped.
+   * Without an index, whether removing a wrapper around `node` would.
+   */
+  restoresZodMetadata: (node: TSESTree.CallExpression, chainIndex?: number) => boolean;
 
   /**
    * True if `node` is a zod call chain built from `schemaType`,
@@ -445,6 +452,13 @@ export function trackZodSchemaImports(
     return schemaResolver(node);
   }
 
+  const collectConstraints = (node: TSESTree.CallExpression): Array<ZodSchemaConstraint> =>
+    collectZodSchemaConstraints({
+      methods: collectZodChainMethods(node),
+      detectZodSchemaRootNode: (argument) => detectZodSchemaRootNode(argument, imports),
+      isZodImportName,
+    });
+
   return {
     importDeclarationListener,
 
@@ -499,12 +513,12 @@ export function trackZodSchemaImports(
       return head && isZodFactoryChainItem(head, isZodImportName) ? head : null;
     },
 
-    collectZodSchemaConstraints: (node) =>
-      collectZodSchemaConstraints({
-        methods: collectZodChainMethods(node),
-        detectZodSchemaRootNode: (argument) => detectZodSchemaRootNode(argument, imports),
-        isZodImportName,
-      }),
+    collectZodSchemaConstraints: collectConstraints,
+
+    restoresZodMetadata(node, chainIndex): boolean {
+      const methods = collectZodChainMethods(node);
+      return restoresZodMetadata(methods, collectConstraints(node), chainIndex ?? methods.length);
+    },
 
     isZodSchemaOfType: (node, schemaType) => isZodSchemaOfType(node, schemaType, imports),
 

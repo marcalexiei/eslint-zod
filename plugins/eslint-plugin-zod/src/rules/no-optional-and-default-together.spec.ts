@@ -8,6 +8,20 @@ const ruleTester = new RuleTester();
 ruleTester.run(noOptionalAndDefaultTogether.name, noOptionalAndDefaultTogether, {
   valid: [
     {
+      name: 'optional and default on either side of unwrap()',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().optional().unwrap().default('x');
+      `,
+    },
+    {
+      name: 'optional and default on either side of apply()',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().optional().apply((schema) => schema).default('x');
+      `,
+    },
+    {
       name: 'optional and default on either side of a type change',
       code: dedent`
           import * as z from 'zod';
@@ -124,6 +138,42 @@ ruleTester.run(noOptionalAndDefaultTogether.name, noOptionalAndDefaultTogether, 
     },
   ],
   invalid: [
+    {
+      name: 'no fix when it would bring back a dropped description',
+      options: [{ preferredMethod: 'optional' }],
+      code: dedent`
+        import * as z from 'zod';
+        z.string().optional().describe('a').default('b');
+      `,
+      errors: [
+        { messageId: 'noOptionalAndDefaultTogetherRemoveMethod', data: { method: 'default' } },
+      ],
+      output: null,
+    },
+    {
+      name: 'no fix before removeDefault(), which reads the removed wrapper',
+      options: [{ preferredMethod: 'optional' }],
+      code: dedent`
+        import * as z from 'zod';
+        z.string().optional().default('a').removeDefault();
+      `,
+      errors: [
+        { messageId: 'noOptionalAndDefaultTogetherRemoveMethod', data: { method: 'default' } },
+      ],
+      output: null,
+    },
+    {
+      name: 'no fix before unwrap(), which reads the removed wrapper',
+      options: [{ preferredMethod: 'default' }],
+      code: dedent`
+        import * as z from 'zod';
+        z.string().default('a').optional().unwrap();
+      `,
+      errors: [
+        { messageId: 'noOptionalAndDefaultTogetherRemoveMethod', data: { method: 'optional' } },
+      ],
+      output: null,
+    },
     {
       name: 'optional then default - preferredMethod: none (explicit)',
       code: dedent`

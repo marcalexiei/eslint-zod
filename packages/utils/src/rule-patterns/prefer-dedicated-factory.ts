@@ -58,7 +58,8 @@ function callsMethod(node: TSESTree.CallExpression, names: ReadonlyArray<string>
  * The fix renames the factory and drops the modifier;
  * it bails on named imports (would need a new import), on a modifier with arguments (nowhere to put them),
  * when an overriding method sits between the factory and the modifier,
- * when the modifier is called after a property access, and when a comment would be dropped.
+ * when the modifier is called after a property access, when a comment would be dropped,
+ * and when the modifier drops a description the factory form would keep.
  */
 export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
   options: PreferDedicatedFactoryOptions<TMessageIds>,
@@ -73,11 +74,8 @@ export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
   } = options;
 
   return function create(context) {
-    const { createSchemaVisitor, collectZodChainMethods, getZodChainFactory } = scope.createTracker(
-      {
-        kind: 'value',
-      },
-    );
+    const { createSchemaVisitor, collectZodChainMethods, getZodChainFactory, restoresZodMetadata } =
+      scope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       schemaType: factoryName,
@@ -113,6 +111,10 @@ export function buildPreferDedicatedFactoryCreate<TMessageIds extends string>(
                 .slice(1, methods.indexOf(modifierMethod))
                 .some((it) => overridingMethods.includes(it.name))
             ) {
+              return null;
+            }
+
+            if (restoresZodMetadata(node, methods.indexOf(modifierMethod))) {
               return null;
             }
 

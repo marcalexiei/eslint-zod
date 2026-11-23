@@ -53,6 +53,27 @@ ruleTester.run(preferStrictObject.name, preferStrictObject, {
   ],
   invalid: [
     {
+      name: 'no fix when it would bring back dropped metadata',
+      code: dedent`
+        import * as z from 'zod';
+        z.object({}).meta({ title: 't' }).strict();
+      `,
+      errors: [{ messageId: 'preferStrictObject' }],
+      output: null,
+    },
+    {
+      name: 'fixed when optional() drops the description anyway',
+      code: dedent`
+        import * as z from 'zod';
+        z.object({}).describe('a').strict().optional();
+      `,
+      errors: [{ messageId: 'preferStrictObject' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.strictObject({}).describe('a').optional();
+      `,
+    },
+    {
       name: 'prefer strictObject over object().strict()',
       code: dedent`
         import { z } from 'zod';
@@ -70,10 +91,7 @@ ruleTester.run(preferStrictObject.name, preferStrictObject, {
         import { z } from 'zod';
         z.object({ a: z.string() }).describe("desc").strict();
       `,
-      output: dedent`
-        import { z } from 'zod';
-        z.strictObject({ a: z.string() }).describe("desc");
-      `,
+      output: null,
       errors: [{ messageId: 'preferStrictObject' }],
     },
     {

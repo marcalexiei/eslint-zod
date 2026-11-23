@@ -4,7 +4,7 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 import { buildZodWrapperUnwrapFix } from '../build-zod-wrapper-unwrap-fix.js';
 import type { ZodSchemaMeta } from '../detect-zod-schema-root-node.js';
 import { hasCommentInRange } from '../has-comment-in-range.js';
-import { readsZodSchemaProperty } from '../reads-zod-schema-property.js';
+import { readsZodSchemaKind } from '../reads-zod-schema-kind.js';
 import type { RuleContext, RuleFix, RuleFixer, RuleListener } from '../rule-types.js';
 import type { ZodChainItem } from '../track-zod-schema-imports.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
@@ -99,6 +99,11 @@ export function buildPreferNullishCreate(
         node: wrapperCall,
         messageId: 'preferNullish',
         fix(fixer) {
+          // `nullish` is `optional(nullable(…))`, so only this order nests differently.
+          if (meta.schemaType === 'nullable' && readsZodSchemaKind(sourceCode, wrapperCall)) {
+            return null;
+          }
+
           const renameFix = renameWrapperFactory(fixer, wrapper, meta.schemaDecl);
           if (!renameFix) {
             return null;
@@ -113,7 +118,7 @@ export function buildPreferNullishCreate(
     }
 
     /** Chained form (`zod`): `schema.optional().nullable()`. */
-    function handleChained(node: TSESTree.CallExpression, meta: ZodSchemaMeta): void {
+    function handleChained(node: TSESTree.CallExpression): void {
       const methods = collectZodChainMethods(node);
       const optionalIndex = methods.findIndex((it) => it.name === 'optional');
       const nullableIndex = methods.findIndex((it) => it.name === 'nullable');
@@ -134,8 +139,8 @@ export function buildPreferNullishCreate(
         node: later.node,
         messageId: 'preferNullish',
         fix(fixer) {
-          // The property being read may not exist on the schema the fix builds.
-          if (readsZodSchemaProperty(node, meta)) {
+          // `nullish` is `optional(nullable(…))`, so only this order nests differently.
+          if (earlier.name === 'optional' && readsZodSchemaKind(sourceCode, later.node)) {
             return null;
           }
 
@@ -170,7 +175,7 @@ export function buildPreferNullishCreate(
           return;
         }
 
-        handleChained(node, meta);
+        handleChained(node);
       },
     });
   };
