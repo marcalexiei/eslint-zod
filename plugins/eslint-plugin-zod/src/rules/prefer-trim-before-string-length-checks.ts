@@ -12,6 +12,13 @@ const LENGTH_CHECK_METHODS: ReadonlySet<string> = new Set<ZodMethodName>([
   'nonempty',
 ]);
 
+/** Methods `.trim()` can move past: any other may read the untrimmed value. */
+const TRIM_MOVABLE_PAST: ReadonlySet<string> = new Set([
+  ...LENGTH_CHECK_METHODS,
+  'describe' satisfies ZodMethodName,
+  'meta' satisfies ZodMethodName,
+]);
+
 export const preferTrimBeforeStringLengthChecks = createZodPluginRule({
   name: 'prefer-trim-before-string-length-checks',
   meta: {
@@ -59,7 +66,8 @@ export const preferTrimBeforeStringLengthChecks = createZodPluginRule({
             if (
               zodSchemaMeta.schemaDecl === 'named' ||
               !trimCallee ||
-              hasParenthesizedReceiver(trimCallee)
+              hasParenthesizedReceiver(trimCallee) ||
+              methods.slice(1, trimIndex).some((it) => !TRIM_MOVABLE_PAST.has(it.name))
             ) {
               return null;
             }

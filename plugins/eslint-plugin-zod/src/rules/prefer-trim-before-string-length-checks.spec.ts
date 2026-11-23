@@ -216,5 +216,32 @@ ruleTester.run(preferTrimBeforeStringLengthChecks.name, preferTrimBeforeStringLe
         z.string().trim().nonempty();
       `,
     },
+    {
+      name: 'moved past metadata, which does not read the value',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().describe('a').min(1).meta({ title: 't' }).trim();
+      `,
+      errors: [{ messageId: 'trimBeforeLengthCheck' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.string().trim().describe('a').min(1).meta({ title: 't' });
+      `,
+    },
+    {
+      name: 'no fix past a method that reads the untrimmed value',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().refine((v) => v.startsWith(' ')).min(1).trim();
+        z.string().superRefine(() => {}).min(1).trim();
+        z.string().check(() => {}).min(1).trim();
+        z.string().with(() => {}).min(1).trim();
+        z.string().regex(/^ /).min(1).trim();
+        z.string().startsWith(' ').min(1).trim();
+        z.string().overwrite((v) => v).min(1).trim();
+      `,
+      errors: Array.from({ length: 7 }, () => ({ messageId: 'trimBeforeLengthCheck' as const })),
+      output: null,
+    },
   ],
 });
