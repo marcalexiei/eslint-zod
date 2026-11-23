@@ -6,7 +6,6 @@ import { ZOD_STRING_FORMAT_NAMES } from './zod-string-format-names.js';
 const SCALAR_FACTORY_NAMES: ReadonlyArray<ZodExportName> = [
   'bigint',
   'boolean',
-  'date',
   'enum',
   'literal',
   'nan',

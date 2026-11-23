@@ -15,7 +15,7 @@ It does add `readOnly: true` to the output of `z.toJSONSchema()`, so removing it
 
 This rule flags `.readonly()` when the schema it wraps is already immutable:
 
-- primitives / scalars (`z.string()`, `z.number()`, `z.boolean()`, `z.bigint()`, `z.date()`, `z.literal()`, `z.enum()`, number sub-types such as `z.int()`, top-level string formats such as `z.email()`, …)
+- primitives / scalars (`z.string()`, `z.number()`, `z.boolean()`, `z.bigint()`, `z.literal()`, `z.enum()`, number sub-types such as `z.int()`, top-level string formats such as `z.email()`, …)
 - a schema that is already `readonly` (a doubled `.readonly().readonly()`)
 
 Immutability is looked up through passthrough wrappers, so `z.optional(z.string()).readonly()` is flagged too.
@@ -40,7 +40,6 @@ import * as z from 'zod';
 
 z.string().readonly();
 z.number().min(2).readonly();
-z.date().readonly();
 z.enum(['a', 'b']).readonly();
 z.object({ foo: z.string().readonly() });
 z.object({}).readonly().readonly(); // doubled
@@ -55,6 +54,7 @@ import * as z from 'zod';
 z.object({ a: z.string() }).readonly();
 z.array(z.string()).readonly();
 z.map(z.string(), z.number()).readonly();
+z.date().readonly(); // freezes the parsed Date
 ```
 
 ## Suggestions
@@ -73,8 +73,9 @@ An earlier `.readonly()` does not count past `.default()` or `.catch()`, which r
 or past `.overwrite()`, `.superRefine()` or a `.check()` that may rewrite it.
 
 No suggestion is offered when a later `.unwrap()`, `.removeDefault()`, `.removeCatch()` or `.apply()` could depend on the wrapper.
-The same applies through a local variable, a parent schema, or a value this file stores or returns.
-A schema exported to another file cannot be checked.
+The same applies through a local variable.
+A schema passed, stored or returned counts as read when the file reads such a member anywhere.
+A read in another file cannot be checked.
 No suggestion is offered when it would bring back metadata the removed call dropped.
 
 ## When Not To Use It

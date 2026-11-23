@@ -4,4 +4,4 @@
 '@eslint-zod/utils': patch
 ---
 
-fix(no-unnecessary-readonly): keep a `readonly` around `default` or `catch`, whose value skips any inner `readonly`.
+fix(no-unnecessary-readonly): keep `readonly` on a date schema and around `default` or `catch`, where it still freezes the value.

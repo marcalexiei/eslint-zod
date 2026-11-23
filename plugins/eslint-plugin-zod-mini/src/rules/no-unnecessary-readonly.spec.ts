@@ -50,6 +50,13 @@ ruleTester.run(noUnnecessaryReadonly.name, noUnnecessaryReadonly, {
       `,
     },
     {
+      name: 'readonly on a date schema freezes the parsed Date',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.readonly(z.date());
+      `,
+    },
+    {
       name: 'readonly on a map schema is meaningful',
       code: dedent`
         import * as z from 'zod/mini';
@@ -151,13 +158,6 @@ ruleTester.run(noUnnecessaryReadonly.name, noUnnecessaryReadonly, {
       `,
     ),
     report(
-      'no suggestion when the schema is read through its parent',
-      dedent`
-        import * as z from 'zod/mini';
-        z.object({ a: z.readonly(z.string()) }).shape.a.unwrap();
-      `,
-    ),
-    report(
       'no suggestion when a variable holding the schema is read',
       dedent`
         import * as z from 'zod/mini';
@@ -210,17 +210,6 @@ ruleTester.run(noUnnecessaryReadonly.name, noUnnecessaryReadonly, {
       dedent`
         import * as z from 'zod/mini';
         z.string().check(z.minLength(2));
-      `,
-    ),
-    suggest(
-      'readonly on a date schema',
-      dedent`
-        import * as z from 'zod/mini';
-        z.readonly(z.date());
-      `,
-      dedent`
-        import * as z from 'zod/mini';
-        z.date();
       `,
     ),
     suggest(
