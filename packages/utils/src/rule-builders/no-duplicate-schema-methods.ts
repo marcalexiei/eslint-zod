@@ -10,6 +10,7 @@ import { readsZodSchemaKind } from '../reads-zod-schema-kind.js';
 import type { RuleContext, RuleListener, SourceCode } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { METADATA_DROPPING_METHODS, mayWriteZodDescription } from '../zod-metadata.js';
+import { ZOD_MUTATING_CHECK_NAMES } from '../zod-mutating-check-names.js';
 import { ZOD_NON_SCHEMA_HELPER_NAMES } from '../zod-non-schema-helper-names.js';
 import type { ZodTypeChangingMethod } from '../zod-type-changing-methods.js';
 import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
@@ -26,26 +27,18 @@ export type NoDuplicateSchemaMethodsExclusions<TExcluded extends ReadonlyArray<s
 /** A chained method or a `.check(...)` argument. */
 type AppliedCheck = Pick<ZodSchemaConstraint, 'name' | 'node'>;
 
-/** Case changes, `normalize()` and `slugify()`: each overrides the one before. */
-const REWRITE_CHECKS: ReadonlySet<string> = new Set<ZodExportName | ZodMethodName>([
-  'normalize',
-  'slugify',
-  'toLowerCase',
-  'toUpperCase',
-]);
-
 /** Rewrites that cannot put whitespace back at the edges. */
 const TRIM_KEEPING_CHECKS: ReadonlySet<string> = new Set<ZodExportName | ZodMethodName>([
   'slugify',
   'toLowerCase',
   'toUpperCase',
-  'trim',
 ]);
 
-/** Wrappers that judge the value, so a rewrite between two of them can make both matter. */
+/** Wrappers a rewrite can see or undo, so both of two repeats can matter. */
 const VALUE_JUDGING_WRAPPERS: ReadonlySet<string> = new Set<ZodMethodName>([
   'catch',
   'nonoptional',
+  'readonly',
 ]);
 
 /** Wrappers peeled one at a time, so a later `.unwrap()` can need both of two repeats. */
@@ -61,20 +54,76 @@ const PEELABLE_WRAPPERS: ReadonlySet<string> = new Set<ZodMethodName>([
   'readonly',
 ]);
 
-/** What a rewrite check sets; `null` when it cannot be known statically. */
-function getRewriteKey(check: AppliedCheck, sourceCode: Readonly<SourceCode>): string | null {
+/** Methods whose argument selects what they apply to, so only identical calls repeat. */
+const SELECTIVE_METHODS: ReadonlySet<string> = new Set<ZodMethodName>([
+  'exactPartial',
+  'exclude',
+  'extract',
+  'partial',
+  'required',
+]);
+
+/** Whether evaluating `node` again gives the same value, so equal text means an equal argument. */
+function isSameOnEachRead(node: TSESTree.Node): boolean {
+  switch (node.type) {
+    case AST_NODE_TYPES.Identifier:
+    case AST_NODE_TYPES.Literal:
+      return true;
+    case AST_NODE_TYPES.ArrayExpression:
+      return node.elements.every((it) => it === null || isSameOnEachRead(it));
+    case AST_NODE_TYPES.ObjectExpression:
+      return node.properties.every((it) => isSameOnEachRead(it));
+    case AST_NODE_TYPES.Property:
+      return (!node.computed || isSameOnEachRead(node.key)) && isSameOnEachRead(node.value);
+    case AST_NODE_TYPES.SpreadElement:
+      return isSameOnEachRead(node.argument);
+    case AST_NODE_TYPES.MemberExpression:
+      return isSameOnEachRead(node.object) && (!node.computed || isSameOnEachRead(node.property));
+    case AST_NODE_TYPES.TSAsExpression:
+    case AST_NODE_TYPES.TSSatisfiesExpression:
+      return isSameOnEachRead(node.expression);
+    default:
+      return false;
+  }
+}
+
+/** What a check is compared by; `null` when it cannot be known statically. */
+function getCheckKey(check: AppliedCheck, sourceCode: Readonly<SourceCode>): string | null {
+  if (SELECTIVE_METHODS.has(check.name)) {
+    const args = check.node.arguments;
+    return args.every((it) => isSameOnEachRead(it))
+      ? `${check.name}(${args.map((it) => sourceCode.getText(it)).join()})`
+      : null;
+  }
   if (check.name !== 'normalize') {
     return check.name;
   }
   // `normalize()` defaults to `NFC`, as `String.prototype.normalize` does.
   const form = check.node.arguments.at(0);
   if (!form) {
-    return 'NFC';
+    return 'normalize(NFC)';
   }
   const value = getArgumentValue(sourceCode, form);
   return value?.type === AST_NODE_TYPES.Literal && typeof value.value === 'string'
-    ? value.value
+    ? `normalize(${value.value})`
     : null;
+}
+
+/** Drops the checks made before a value change, which judged another value. */
+function forgetValueChecks(seen: Set<string>, changedBy: string): void {
+  for (const key of seen) {
+    const [name] = key.split('(', 1);
+    const stillHolds =
+      name === 'clone' ||
+      name === 'describe' ||
+      (METADATA_DROPPING_METHODS.has(name) && !VALUE_JUDGING_WRAPPERS.has(name)) ||
+      (name === 'trim' && TRIM_KEEPING_CHECKS.has(changedBy)) ||
+      // `trim()` only drops whitespace, so it cannot undo a rewrite.
+      (changedBy === 'trim' && ZOD_MUTATING_CHECK_NAMES.includes(name));
+    if (!stillHolds) {
+      seen.delete(key);
+    }
+  }
 }
 
 /**
@@ -99,62 +148,42 @@ export function buildNoDuplicateSchemaMethodsCreate<const TExcluded extends Read
     return createSchemaVisitor({
       onSchema(node): void {
         const seen = new Set<string>();
-        // The rewrite in effect, `null` when unknown.
-        let rewrite: string | null = null;
-        const constraints = collectZodSchemaConstraints(node);
 
-        // Checks made before a value change judged another value.
-        const forgetValueChecks = (changedBy: string): void => {
-          for (const name of seen) {
-            const stillHolds =
-              name === 'clone' ||
-              name === 'describe' ||
-              (METADATA_DROPPING_METHODS.has(name) && !VALUE_JUDGING_WRAPPERS.has(name)) ||
-              (name === 'trim' && TRIM_KEEPING_CHECKS.has(changedBy));
-            if (!stillHolds) {
-              seen.delete(name);
-            }
-          }
-          // `trim()` only drops whitespace, so it cannot undo a rewrite.
-          if (changedBy !== 'trim') {
-            rewrite = null;
-          }
-        };
         // Records `check`; whether it repeats one still in effect.
         const isRepeat = (check: AppliedCheck, tracked: boolean): boolean => {
-          const isRewrite = REWRITE_CHECKS.has(check.name);
-          const key = isRewrite ? getRewriteKey(check, context.sourceCode) : null;
-          const repeated =
-            tracked && (isRewrite ? key !== null && key === rewrite : seen.has(check.name));
+          const key = tracked ? getCheckKey(check, context.sourceCode) : null;
+          const repeated = key !== null && seen.has(key);
           if (mayWriteZodDescription(check)) {
             seen.delete('describe');
           }
           if (!repeated && mayRewriteZodValue(check.name)) {
-            forgetValueChecks(check.name);
+            forgetValueChecks(seen, check.name);
           }
-          if (tracked && isRewrite) {
-            rewrite = key;
-          } else if (tracked) {
-            seen.add(check.name);
+          if (key !== null) {
+            seen.add(key);
           }
           return repeated;
         };
 
         for (const method of collectZodChainMethods(node)) {
+          // What `catch` returned can still fail here, leaving the next `catch` to handle it.
+          if (method.name === 'refine' || isZodCheckMethodName(method.name)) {
+            seen.delete('catch');
+          }
           // A type-changing method starts a new segment: what follows constrains a different schema.
           if (ZOD_TYPE_CHANGING_METHODS.includes(method.name)) {
             seen.clear();
-            rewrite = null;
           } else if (ZOD_NON_SCHEMA_HELPER_NAMES.includes(method.name)) {
             // What follows is called on a parse result or the like, not on a schema.
             break;
           } else if (isZodCheckMethodName(method.name)) {
+            const constraints = collectZodSchemaConstraints(node);
             for (const argument of method.node.arguments) {
               const check = constraints.find((it) => it.node === argument);
               if (!check) {
                 // A custom check may rewrite the value or the description.
                 seen.delete('describe');
-                forgetValueChecks('check');
+                forgetValueChecks(seen, 'check');
               } else if (isRepeat(check, comparedCheckArguments.includes(check.name))) {
                 report(check.node, check.name);
               }

@@ -318,10 +318,76 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         s.unwrap();
       `,
     },
+    {
+      name: 'catch() across a check that can reject what the first one returned',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().catch('a').refine((s) => s === 'a').catch('b');
+        z.string().catch('a').check(() => {}).catch('b');
+      `,
+    },
+    {
+      name: 'readonly() across a rewrite, whose callback sees the frozen value',
+      code: dedent`
+        import * as z from 'zod';
+        z.array(z.string()).readonly().overwrite((v) => [...v]).readonly();
+        z.array(z.string()).readonly().superRefine(() => {}).readonly();
+      `,
+    },
+    {
+      name: 'native method repeated on the result of a top-level parse',
+      code: dedent`
+        import * as z from 'zod';
+        z.parse(z.string(), ' a ').trim().trim();
+      `,
+    },
+    {
+      name: 'selective method whose argument may differ on each call',
+      code: dedent`
+        import * as z from 'zod';
+        declare const next: () => ['a'];
+        z.enum(['a', 'b']).exclude(next()).exclude(next());
+      `,
+    },
+    {
+      name: 'a schema passed to a helper that peels both repeats',
+      code: dedent`
+        import * as z from 'zod';
+        const f = (s) => s.unwrap().unwrap();
+        f(z.string().optional().optional());
+      `,
+    },
   ],
   invalid: [
     {
-      name: 'readonly() repeated past default() or catch(), the earlier call being redundant',
+      name: 'wrapper repeated on a codec',
+      code: dedent`
+        import * as z from 'zod';
+        z.codec(z.string(), z.number(), { decode: Number, encode: String }).optional().optional();
+      `,
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'optional' } }],
+    },
+    {
+      name: 'selective method repeated with the same argument',
+      code: dedent`
+        import * as z from 'zod';
+        z.object({ a: z.string() }).partial().partial();
+        z.object({ a: z.string() }).partial({ a: true }).partial({ a: true });
+        z.object({ a: z.string() }).required().required();
+        z.enum(['a', 'b']).exclude(['a']).exclude(['a']);
+        declare const keys: ['a'];
+        z.enum(['a', 'b']).exclude(keys).exclude(keys);
+      `,
+      errors: [
+        { messageId: 'noDuplicateSchemaMethod', data: { method: 'partial' } },
+        { messageId: 'noDuplicateSchemaMethod', data: { method: 'partial' } },
+        { messageId: 'noDuplicateSchemaMethod', data: { method: 'required' } },
+        { messageId: 'noDuplicateSchemaMethod', data: { method: 'exclude' } },
+        { messageId: 'noDuplicateSchemaMethod', data: { method: 'exclude' } },
+      ],
+    },
+    {
+      name: 'readonly() repeated past default() or catch(), one call being redundant',
       code: dedent`
         import * as z from 'zod';
         z.array(z.string()).readonly().default(['a']).readonly();
@@ -333,7 +399,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       ],
     },
     {
-      name: 'a method repeated after its opposite, the earlier call being redundant',
+      name: 'a method repeated after its opposite, one call being redundant',
       code: dedent`
         import * as z from 'zod';
         z.string().optional().nonoptional().optional();
@@ -363,7 +429,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       ],
     },
     {
-      name: 'a wrapper repeated across a value change, the earlier call being redundant',
+      name: 'a wrapper repeated across a value change, one call being redundant',
       code: dedent`
         import * as z from 'zod';
         z.string().optional().overwrite((s) => s).optional();
@@ -371,28 +437,12 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'optional' } }],
     },
     {
-      name: 'a wrapper repeated across refine(), the earlier call being redundant',
+      name: 'a wrapper repeated across refine(), one call being redundant',
       code: dedent`
         import * as z from 'zod';
         z.string().nullable().refine((s) => s !== null).nullable();
       `,
       errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'nullable' } }],
-    },
-    {
-      name: 'readonly() repeated across a value change, the earlier call being redundant',
-      code: dedent`
-        import * as z from 'zod';
-        z.array(z.string()).readonly().overwrite((v) => [...v]).readonly();
-      `,
-      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'readonly' } }],
-    },
-    {
-      name: 'catch() repeated across refine(), which does not rewrite the value',
-      code: dedent`
-        import * as z from 'zod';
-        z.string().catch('a').refine((s) => s !== 'a').catch('a');
-      `,
-      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'catch' } }],
     },
     {
       name: 'a value check repeated across refine() is still reported',

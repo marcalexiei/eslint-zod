@@ -12,9 +12,7 @@ import { createZodPluginRule } from '../meta.js';
  * - `endsWith` / `includes` / `startsWith` / `regex` — each call adds an
  *   independent string constraint; calling one twice with different values
  *   is common (e.g. matching against multiple patterns)
- * - `exclude` / `extract` — each call narrows the enum further
- * - `exactPartial` / `extend` / `safeExtend` / `merge` / `omit` / `partial` / `pick` / `required` —
- *   each call reshapes the object again
+ * - `extend` / `safeExtend` / `merge` / `omit` / `pick` — each call reshapes the object again
  * - `meta` — each call merges more metadata
  * - `multipleOf` / `step` — two divisors constrain independently
  * - `overwrite` — each call applies an independent transformation
@@ -24,26 +22,22 @@ import { createZodPluginRule } from '../meta.js';
  * Type-changing methods need no entry:
  * each starts a new chain segment, which the builder handles before reading this list.
  * Neither do `check` / `with`: the builder compares their arguments, never the calls.
+ * `partial`, `exactPartial`, `required`, `exclude` and `extract` repeat only with the same argument.
  */
 const EXCLUDED_METHODS = [
   'brand',
   'endsWith',
-  'exactPartial',
-  'exclude',
   'extend',
-  'extract',
   'includes',
   'merge',
   'meta',
   'multipleOf',
   'omit',
   'overwrite',
-  'partial',
   'pick',
   'refine',
   'regex',
   'register',
-  'required',
   'safeExtend',
   'startsWith',
   'step',

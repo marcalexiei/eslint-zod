@@ -11,7 +11,10 @@
 This rule disallows calling the same Zod schema method more than once within a single method chain. Duplicate calls are almost always a mistake — they are either redundant (e.g. calling `.trim()` twice) or create conflicting constraints (e.g. setting `.min()` twice with different values).
 
 Methods that are designed to be chained multiple times are excluded from this check: `.regex()`, `.includes()`, `.startsWith()`, `.endsWith()`, and `.overwrite()`, since each call applies an independent constraint or transformation — matching a string against two different patterns is common, unlike calling `.min()` twice with different values.
-The object reshaping methods (`.extend()`, `.safeExtend()`, `.merge()`, `.omit()`, `.pick()`, `.partial()`, `.exactPartial()`, `.required()`), `.exclude()`, `.extract()`, `.brand()`, `.meta()`, `.multipleOf()`, `.step()` and `.check()` / `.with()` are excluded for the same reason.
+The object reshaping methods (`.extend()`, `.safeExtend()`, `.merge()`, `.omit()`, `.pick()`), `.brand()`, `.meta()`, `.multipleOf()`, `.step()` and `.check()` / `.with()` are excluded for the same reason.
+`.partial()`, `.exactPartial()`, `.required()`, `.exclude()` and `.extract()` repeat only with the same argument:
+`.partial().partial()` is reported, `.partial({ a: true }).partial({ b: true })` is not.
+An argument containing a call may differ each time, so it is not compared.
 
 A repeat is reported only while the earlier call is still in effect:
 
@@ -23,10 +26,11 @@ A repeat is reported only while the earlier call is still in effect:
 - `.describe()` does not depend on the value.
   It ends at a method that builds a new schema without it, such as `.optional()` or `.partial()`,
   at `.register()`, at a custom check, and at any `.meta()` but an inline object without `description`.
-- Wrappers and object modes survive what follows them, which leaves the earlier call the one to remove:
+- Wrappers and object modes survive what follows them, so one of the two calls is redundant:
   `.strict().loose().strict()` behaves as `.loose().strict()`.
-  `.catch()` and `.nonoptional()` end at a method that may change the value.
-- A repeated wrapper is not reported when this file reads it, as `.unwrap()` does, since each such call peels one.
+  `.catch()`, `.nonoptional()` and `.readonly()` end at a method that may change the value.
+  `.catch()` also ends at `.refine()` and `.check()`, which can reject the value it returned.
+- A repeated wrapper is not reported when later code in the file may read it, as `.unwrap()` does, since each such call peels one.
 
 A type-changing method (`.or()`, `.and()`, `.array()`, `.pipe()`, `.transform()`, `.apply()`, `.keyof()`, `.unwrap()`, `.removeDefault()`, `.removeCatch()`) returns another schema:
 the methods after it constrain that schema, not the one before.

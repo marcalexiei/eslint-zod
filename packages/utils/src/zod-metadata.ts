@@ -45,11 +45,8 @@ const METADATA_WRITING_METHODS: ReadonlySet<string> = new Set<ZodMethodName>([
 
 /** Whether a call may replace the description. */
 export function mayWriteZodDescription(check: Pick<ZodSchemaConstraint, 'name' | 'node'>): boolean {
-  if (check.name === 'describe' || check.name === 'register') {
-    return true;
-  }
   if (check.name !== 'meta') {
-    return false;
+    return METADATA_WRITING_METHODS.has(check.name);
   }
   const argument = check.node.arguments.at(0);
   if (!argument || argument.type === AST_NODE_TYPES.SpreadElement) {
