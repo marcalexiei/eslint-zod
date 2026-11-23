@@ -8,6 +8,17 @@ describe('ZOD_TYPE_CHANGING_METHODS', () => {
   });
 
   it('lists the chained methods that rebuild the schema around another type', () => {
-    expect(ZOD_TYPE_CHANGING_METHODS).toStrictEqual(['and', 'array', 'or', 'pipe', 'transform']);
+    expect(ZOD_TYPE_CHANGING_METHODS).toStrictEqual([
+      'and',
+      'apply',
+      'array',
+      'keyof',
+      'or',
+      'pipe',
+      'removeCatch',
+      'removeDefault',
+      'transform',
+      'unwrap',
+    ]);
   });
 });

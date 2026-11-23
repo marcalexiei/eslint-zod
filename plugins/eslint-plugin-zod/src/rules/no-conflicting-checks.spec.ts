@@ -8,6 +8,13 @@ const ruleTester = new RuleTester();
 ruleTester.run(noConflictingChecks.name, noConflictingChecks, {
   valid: [
     {
+      name: 'checks on either side of apply() are not compared',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().min(5).apply((schema) => schema).max(2);
+      `,
+    },
+    {
       name: 'checks on either side of a mutating method see different values',
       code: dedent`
         import * as z from 'zod';
@@ -129,10 +136,10 @@ ruleTester.run(noConflictingChecks.name, noConflictingChecks, {
       `,
     },
     {
-      name: 'chains with type-changing methods are not analyzed',
+      name: 'checks after a type-changing method bound another schema',
       code: dedent`
         import * as z from 'zod';
-        z.string().min(5).max(2).transform((s) => s.length);
+        z.string().min(5).array().max(2);
       `,
     },
     {
@@ -200,8 +207,39 @@ ruleTester.run(noConflictingChecks.name, noConflictingChecks, {
         z.number().min(5).check((ctx) => { ctx.value = 1; }).max(3);
       `,
     },
+    {
+      name: 'string methods called on a parsed value',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().startsWith('a').parse('ab').startsWith('b');
+      `,
+    },
+    {
+      name: 'checks on either side of unwrap() are not compared',
+      code: dedent`
+        import * as z from 'zod';
+        z.array(z.string()).min(5).unwrap().max(2);
+      `,
+    },
   ],
   invalid: [
+    {
+      name: 'checks before a type-changing method are still compared',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().min(5).max(2).transform((s) => s.length);
+        z.string().min(5).max(2).apply((schema) => schema);
+      `,
+      errors: [{ messageId: 'impossibleCase' }, { messageId: 'impossibleCase' }],
+    },
+    {
+      name: 'checks before parse() are still compared',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().min(5).max(2).parse('abc');
+      `,
+      errors: [{ messageId: 'impossibleCase' }],
+    },
     {
       name: 'empty string length range across a mutating method — zod throws on it',
       code: dedent`

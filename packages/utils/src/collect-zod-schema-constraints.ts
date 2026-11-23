@@ -56,6 +56,11 @@ interface ZodCheckArgumentConstraint extends ZodSchemaConstraintBase {
  */
 export type ZodSchemaConstraint = ZodChainedConstraint | ZodCheckArgumentConstraint;
 
+/** Whether a chained method is `.check(...)` or its alias `.with(...)`. */
+export function isZodCheckMethodName(name: string): boolean {
+  return name === 'check' || name === 'with';
+}
+
 /**
  * Flattens a zod call chain into the list of constraints applied to the schema,
  * regardless of API style:
@@ -95,8 +100,7 @@ export function collectZodSchemaConstraints(opts: {
       continue;
     }
 
-    // `.with(...)` is zod's alias of `.check(...)`.
-    if (method.name !== 'check' && method.name !== 'with') {
+    if (!isZodCheckMethodName(method.name)) {
       constraints.push({
         name: method.name,
         node: method.node,

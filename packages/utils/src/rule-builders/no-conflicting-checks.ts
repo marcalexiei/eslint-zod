@@ -11,11 +11,12 @@ import type { ZodCheckBound, ZodCheckDescriptor, ZodCheckDomain } from '../zod-c
 import { canonicalizeZodConstraintName, getZodCheckDescriptor } from '../zod-check-vocabulary.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 import { ZOD_MUTATING_CHECK_NAMES } from '../zod-mutating-check-names.js';
+import { ZOD_NON_SCHEMA_PRODUCING_METHODS } from '../zod-non-schema-producing-methods.js';
 import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
 
 /** Options contract implemented by each plugin's rule. */
 export interface NoConflictingChecksOptions {
-  /** Provably unsatisfiable combinations — the schema can never match. */
+  /** Provably unsatisfiable combinations — the checks can never all pass. */
   checkImpossibleCases?: boolean;
   /** Technically valid but almost certainly a mistake: redundant / no-op combinations. */
   checkConfusingCases?: boolean;
@@ -589,10 +590,6 @@ export function buildNoConflictingChecksCreate(
         if (chain.length === 0 || !isZodFactoryChainItem(chain[0])) {
           return;
         }
-        if (chain.slice(1).some((item) => ZOD_TYPE_CHANGING_METHODS.includes(item.name))) {
-          return;
-        }
-
         const baseType = getZodSchemaBaseType(zodSchemaMeta.schemaType);
         if (!baseType) {
           return;
@@ -619,7 +616,16 @@ export function buildNoConflictingChecksCreate(
           });
         }
 
-        const constraints = collectZodSchemaConstraints(node);
+        // What follows constrains another schema, or is not called on a schema at all.
+        const schemaEnd = chain.findIndex(
+          (item, index) =>
+            index > 0 &&
+            (ZOD_TYPE_CHANGING_METHODS.includes(item.name) ||
+              ZOD_NON_SCHEMA_PRODUCING_METHODS.includes(item.name)),
+        );
+        const constraints = collectZodSchemaConstraints(node).filter(
+          (it) => schemaEnd === -1 || it.chainIndex < schemaEnd,
+        );
         // A `.check(...)` with an argument that is not a zod call (a callback, `trimIt`) may mutate too.
         const opaqueChainIndexes = getOpaqueCheckChainIndexes(chain, constraints);
         for (const [index, constraint] of constraints.entries()) {

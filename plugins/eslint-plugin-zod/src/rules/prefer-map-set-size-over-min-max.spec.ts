@@ -8,6 +8,20 @@ const ruleTester = new RuleTester();
 ruleTester.run(preferMapSetSizeOverMinMax.name, preferMapSetSizeOverMinMax, {
   valid: [
     {
+      name: 'bounds on either side of unwrap()',
+      code: dedent`
+        import * as z from 'zod';
+        z.set(z.string()).min(3).optional().unwrap().max(3);
+      `,
+    },
+    {
+      name: 'bounds on either side of apply()',
+      code: dedent`
+        import * as z from 'zod';
+        z.set(z.string()).min(3).apply((schema) => schema).max(3);
+      `,
+    },
+    {
       name: 'already an exact size',
       code: dedent`
         import * as z from 'zod';

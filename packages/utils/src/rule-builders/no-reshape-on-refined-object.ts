@@ -2,6 +2,7 @@ import type { ZodExportName, ZodMethodName, ZodMiniMethodName } from '@eslint-zo
 import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
+import { isZodCheckMethodName } from '../collect-zod-schema-constraints.js';
 import { findVariable } from '../find-variable.js';
 import { getBindingInitializer } from '../get-binding-initializer.js';
 import { getStaticPropertyName } from '../get-static-property-name.js';
@@ -308,7 +309,7 @@ export function buildNoReshapeOnRefinedObjectCreate(
     ): Value | null {
       if (REFINING_METHODS.has(name)) {
         // `check` and `with` add as many checks as they are given.
-        if ((name === 'check' || name === 'with') && args.every(isSpread)) {
+        if (isZodCheckMethodName(name) && args.every(isSpread)) {
           return args.length === 0 ? receiver : null;
         }
         return { ...receiver, refined: true };

@@ -45,7 +45,7 @@ Only what the plugins import; every other helper is internal to this package.
 - `ZOD_MUTATING_CHECK_NAMES` — Zod check names that mutate the validated value
 - `ZOD_NON_SCHEMA_PRODUCING_METHODS` — Zod method names that do not return a schema
 - `ZOD_STRING_FORMAT_METHODS` — deprecated `z.string().<format>()` methods and the top-level factory replacing each; type `ZodStringFormatMethodName`
-- `ZOD_TYPE_CHANGING_METHODS` — chained methods that rebuild the schema around another type (`array`, `or`, `pipe`, …)
+- `ZOD_TYPE_CHANGING_METHODS` — chained methods after which the schema may have another type (`array`, `or`, `pipe`, `apply`, …)
 
 ### Rule types — `@eslint-zod/utils/rule-types`
 
