@@ -4,14 +4,15 @@ import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { buildZodConstraintsRemoveFix } from '../build-zod-constraints-remove-fix.js';
 import { buildZodWrapperUnwrapFix } from '../build-zod-wrapper-unwrap-fix.js';
-import { readsZodSchemaProperty } from '../reads-zod-schema-property.js';
-import type { RuleContext, RuleListener } from '../rule-types.js';
-import type { ZodChainItem } from '../track-zod-schema-imports.js';
+import { getOpaqueCheckChainIndexes, mayRewriteZodValue } from '../has-opaque-zod-check.js';
+import { readsZodSchemaKind } from '../reads-zod-schema-kind.js';
+import type { RuleContext, RuleFix, RuleListener } from '../rule-types.js';
 import { ZOD_IMMUTABLE_SCHEMA_TYPES } from '../zod-immutable-schema-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
+import { restoresZodMetadata } from '../zod-metadata.js';
 import { ZOD_TYPE_CHANGING_METHODS } from '../zod-type-changing-methods.js';
 
-type MessageIds = 'unnecessaryReadonly';
+type MessageIds = 'unnecessaryReadonly' | 'removeReadonly';
 
 /**
  * Wrapper factories whose output immutability equals their first argument's (e.g. `z.optional(z.string())` is as immutable as `z.string()`).
@@ -26,9 +27,14 @@ const PASSTHROUGH_WRAPPERS: ReadonlySet<string> = new Set<ZodExportName>([
   'optional',
 ]);
 
-type Immutability = 'immutable' | 'readonly' | 'unknown';
+/** Passthrough wrappers that can return a value their argument never produced. */
+const BYPASSING_WRAPPERS: ReadonlySet<string> = new Set<ZodExportName>([
+  '_default',
+  'catch',
+  'default',
+]);
 
-type ChainItems = Array<ZodChainItem>;
+type Immutability = 'immutable' | 'readonly' | 'unknown';
 
 /**
  * Builds the `create` function for the `no-unnecessary-readonly` rule.
@@ -52,8 +58,13 @@ export function buildNoUnnecessaryReadonlyCreate(
       getZodChainFactory,
     } = scope.createTracker({ kind: 'value' });
 
-    /** Immutability of the schema produced by `chain[0..endIndex)`. */
-    function classifyChain(schemaType: string, chain: ChainItems, endIndex: number): Immutability {
+    /** Immutability of the schema `node` builds, up to `endIndex` of its chain. */
+    function classifyChain(
+      node: TSESTree.CallExpression,
+      schemaType: string,
+      endIndex?: number,
+    ): Immutability {
+      const chain = collectZodChainMethods(node);
       // After a property access (`z.string().pipe(x).out.readonly()`) the factory says nothing about the chain.
       const head = chain.at(0);
       if (head && !isZodFactoryChainItem(head)) {
@@ -65,7 +76,19 @@ export function buildNoUnnecessaryReadonlyCreate(
       if (precedingNames.some((name) => ZOD_TYPE_CHANGING_METHODS.includes(name))) {
         return 'unknown';
       }
-      if (precedingNames.includes('readonly') || schemaType === 'readonly') {
+      const constraints = collectZodSchemaConstraints(node);
+      const opaqueIndexes = getOpaqueCheckChainIndexes(chain, constraints);
+      // `default` and `catch` skip the inner `readonly`, and a rewrite replaces what it froze.
+      const bypassAt = precedingNames.findLastIndex(
+        (name, index) =>
+          BYPASSING_WRAPPERS.has(name) ||
+          opaqueIndexes.includes(index + 1) ||
+          constraints.some((it) => it.chainIndex === index + 1 && mayRewriteZodValue(it.name)),
+      );
+      if (
+        precedingNames.lastIndexOf('readonly') > bypassAt ||
+        (schemaType === 'readonly' && bypassAt === -1)
+      ) {
         return 'readonly';
       }
       if (ZOD_IMMUTABLE_SCHEMA_TYPES.includes(schemaType)) {
@@ -81,8 +104,10 @@ export function buildNoUnnecessaryReadonlyCreate(
         if (!argumentMeta) {
           return 'unknown';
         }
-        const argumentChain = collectZodChainMethods(argument);
-        return classifyChain(argumentMeta.schemaType, argumentChain, argumentChain.length);
+        const inner = classifyChain(argument, argumentMeta.schemaType);
+        return inner === 'readonly' && (bypassAt !== -1 || BYPASSING_WRAPPERS.has(schemaType))
+          ? 'unknown'
+          : inner;
       }
       return 'unknown';
     }
@@ -94,19 +119,14 @@ export function buildNoUnnecessaryReadonlyCreate(
       }
 
       const meta = detectZodSchemaRootNode(node);
-      if (!meta) {
-        return 'unknown';
-      }
-
-      const chain = collectZodChainMethods(node);
-      return classifyChain(meta.schemaType, chain, chain.length);
+      return meta ? classifyChain(node, meta.schemaType) : 'unknown';
     }
 
     return createSchemaVisitor({
       onSchema(node, zodSchemaMeta): void {
         const methods = collectZodChainMethods(node);
-        // `….def.innerType` exists on the readonly schema only, so its removal is not offered there.
-        const isFixable = !readsZodSchemaProperty(node, zodSchemaMeta);
+        const { sourceCode } = context;
+        const constraints = collectZodSchemaConstraints(node);
 
         // Wrapper form: `z.readonly(inner)` (`zod/mini`).
         if (zodSchemaMeta.schemaType === 'readonly') {
@@ -119,39 +139,52 @@ export function buildNoUnnecessaryReadonlyCreate(
             context.report({
               node: wrapperCall,
               messageId: 'unnecessaryReadonly',
-              fix: (fixer) =>
-                isFixable
-                  ? buildZodWrapperUnwrapFix({ fixer, sourceCode: context.sourceCode, wrapperCall })
-                  : null,
+              suggest: [
+                {
+                  messageId: 'removeReadonly',
+                  fix: (fixer): RuleFix | null =>
+                    readsZodSchemaKind(sourceCode, wrapperCall) ||
+                    (inner?.type === AST_NODE_TYPES.CallExpression &&
+                      restoresZodMetadata(
+                        collectZodChainMethods(inner),
+                        collectZodSchemaConstraints(inner),
+                        collectZodChainMethods(inner).length,
+                      ))
+                      ? null
+                      : buildZodWrapperUnwrapFix({ fixer, sourceCode, wrapperCall }),
+                },
+              ],
             });
           }
         }
 
         // Chained form: `schema.readonly()` (`zod`).
-        const readonlyConstraints = collectZodSchemaConstraints(node).filter(
+        const readonlyConstraints = constraints.filter(
           (it) => it.origin === 'chained' && it.name === 'readonly',
         );
 
         for (const constraint of readonlyConstraints) {
-          const immutability = classifyChain(
-            zodSchemaMeta.schemaType,
-            methods,
-            constraint.chainIndex,
-          );
+          const immutability = classifyChain(node, zodSchemaMeta.schemaType, constraint.chainIndex);
 
           if (immutability !== 'unknown') {
             context.report({
               node: constraint.node,
               messageId: 'unnecessaryReadonly',
-              fix: (fixer) =>
-                isFixable
-                  ? buildZodConstraintsRemoveFix({
-                      fixer,
-                      methods,
-                      constraints: [constraint],
-                      sourceCode: context.sourceCode,
-                    })
-                  : null,
+              suggest: [
+                {
+                  messageId: 'removeReadonly',
+                  fix: (fixer): Array<RuleFix> | null =>
+                    readsZodSchemaKind(sourceCode, constraint.node) ||
+                    restoresZodMetadata(methods, constraints, constraint.chainIndex)
+                      ? null
+                      : buildZodConstraintsRemoveFix({
+                          fixer,
+                          methods,
+                          constraints: [constraint],
+                          sourceCode,
+                        }),
+                },
+              ],
             });
           }
         }

@@ -1,3 +1,4 @@
+import { createSuggestionCases } from '@eslint-zod/tooling/vitest/rule-tester-cases';
 import { RuleTester } from '@typescript-eslint/rule-tester';
 import dedent from 'dedent';
 
@@ -5,8 +6,45 @@ import { noUnnecessaryReadonly } from './no-unnecessary-readonly.js';
 
 const ruleTester = new RuleTester();
 
+const { suggest, report } = createSuggestionCases(noUnnecessaryReadonly, {
+  messageId: 'unnecessaryReadonly',
+  suggestionMessageId: 'removeReadonly',
+});
+
 ruleTester.run(noUnnecessaryReadonly.name, noUnnecessaryReadonly, {
   valid: [
+    {
+      name: 'readonly after a rewrite of the frozen value',
+      code: dedent`
+        import * as z from 'zod';
+        z.array(z.string()).readonly().overwrite((v) => [...v]).readonly();
+        z.array(z.string()).readonly().check((ctx) => { ctx.value = [...ctx.value]; }).readonly();
+      `,
+    },
+    {
+      name: 'readonly after unwrap() is not analyzed',
+      code: dedent`
+        import * as z from 'zod';
+        z.array(z.string()).readonly().unwrap().readonly();
+      `,
+    },
+    {
+      name: 'readonly past default() or catch(), whose value skips the inner one',
+      code: dedent`
+        import * as z from 'zod';
+        z.array(z.string()).readonly().default(['a']).readonly();
+        z.array(z.string()).readonly().catch(['a']).readonly();
+        z.readonly(z.array(z.string())).default(['a']).readonly();
+        z.optional(z.array(z.string()).readonly()).default(['a']).readonly();
+      `,
+    },
+    {
+      name: 'readonly after apply() is not analyzed',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().apply((schema) => schema).readonly();
+      `,
+    },
     {
       name: 'readonly on an object schema is meaningful',
       code: dedent`
@@ -79,174 +117,285 @@ ruleTester.run(noUnnecessaryReadonly.name, noUnnecessaryReadonly, {
     },
   ],
   invalid: [
-    {
-      name: 'property read from the schema — reported without a fix',
-      code: dedent`
+    report(
+      'no suggestion when a later unwrap() can reach the wrapper through array()',
+      dedent`
+        import * as z from 'zod';
+        z.string().readonly().array().unwrap().unwrap();
+      `,
+    ),
+    report(
+      'no suggestion when a variable holding the schema is unwrapped',
+      dedent`
+        import * as z from 'zod';
+        const s = z.string().readonly();
+        s.unwrap();
+      `,
+    ),
+    suggest(
+      'suggested when a variable holding the schema is only parsed',
+      dedent`
+        import * as z from 'zod';
+        const s = z.string().readonly();
+        s.parse('a');
+      `,
+      dedent`
+        import * as z from 'zod';
+        const s = z.string();
+        s.parse('a');
+      `,
+    ),
+    report(
+      'no suggestion when it would bring back a dropped description',
+      dedent`
+        import * as z from 'zod';
+        z.string().describe('a').readonly();
+      `,
+    ),
+    report(
+      'no suggestion when it would bring back dropped metadata',
+      dedent`
+        import * as z from 'zod';
+        z.string().meta({ title: 't' }).readonly();
+      `,
+    ),
+    report(
+      'no suggestion when a later describe() would inherit the dropped metadata',
+      dedent`
+        import * as z from 'zod';
+        z.string().meta({ title: 't' }).readonly().describe('a');
+      `,
+    ),
+    report(
+      'no suggestion when the schema is read through its parent',
+      dedent`
+        import * as z from 'zod';
+        z.object({ a: z.string().readonly() }).shape.a.unwrap();
+      `,
+    ),
+    suggest(
+      'suggested when a later wrapper drops the description anyway',
+      dedent`
+        import * as z from 'zod';
+        z.string().describe('a').readonly().optional();
+      `,
+      dedent`
+        import * as z from 'zod';
+        z.string().describe('a').optional();
+      `,
+    ),
+    report(
+      'no suggestion before unwrap(), which reads the wrapper',
+      dedent`
+        import * as z from 'zod';
+        z.string().readonly().unwrap();
+      `,
+    ),
+    report(
+      'no suggestion before apply(), whose callback can read the wrapper',
+      dedent`
+        import * as z from 'zod';
+        z.string().readonly().apply((s) => s.unwrap());
+      `,
+    ),
+    suggest(
+      'refine() does not replace the frozen value',
+      dedent`
+        import * as z from 'zod';
+        z.array(z.string()).readonly().refine(() => true).readonly();
+      `,
+      dedent`
+        import * as z from 'zod';
+        z.array(z.string()).readonly().refine(() => true);
+      `,
+    ),
+    suggest(
+      'readonly repeated right after the one past default()',
+      dedent`
+        import * as z from 'zod';
+        z.array(z.string()).readonly().default(['a']).readonly().readonly();
+      `,
+      dedent`
+        import * as z from 'zod';
+        z.array(z.string()).readonly().default(['a']).readonly();
+      `,
+    ),
+    suggest(
+      'readonly past default() on an immutable schema',
+      dedent`
+        import * as z from 'zod';
+        z.string().default('a').readonly();
+      `,
+      dedent`
+        import * as z from 'zod';
+        z.string().default('a');
+      `,
+    ),
+    report(
+      'property read from the schema — reported without a suggestion',
+      dedent`
         import * as z from 'zod';
         z.string().readonly().def.innerType;
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: null,
-    },
-    {
-      name: 'readonly on a string schema',
-      code: dedent`
+    ),
+    suggest(
+      'readonly on a string schema',
+      dedent`
         import * as z from 'zod';
         z.string().readonly();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: dedent`
+      dedent`
         import * as z from 'zod';
         z.string();
       `,
-    },
-    {
-      name: 'readonly on a number schema keeps its checks',
-      code: dedent`
+    ),
+    suggest(
+      'readonly on a number schema keeps its checks',
+      dedent`
         import * as z from 'zod';
         z.number().min(2).readonly();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: dedent`
+      dedent`
         import * as z from 'zod';
         z.number().min(2);
       `,
-    },
-    {
-      name: 'readonly on a date schema',
-      code: dedent`
+    ),
+    suggest(
+      'readonly on a date schema',
+      dedent`
         import * as z from 'zod';
         z.date().readonly();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: dedent`
+      dedent`
         import * as z from 'zod';
         z.date();
       `,
-    },
-    {
-      name: 'readonly on an enum schema',
-      code: dedent`
+    ),
+    suggest(
+      'readonly on an enum schema',
+      dedent`
         import * as z from 'zod';
         z.enum(['a', 'b']).readonly();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: dedent`
+      dedent`
         import * as z from 'zod';
         z.enum(['a', 'b']);
       `,
-    },
-    {
-      name: 'readonly on a literal schema',
-      code: dedent`
+    ),
+    suggest(
+      'readonly on a literal schema',
+      dedent`
         import * as z from 'zod';
         z.literal('x').readonly();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: dedent`
+      dedent`
         import * as z from 'zod';
         z.literal('x');
       `,
-    },
-    {
-      name: 'readonly on a top-level string format schema',
-      code: dedent`
+    ),
+    suggest(
+      'readonly on a top-level string format schema',
+      dedent`
         import * as z from 'zod';
         z.creditCard().readonly();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: dedent`
+      dedent`
         import * as z from 'zod';
         z.creditCard();
       `,
-    },
-    {
-      name: 'readonly in the middle of a chain keeps trailing methods',
-      code: dedent`
+    ),
+    suggest(
+      'readonly in the middle of a chain keeps trailing methods',
+      dedent`
         import * as z from 'zod';
         z.string().readonly().optional();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: dedent`
+      dedent`
         import * as z from 'zod';
         z.string().optional();
       `,
-    },
-    {
-      name: 'doubled readonly on a mutable schema flags only the second',
-      code: dedent`
+    ),
+    suggest(
+      'doubled readonly on a mutable schema flags only the second',
+      dedent`
         import * as z from 'zod';
         z.object({ a: z.string() }).readonly().readonly();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: dedent`
+      dedent`
         import * as z from 'zod';
         z.object({ a: z.string() }).readonly();
       `,
-    },
+    ),
     {
       name: 'doubled readonly on an immutable schema flags both',
       code: dedent`
         import * as z from 'zod';
         z.string().readonly().readonly();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }, { messageId: 'unnecessaryReadonly' }],
-      // The two removals touch, so the first fix pass applies only one;
-      // the second pass converges to `z.string()`.
-      output: [
-        dedent`
+      errors: [
+        {
+          messageId: 'unnecessaryReadonly',
+          suggestions: [
+            {
+              messageId: 'removeReadonly',
+              output: dedent`
           import * as z from 'zod';
           z.string().readonly();
         `,
-        dedent`
+            },
+          ],
+        },
+        {
+          messageId: 'unnecessaryReadonly',
+          suggestions: [
+            {
+              messageId: 'removeReadonly',
+              output: dedent`
           import * as z from 'zod';
-          z.string();
+          z.string().readonly();
         `,
+            },
+          ],
+        },
       ],
     },
-    {
-      name: 'readonly nested inside an object schema',
-      code: dedent`
+    suggest(
+      'readonly nested inside an object schema',
+      dedent`
         import * as z from 'zod';
         z.object({ foo: z.string().readonly() });
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: dedent`
+      dedent`
         import * as z from 'zod';
         z.object({ foo: z.string() });
       `,
-    },
-    {
-      name: 'named import',
-      code: dedent`
+    ),
+    suggest(
+      'named import',
+      dedent`
         import { string } from 'zod';
         string().readonly();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: dedent`
+      dedent`
         import { string } from 'zod';
         string();
       `,
-    },
-    {
-      name: 'parenthesized receiver — reported without a fix',
-      code: dedent`
+    ),
+    report(
+      'parenthesized receiver — reported without a suggestion',
+      dedent`
         import * as z from 'zod';
         (z.string()).readonly();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: null,
-    },
-    {
-      name: 'comment in the rewritten text — reported without a fix',
-      code: dedent`
+    ),
+    report(
+      'comment in the rewritten text — reported without a suggestion',
+      dedent`
         import * as z from 'zod';
         z.string()
           // keep
           .readonly();
       `,
-      errors: [{ messageId: 'unnecessaryReadonly' }],
-      output: null,
-    },
+    ),
   ],
 });

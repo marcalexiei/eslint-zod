@@ -4,13 +4,14 @@
 
 💼 This rule is enabled in the 🔒 `strict` config.
 
-🔧 This rule is automatically fixable by the [`--fix` CLI option](https://eslint.org/docs/latest/user-guide/command-line-interface#--fix).
+💡 This rule is manually fixable by [editor suggestions](https://eslint.org/docs/latest/use/core-concepts#rule-suggestions).
 
 <!-- end auto-generated rule header -->
 
 ## Rule Details
 
-`.readonly()` on an already-immutable schema has no effect on the inferred type — `Readonly<string>` is just `string` — and no runtime effect either, since freezing a primitive is a no-op. It is pure noise.
+`.readonly()` on an already-immutable schema has no effect on the inferred type — `Readonly<string>` is just `string` — or on the parsed value, since freezing a primitive is a no-op.
+It does add `readOnly: true` to the output of `z.toJSONSchema()`, so removing it is offered as a suggestion rather than an autofix.
 
 This rule flags `.readonly()` when the schema it wraps is already immutable:
 
@@ -56,9 +57,9 @@ z.array(z.string()).readonly();
 z.map(z.string(), z.number()).readonly();
 ```
 
-## Autofix Behavior
+## Suggestions
 
-The fix removes the unnecessary `.readonly()` call, keeping the rest of the chain:
+The suggestion removes the unnecessary `.readonly()` call, keeping the rest of the chain:
 
 ```ts
 // Before
@@ -67,11 +68,19 @@ z.string().readonly().optional();
 z.string().optional();
 ```
 
-The rule does **not** report when it cannot determine the wrapped schema's immutability — e.g. after a `.transform()`/`.pipe()` (the output type changes) or when the schema is referenced through a variable.
+The rule does **not** report when it cannot determine the wrapped schema's immutability — e.g. after a `.transform()`, `.pipe()` or `.apply()` (the output type may change) or when the schema is referenced through a variable.
+An earlier `.readonly()` does not count past `.default()` or `.catch()`, which return their value without running it,
+or past `.overwrite()`, `.superRefine()` or a `.check()` that may rewrite it.
+
+No suggestion is offered when a later `.unwrap()`, `.removeDefault()`, `.removeCatch()` or `.apply()` could depend on the wrapper.
+The same applies through a local variable, a parent schema, or a value this file stores or returns.
+A schema exported to another file cannot be checked.
+No suggestion is offered when it would bring back metadata the removed call dropped.
 
 ## When Not To Use It
 
-You may want to disable this rule if you deliberately keep `.readonly()` on every schema for stylistic uniformity.
+You may want to disable this rule if you deliberately keep `.readonly()` on every schema for stylistic uniformity,
+or if you rely on `readOnly` in generated JSON Schema.
 
 ## Further Reading
 
