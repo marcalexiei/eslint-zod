@@ -37,7 +37,7 @@ To install dependencies and verify your environment:
 
 ```shell
 pnpm install
-pnpm run check-all
+pnpm run validate
 ```
 
 `pnpm install` also installs the Git hooks (see **Git hooks** below).
@@ -150,7 +150,7 @@ Please ensure your commit messages are clear and follow the repository conventio
 
 - Fork the repository and create a branch with a descriptive name.
 - Open a pull request against `main` and include a short description of the changes and the reasoning.
-- Run `pnpm run check-all`.
+- Run `pnpm run validate`.
 - If your change affects docs, include the updated docs or run `pnpm run build:docs` from the relevant plugin directory and include the generated files.
 
 ---

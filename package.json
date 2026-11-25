@@ -23,7 +23,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "release": "pnpm run build && changeset publish",
-    "check-all": "pnpm run format && pnpm run build && pnpm run lint && pnpm run lint:publish && pnpm run test && pnpm run typecheck",
+    "validate": "pnpm run format && pnpm run build && pnpm run lint && pnpm run lint:publish && pnpm run test && pnpm run typecheck",
     "prepare": "lefthook install"
   },
   "devDependencies": {
