@@ -1,5 +1,36 @@
 # @eslint-zod/utils
 
+## 7.1.0
+
+### Minor Changes
+
+- [#618](https://github.com/marcalexiei/eslint-zod/pull/618) [`e153c5f`](https://github.com/marcalexiei/eslint-zod/commit/e153c5fe7041723dd0ccc1ce96be6fcfc37b98d5) - feat: add `no-duplicate-union-members` to `eslint-plugin-zod-core`, reporting a member repeated in `_union()`, `_discriminatedUnion()`, `_enum()` or `_literal([...])`.
+
+- [#628](https://github.com/marcalexiei/eslint-zod/pull/628) [`55b3332`](https://github.com/marcalexiei/eslint-zod/commit/55b333256666efa5b549fb9661bec95cd588cf4f) - fix(no-unnecessary-readonly): offer a suggestion instead of an autofix, since removing `readonly` drops `readOnly` from generated JSON Schema.
+
+- [#623](https://github.com/marcalexiei/eslint-zod/pull/623) [`ce7e0d0`](https://github.com/marcalexiei/eslint-zod/commit/ce7e0d0a45406f9e7e82bdf9b714e5af260a9055) - feat(no-duplicate-schema-methods): report a repeated `trim`, `toLowerCase`, `toUpperCase`, `normalize` or `describe` check argument in zod/mini.
+  The message now reads `` `<name>()` is applied more than once in this schema chain``.
+
+- [#617](https://github.com/marcalexiei/eslint-zod/pull/617) [`ad06b6a`](https://github.com/marcalexiei/eslint-zod/commit/ad06b6ae22ff271ecc009336f813cdc860b26c0e) - feat: add `no-duplicate-union-members` rule, reporting a member repeated in `z.union()`, `z.discriminatedUnion()`, `z.enum()` or `z.literal([...])`.
+
+### Patch Changes
+
+- [#626](https://github.com/marcalexiei/eslint-zod/pull/626) [`3217cbe`](https://github.com/marcalexiei/eslint-zod/commit/3217cbe29e8527380e430827bf294e7b97021649) - fix: stop carrying checks past a method that returns another schema.
+
+- [#629](https://github.com/marcalexiei/eslint-zod/pull/629) [`91e9251`](https://github.com/marcalexiei/eslint-zod/commit/91e925144e0b56c25f3d5e713ecae16e2dee8e42) - fix(no-duplicate-schema-methods): stop reporting repeats that still affect the result, such as a validator after a rewrite or a second `brand()`.
+
+- [#629](https://github.com/marcalexiei/eslint-zod/pull/629) [`91e9251`](https://github.com/marcalexiei/eslint-zod/commit/91e925144e0b56c25f3d5e713ecae16e2dee8e42) - fix: stop reporting a repeat when a value rewrite or a variable passed to `meta()` may have undone the earlier call.
+
+- [#628](https://github.com/marcalexiei/eslint-zod/pull/628) [`55b3332`](https://github.com/marcalexiei/eslint-zod/commit/55b333256666efa5b549fb9661bec95cd588cf4f) - fix(no-unnecessary-readonly): keep `readonly` on a date schema and around `default` or `catch`, where it still freezes the value.
+
+- [#627](https://github.com/marcalexiei/eslint-zod/pull/627) [`5f5b0d2`](https://github.com/marcalexiei/eslint-zod/commit/5f5b0d22cefb295a8d031b04b46b6ead12bc2661) - fix: withhold autofixes when later code depends on the replaced schema or the fix would restore dropped metadata.
+
+- [#629](https://github.com/marcalexiei/eslint-zod/pull/629) [`91e9251`](https://github.com/marcalexiei/eslint-zod/commit/91e925144e0b56c25f3d5e713ecae16e2dee8e42) - fix(no-duplicate-schema-methods): report wrappers repeated across their opposite, and skip repeats a later `.unwrap()` needs.
+
+- [#626](https://github.com/marcalexiei/eslint-zod/pull/626) [`3217cbe`](https://github.com/marcalexiei/eslint-zod/commit/3217cbe29e8527380e430827bf294e7b97021649) - fix(no-conflicting-checks): compare the checks before a type-changing method, reporting that they conflict rather than that the schema can never match.
+
+- [#629](https://github.com/marcalexiei/eslint-zod/pull/629) [`91e9251`](https://github.com/marcalexiei/eslint-zod/commit/91e925144e0b56c25f3d5e713ecae16e2dee8e42) - fix: stop treating methods called on a parsed value as schema checks in `no-duplicate-schema-methods` and `no-conflicting-checks`.
+
 ## 7.0.0
 
 ### Major Changes
