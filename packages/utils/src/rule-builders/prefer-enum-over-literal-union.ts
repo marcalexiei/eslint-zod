@@ -2,7 +2,7 @@ import type { TSESTree } from '@typescript-eslint/types';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { hasCommentInRange } from '../has-comment-in-range.js';
-import { readsZodSchemaProperty } from '../reads-zod-schema-property.js';
+import { readsZodSchemaKind } from '../reads-zod-schema-kind.js';
 import type { RuleContext, RuleListener } from '../rule-types.js';
 import type { ZodImportScope } from '../zod-import-scope.js';
 
@@ -58,8 +58,8 @@ export function buildPreferEnumOverLiteralUnionCreate(
           node,
           messageId: 'useEnum',
           fix(fixer) {
-            // The property being read may not exist on the schema the fix builds.
-            if (readsZodSchemaProperty(node, zodSchemaMeta)) {
+            // What follows may not exist on the enum the fix builds.
+            if (readsZodSchemaKind(context.sourceCode, union.node)) {
               return null;
             }
 

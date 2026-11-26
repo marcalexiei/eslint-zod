@@ -61,6 +61,18 @@ ruleTester.run(preferLooseObject.name, preferLooseObject, {
   ],
   invalid: [
     {
+      name: 'fixed when optional() drops the description anyway',
+      code: dedent`
+        import * as z from 'zod';
+        z.object({}).describe('a').loose().optional();
+      `,
+      errors: [{ messageId: 'preferLooseObject' }],
+      output: dedent`
+        import * as z from 'zod';
+        z.looseObject({}).describe('a').optional();
+      `,
+    },
+    {
       name: 'prefer looseObject over object().passthrough()',
       code: dedent`
         import { z } from 'zod';
@@ -78,10 +90,7 @@ ruleTester.run(preferLooseObject.name, preferLooseObject, {
         import { z } from 'zod';
         z.object({ a: z.string() }).describe("desc").passthrough();
       `,
-      output: dedent`
-        import { z } from 'zod';
-        z.looseObject({ a: z.string() }).describe("desc");
-      `,
+      output: null,
       errors: [{ messageId: 'preferLooseObject' }],
     },
     {
@@ -102,10 +111,7 @@ ruleTester.run(preferLooseObject.name, preferLooseObject, {
         import { z } from 'zod';
         z.object({ a: z.string() }).describe("desc").loose();
       `,
-      output: dedent`
-        import { z } from 'zod';
-        z.looseObject({ a: z.string() }).describe("desc");
-      `,
+      output: null,
       errors: [{ messageId: 'preferLooseObject' }],
     },
     {

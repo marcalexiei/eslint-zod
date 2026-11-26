@@ -61,6 +61,12 @@ z.string().optional().nullable().describe('x');
 z.string().nullish().describe('x');
 ```
 
+`.optional().nullable()` nests differently from `.nullish()`,
+so no fix is offered when a later `.unwrap()`, `.removeDefault()`, `.removeCatch()` or `.apply()` could depend on it.
+The same applies through a local variable.
+A schema passed, stored or returned counts as read when the file reads such a member anywhere.
+A read in another file cannot be checked.
+
 ## Further Reading
 
 - [Zod – Nullish](https://zod.dev/api?id=nullish)

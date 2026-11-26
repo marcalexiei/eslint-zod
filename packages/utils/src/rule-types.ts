@@ -124,6 +124,7 @@ export interface SourceCode {
   getText: (node?: NodeOrToken, beforeCount?: number, afterCount?: number) => string;
   getTokenAfter: (nodeOrToken: NodeOrToken, options?: TokenSearchOptions) => TSESTree.Token | null;
   getTokenBefore: (nodeOrToken: NodeOrToken, options?: TokenSearchOptions) => TSESTree.Token | null;
+  text: string;
 }
 
 export interface RuleContext<

@@ -8,6 +8,20 @@ const ruleTester = new RuleTester();
 ruleTester.run(preferTupleOverArrayLength.name, preferTupleOverArrayLength, {
   valid: [
     {
+      name: 'checks after unwrap() bound another schema',
+      code: dedent`
+        import * as z from 'zod';
+        z.array(z.array(z.string())).unwrap().length(2);
+      `,
+    },
+    {
+      name: 'checks after apply() bound another schema',
+      code: dedent`
+        import * as z from 'zod';
+        z.array(z.string()).apply((schema) => schema).length(2);
+      `,
+    },
+    {
       name: 'length check after a type-changing method bounds the outer array',
       code: dedent`
         import * as z from 'zod';
@@ -58,6 +72,25 @@ ruleTester.run(preferTupleOverArrayLength.name, preferTupleOverArrayLength, {
     },
   ],
   invalid: [
+    {
+      name: 'no fix when a variable holding the array reads its element',
+      code: dedent`
+        import * as z from 'zod';
+        const a = z.array(z.string()).length(2);
+        a.element;
+      `,
+      errors: [{ messageId: 'preferTuple' }],
+      output: null,
+    },
+    {
+      name: 'no fix before unwrap(), which a tuple does not have',
+      code: dedent`
+        import * as z from 'zod';
+        z.array(z.string()).length(2).unwrap();
+      `,
+      errors: [{ messageId: 'preferTuple' }],
+      output: null,
+    },
     {
       name: 'property read from the schema — reported without a fix',
       code: dedent`

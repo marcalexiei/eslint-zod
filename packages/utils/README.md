@@ -41,6 +41,7 @@ Only what the plugins import; every other helper is internal to this package.
 - `getZodSchemaFactoryName(meta)` — the factory a detected chain builds its schema with: `meta.schemaType`, except that `coerce.<name>()` gives `<name>`
 - `buildZodChainRemoveMethodFix(opts)` — remove one method from a chain
 - `hasCommentInRange(sourceCode, range)` — whether a comment sits inside a range a fixer is about to remove or rewrite
+- `readsZodSchemaKind(sourceCode, call)` — whether later code may read the kind of schema `call` builds (a property read, `instanceof`, `.unwrap()`, `.removeDefault()`, `.removeCatch()`, `.apply()`), so a fixer must not remove a wrapper or swap the schema there. Once the schema is passed, stored or returned, any such read in the file counts; other files are not seen
 - `hasParenthesizedReceiver(member)` — whether a member expression's object is wrapped in parentheses (`(z.string()).min(1)`)
 - `ZOD_MUTATING_CHECK_NAMES` — Zod check names that mutate the validated value
 - `ZOD_NON_SCHEMA_PRODUCING_METHODS` — Zod method names that do not return a schema

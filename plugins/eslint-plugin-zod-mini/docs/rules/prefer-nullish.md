@@ -62,6 +62,12 @@ z.nullish(z.string());
 
 With named imports, the fix requires `nullish` to be imported. When it is not, the rule reports without autofixing so the fix never references an undefined identifier.
 
+`z.nullable(z.optional(…))` nests differently from `z.nullish(…)`,
+so no fix is offered before `.apply()`, whose callback could depend on it.
+The same applies through a local variable.
+A schema passed, stored or returned counts as read when the file reads such a member anywhere.
+A read in another file cannot be checked.
+
 ## Further Reading
 
 - [Zod – Nullish](https://zod.dev/api?id=nullish)

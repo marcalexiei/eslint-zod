@@ -101,6 +101,11 @@ Autofix is also **not applied** when:
 
 In these cases the rule still reports but leaves the code unchanged.
 
+No fix is offered before `.apply()`, whose callback could depend on the array.
+The same applies through a local variable.
+A schema passed, stored or returned counts as read when the file reads such a member anywhere.
+A read in another file cannot be checked.
+
 ## When Not To Use It
 
 You may want to disable this rule if:

@@ -84,6 +84,10 @@ Autofix is **not applied** when:
 
 In these cases, the rule will still report but will not modify the code.
 
+No fix is offered when a later `.unwrap()`, `.removeDefault()`, `.removeCatch()` or `.apply()` could depend on the union.
+The same applies through a local variable.
+A read in a helper, through a parent schema or in another file cannot be checked.
+
 ## When Not To Use It
 
 You may want to disable this rule if:

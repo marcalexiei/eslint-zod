@@ -1,4 +1,9 @@
-import { ZOD_TYPE_CHANGING_METHODS, hasCommentInRange, zodImportScope } from '@eslint-zod/utils';
+import {
+  ZOD_TYPE_CHANGING_METHODS,
+  hasCommentInRange,
+  readsZodSchemaKind,
+  zodImportScope,
+} from '@eslint-zod/utils';
 import { AST_NODE_TYPES } from '@typescript-eslint/types';
 
 import { createZodPluginRule } from '../meta.js';
@@ -47,9 +52,8 @@ export const noOptionalAndDefaultTogether = createZodPluginRule<[Options], Messa
   create(context, [{ preferredMethod }]) {
     const { sourceCode } = context;
 
-    const { createSchemaVisitor, collectZodChainMethods } = zodImportScope.createTracker({
-      kind: 'value',
-    });
+    const { createSchemaVisitor, collectZodChainMethods, restoresZodMetadata } =
+      zodImportScope.createTracker({ kind: 'value' });
 
     return createSchemaVisitor({
       onSchema(node): void {
@@ -92,16 +96,21 @@ export const noOptionalAndDefaultTogether = createZodPluginRule<[Options], Messa
           return;
         }
 
-        const methodToRemoveName: Exclude<PreferredMethod, 'none'> =
-          preferredMethod === 'default' ? 'optional' : 'default';
+        const methodToRemove = preferredMethod === 'default' ? optionalMethod : defaultMethod;
+        const nodeToRemove = methodToRemove.node;
 
         context.report({
           node: reportNode,
           messageId: 'noOptionalAndDefaultTogetherRemoveMethod',
-          data: { method: methodToRemoveName },
+          data: { method: methodToRemove.name },
           fix(fixer) {
-            const nodeToRemove =
-              preferredMethod === 'default' ? optionalMethod.node : defaultMethod.node;
+            if (
+              readsZodSchemaKind(sourceCode, nodeToRemove) ||
+              restoresZodMetadata(node, methods.indexOf(methodToRemove))
+            ) {
+              return null;
+            }
+
             const calleeToRemove = nodeToRemove.callee;
 
             // The wrapper form (`z.optional(schema)`, `optional(schema)`) has no chained call to remove.

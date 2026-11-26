@@ -54,6 +54,8 @@ hoisting `.loose()` into the factory would let that method override it.
 
 It is also withheld when `.loose()` is called after a property access (`z.object({ a: z.object({}) }).shape.a.loose()`), where the factory to rename is out of reach.
 
+No fix is offered when it would bring back metadata the modifier dropped.
+
 ## Conflict with `zod/consistent-object-schema-type`
 
 If you are using the `zod/consistent-object-schema-type` rule alongside this one, be aware that there can be a conflict if `consistent-object-schema-type` is configured to only allow `object` (which is its default behavior).

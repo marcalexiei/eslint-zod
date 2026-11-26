@@ -125,6 +125,15 @@ ruleTester.run(preferEnumOverLiteralUnion.name, preferEnumOverLiteralUnion, {
   ],
   invalid: [
     {
+      name: 'no fix before apply(), whose callback can read the union',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.union([z.literal('a'), z.literal('b')]).apply((s) => s);
+      `,
+      errors: [{ messageId: 'useEnum' }],
+      output: null,
+    },
+    {
       name: 'property read from the schema — reported without a fix',
       code: dedent`
         import * as z from 'zod/mini';

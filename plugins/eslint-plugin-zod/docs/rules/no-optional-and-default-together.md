@@ -132,6 +132,12 @@ The redundancy it reports is that `.default()` already makes a field optional, s
 That argument does not carry over to `exactOptional`, which rejects an explicitly-passed `undefined` while allowing the key to be absent.
 `.default()` accepts that `undefined` and substitutes the default, so the two are a real, if unusual, combination rather than a redundancy.
 
+No fix is offered when a later `.unwrap()`, `.removeDefault()`, `.removeCatch()` or `.apply()` could depend on the removed wrapper.
+The same applies through a local variable.
+A schema passed, stored or returned counts as read when the file reads such a member anywhere.
+A read in another file cannot be checked.
+No fix is offered when it would bring back metadata the removed call dropped.
+
 ## When Not To Use It
 
 If you have a specific use case that requires both `.optional()` and `.default()` in your schema, you may want to disable this rule.
