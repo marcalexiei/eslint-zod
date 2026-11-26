@@ -10,7 +10,7 @@
 
 This rule disallows calling the same Zod Mini schema method more than once within a single method chain. Duplicate calls are almost always a mistake — they indicate redundant or conflicting configuration.
 
-Methods that are designed to be chained multiple times, such as `.check()` (and its alias `.with()`) and `.register()`, are excluded from this check.
+Methods that are designed to be chained multiple times, such as `.check()` (and its alias `.with()`), `.brand()` and `.register()`, are excluded from this check.
 
 Since most of `zod/mini`'s API is passed to `.check()` rather than chained,
 the rule also reports a check argument that repeats an earlier one in the same schema,
@@ -19,10 +19,14 @@ Only checks whose second application is redundant are compared:
 `trim()`, `toLowerCase()`, `toUpperCase()`, `describe()`, and `normalize()` with the same form (no argument means `'NFC'`).
 A form that is neither a string nor a constant bound to one is not compared.
 
-A repeat is reported only while the earlier check is still in effect.
-It is not when a check between the two may change the value:
-`toLowerCase()`, `toUpperCase()`, `normalize()`, `overwrite()`, a callback check, or a custom check that is not a zod call.
-`describe()` sets metadata, so only `.apply()` resets it.
+A repeat is reported only while the earlier check is still in effect:
+
+- `trim()` ends at `normalize()`, `overwrite()`, a callback check, or a custom check that is not a zod call.
+- `toLowerCase()`, `toUpperCase()` and `normalize()` end at those and at each other.
+- `describe()` ends at `.register()`, a custom check, and any `z.meta()` but an inline object without `description`.
+
+`.apply()` may return any schema, so what follows it is never compared with what precedes it.
+Nothing is compared past a method that does not return a schema, such as `.parse()`.
 
 Repeated bounds such as `z.minLength(1)` are reported by [`no-conflicting-checks`](./no-conflicting-checks.md).
 
@@ -33,8 +37,8 @@ Repeated bounds such as `z.minLength(1)` are reported by [`no-conflicting-checks
 ```ts
 import * as z from 'zod/mini';
 
-const aSchema = z.string().brand('Foo').brand('Bar');
-//                                     ^^^^^^^^^^^^^ duplicate .brand()
+const aSchema = z.string().clone().clone();
+//                                ^^^^^^^^ duplicate .clone()
 
 const bSchema = z.string().check(z.toLowerCase(), z.trim(), z.toLowerCase());
 //                                                          ^^^^^^^^^^^^^^^ duplicate toLowerCase()

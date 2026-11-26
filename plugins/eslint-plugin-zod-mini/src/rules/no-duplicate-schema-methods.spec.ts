@@ -8,6 +8,39 @@ const ruleTester = new RuleTester();
 ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
   valid: [
     {
+      name: 'describe() across meta() with a variable, which can gain a description',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const m = { title: 't' };
+        m.description = 'b';
+        z.string().check(z.describe('a'), z.meta(m), z.describe('a'));
+      `,
+    },
+    {
+      name: 'apply() starts a new segment',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().clone().apply((schema) => schema).clone();
+      `,
+    },
+    {
+      name: 'string methods called on a parsed value',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.trim()).parse(' a ').trim();
+        z.string().check(z.toLowerCase()).parse('A').toLowerCase();
+        z.string().check(z.normalize()).parse('a').normalize();
+      `,
+    },
+    {
+      name: 'check arguments - describe() restoring what a custom check may have replaced',
+      code: dedent`
+        import * as z from 'zod/mini';
+        const custom = z.meta({ description: 'x' });
+        z.string().check(z.describe('a'), custom, z.describe('a'));
+      `,
+    },
+    {
       name: 'with() is the alias of check()',
       code: dedent`
         import * as z from 'zod/mini';
@@ -29,7 +62,7 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       `,
     },
     {
-      name: 'namespace - check called multiple times (excluded)',
+      name: 'namespace - check called multiple times (only its arguments are compared)',
       code: dedent`
         import * as z from 'zod/mini';
         z.string().check(z.minLength(1)).check(z.maxLength(10));
@@ -167,8 +200,77 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         obj.brand().brand();
       `,
     },
+    {
+      name: 'brand() accumulates',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().brand('A').brand('B');
+      `,
+    },
+    {
+      name: 'check arguments - describe() restoring what meta() or register() replaced',
+      code: dedent`
+        import * as z from 'zod/mini';
+        declare const extra: { description?: string };
+        z.string().check(z.describe('a'), z.meta({ description: 'b' }), z.describe('a'));
+        z.string().check(z.describe('a'), z.meta({ ...extra }), z.describe('a'));
+        z.string().check(z.describe('a'), z.meta(extra), z.describe('a'));
+        z.string()
+          .check(z.describe('a'))
+          .register(z.globalRegistry, { description: 'b' })
+          .check(z.describe('a'));
+      `,
+    },
   ],
   invalid: [
+    {
+      name: 'check arguments - trim() repeated across a case change',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.trim(), z.toLowerCase(), z.trim());
+        z.string().check(z.trim(), z.toUpperCase(), z.trim());
+      `,
+      errors: [
+        { messageId: 'noDuplicateSchemaMethod', data: { method: 'trim' } },
+        { messageId: 'noDuplicateSchemaMethod', data: { method: 'trim' } },
+      ],
+    },
+    {
+      name: 'check arguments - describe() across meta() that leaves the description alone',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.describe('a'), z.meta({ title: 'b' }), z.describe('c'));
+      `,
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'describe' } }],
+    },
+    {
+      name: 'clone() repeated across a value change',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().clone().check(z.trim()).clone();
+      `,
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'clone' } }],
+    },
+    {
+      name: 'a repeat before parse() is still reported',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.trim(), z.trim()).parse(' a ');
+      `,
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'trim' } }],
+    },
+    {
+      name: 'a repeat before apply() is still reported',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().clone().clone().apply((schema) => schema);
+        z.string().check(z.trim(), z.trim()).apply((schema) => schema);
+      `,
+      errors: [
+        { messageId: 'noDuplicateSchemaMethod', data: { method: 'clone' } },
+        { messageId: 'noDuplicateSchemaMethod', data: { method: 'trim' } },
+      ],
+    },
     {
       name: 'check arguments - normalize form read from a constant',
       code: dedent`
@@ -294,28 +396,28 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'trim' } }],
     },
     {
-      name: 'namespace - brand called twice',
+      name: 'namespace - clone called twice',
       code: dedent`
         import * as z from 'zod/mini';
-        z.string().brand('Foo').brand('Bar');
+        z.string().clone().clone();
       `,
-      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'brand' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'clone' } }],
     },
     {
-      name: 'named - brand called twice',
+      name: 'named - clone called twice',
       code: dedent`
         import { string } from 'zod/mini';
-        string().brand('Foo').brand('Bar');
+        string().clone().clone();
       `,
-      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'brand' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'clone' } }],
     },
     {
-      name: 'named z - brand called twice',
+      name: 'named z - clone called twice',
       code: dedent`
         import { z } from 'zod/mini';
-        z.string().brand('Foo').brand('Bar');
+        z.string().clone().clone();
       `,
-      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'brand' } }],
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'clone' } }],
     },
   ],
 });

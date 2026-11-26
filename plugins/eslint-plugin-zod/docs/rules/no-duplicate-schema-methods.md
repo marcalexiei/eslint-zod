@@ -11,20 +11,32 @@
 This rule disallows calling the same Zod schema method more than once within a single method chain. Duplicate calls are almost always a mistake — they are either redundant (e.g. calling `.trim()` twice) or create conflicting constraints (e.g. setting `.min()` twice with different values).
 
 Methods that are designed to be chained multiple times are excluded from this check: `.regex()`, `.includes()`, `.startsWith()`, `.endsWith()`, and `.overwrite()`, since each call applies an independent constraint or transformation — matching a string against two different patterns is common, unlike calling `.min()` twice with different values.
-The object reshaping methods (`.extend()`, `.safeExtend()`, `.merge()`, `.omit()`, `.pick()`), `.meta()`, `.multipleOf()` and `.check()` / `.with()` are excluded for the same reason.
+The object reshaping methods (`.extend()`, `.safeExtend()`, `.merge()`, `.omit()`, `.pick()`), `.brand()`, `.meta()`, `.multipleOf()`, `.step()` and `.check()` / `.with()` are excluded for the same reason.
+`.partial()`, `.exactPartial()`, `.required()`, `.exclude()` and `.extract()` repeat only with the same argument:
+`.partial().partial()` is reported, `.partial({ a: true }).partial({ b: true })` is not.
+An argument containing a call may differ each time, so it is not compared.
 
-`.trim()`, `.toLowerCase()`, `.toUpperCase()`, `.describe()`, and `.normalize()` with the same form (no argument means `'NFC'`)
-are reported only while the earlier call is still in effect.
-They are not when a method between the two may change the value:
-`.toLowerCase()`, `.toUpperCase()`, `.normalize()`, `.overwrite()`, `.slugify()`, `.superRefine()`, or `.check()` with a function.
-`.describe()` sets metadata, so only `.apply()` resets it.
-A form that is neither a string nor a constant bound to one is not compared.
+A repeat is reported only while the earlier call is still in effect:
 
-A type-changing method (`.or()`, `.and()`, `.array()`, `.pipe()`, `.transform()`) wraps the schema in a new one:
-the methods after it constrain the new schema, not the one before.
+- A method that may change the value ends the value checks before it, so `.min(3).trim().min(3)` is not reported.
+  Those methods are `.trim()`, `.toLowerCase()`, `.toUpperCase()`, `.normalize()`, `.slugify()`, `.overwrite()`, `.superRefine()`, and `.check()` with a custom check.
+- `.trim()` survives a case change and `.slugify()`, which cannot put whitespace back at the edges.
+- A case change, `.slugify()`, and `.normalize()` with the same form (no argument means `'NFC'`) survive `.trim()`.
+  A form that is neither a string nor a constant bound to one is not compared.
+- `.describe()` does not depend on the value.
+  It ends at a method that builds a new schema without it, such as `.optional()` or `.partial()`,
+  at `.register()`, at a custom check, and at any `.meta()` but an inline object without `description`.
+- Wrappers and object modes survive what follows them, so one of the two calls is redundant:
+  `.strict().loose().strict()` behaves as `.loose().strict()`.
+  `.catch()`, `.nonoptional()` and `.readonly()` end at a method that may change the value.
+  `.catch()` also ends at `.refine()` and `.check()`, which can reject the value it returned.
+- A repeated wrapper is not reported when later code in the file may read it, as `.unwrap()` does, since each such call peels one.
+
+A type-changing method (`.or()`, `.and()`, `.array()`, `.pipe()`, `.transform()`, `.apply()`, `.keyof()`, `.unwrap()`, `.removeDefault()`, `.removeCatch()`) returns another schema:
+the methods after it constrain that schema, not the one before.
 `z.string().min(1).array().min(1)` bounds the string's length and then the array's, so it is not a duplicate.
-`.array()` is the only such method whose result takes further constraints —
-`.or()`, `.and()`, `.pipe()` and `.transform()` return schemas with no chainable checks of their own.
+
+Nothing is compared past a method that does not return a schema, such as `.parse()`.
 
 [`no-conflicting-checks`](./no-conflicting-checks.md) owns the excluded content methods:
 it reports the combinations that are unsatisfiable or redundant rather than merely repeated.
@@ -77,6 +89,12 @@ const gSchema = z
   .trim()
   .overwrite((s) => ` ${s} `)
   .trim();
+
+// the second .min() checks the trimmed value
+const hSchema = z.string().min(3).trim().min(3);
+
+// each .describe() belongs to a different schema
+const iSchema = z.string().describe('inner').optional().describe('outer');
 ```
 
 ## When Not To Use It
