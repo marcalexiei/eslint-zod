@@ -172,6 +172,30 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
         z.string().min(1).max(10);
       `,
     },
+    {
+      name: 'a value check repeated after a check that may undo it',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().trim().overwrite((s) => \` \${s} \`).trim();
+        z.string().trim().superRefine((s, ctx) => {}).trim();
+        z.string().trim().check((ctx) => {}).trim();
+        z.string().trim().slugify().trim();
+        z.string().trim().apply((schema) => schema).trim();
+        z.string().toLowerCase().toUpperCase().toLowerCase();
+        z.string().normalize('NFC').normalize('NFD').normalize('NFC');
+        z.string().normalize().toUpperCase().normalize();
+        z.string().trim().normalize('NFKC').trim();
+        z.string().toLowerCase().normalize('NFKD').toLowerCase();
+      `,
+    },
+    {
+      name: 'normalize forms that are not constants',
+      code: dedent`
+        import * as z from 'zod';
+        declare function nextForm(): string;
+        z.string().normalize(nextForm()).normalize(nextForm());
+      `,
+    },
   ],
   invalid: [
     {
@@ -246,6 +270,39 @@ ruleTester.run(noDuplicateSchemaMethods.name, noDuplicateSchemaMethods, {
       code: dedent`
         import * as z from 'zod';
         z.string().describe('foo').describe('bar');
+      `,
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'describe' } }],
+    },
+    {
+      name: 'normalize repeated with the same form',
+      code: dedent`
+        import * as z from 'zod';
+        const form = 'NFC';
+        z.string().normalize().normalize(form);
+      `,
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'normalize' } }],
+    },
+    {
+      name: 'checks that do not rewrite the value keep a repeat reported',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().toLowerCase().trim().refine((s) => s.length > 0).toLowerCase();
+      `,
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'toLowerCase' } }],
+    },
+    {
+      name: 'normalize form with a type assertion',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().normalize('NFD' as const).normalize('NFD');
+      `,
+      errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'normalize' } }],
+    },
+    {
+      name: 'overwrite does not undo describe',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().describe('foo').overwrite((s) => s).describe('foo');
       `,
       errors: [{ messageId: 'noDuplicateSchemaMethod', data: { method: 'describe' } }],
     },

@@ -2,12 +2,18 @@ import type { ZodExportName, ZodMethodName } from '@eslint-zod/zod-api';
 import type { TSESTree } from '@typescript-eslint/types';
 
 import type { ZodSchemaConstraint } from './collect-zod-schema-constraints.js';
+import { ZOD_MUTATING_CHECK_NAMES } from './zod-mutating-check-names.js';
 
 /** Checks whose callback may rewrite the value. */
-export const CALLBACK_CHECK_NAMES: ReadonlySet<string> = new Set<ZodExportName | ZodMethodName>([
+const CALLBACK_CHECK_NAMES: ReadonlySet<string> = new Set<ZodExportName | ZodMethodName>([
   'check',
   'superRefine',
 ]);
+
+/** Whether a check of this name may rewrite the value: a mutating check or a callback one. */
+export function mayRewriteZodValue(name: string): boolean {
+  return ZOD_MUTATING_CHECK_NAMES.includes(name) || CALLBACK_CHECK_NAMES.has(name);
+}
 
 /** Chain indexes of `.check(...)` / `.with(...)` calls carrying an argument that is not a recognized zod call. */
 export function getOpaqueCheckChainIndexes(

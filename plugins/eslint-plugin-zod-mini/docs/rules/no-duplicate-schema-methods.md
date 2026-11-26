@@ -12,6 +12,20 @@ This rule disallows calling the same Zod Mini schema method more than once withi
 
 Methods that are designed to be chained multiple times, such as `.check()` (and its alias `.with()`) and `.register()`, are excluded from this check.
 
+Since most of `zod/mini`'s API is passed to `.check()` rather than chained,
+the rule also reports a check argument that repeats an earlier one in the same schema,
+whether within one `.check()` call or across several.
+Only checks whose second application is redundant are compared:
+`trim()`, `toLowerCase()`, `toUpperCase()`, `describe()`, and `normalize()` with the same form (no argument means `'NFC'`).
+A form that is neither a string nor a constant bound to one is not compared.
+
+A repeat is reported only while the earlier check is still in effect.
+It is not when a check between the two may change the value:
+`toLowerCase()`, `toUpperCase()`, `normalize()`, `overwrite()`, a callback check, or a custom check that is not a zod call.
+`describe()` sets metadata, so only `.apply()` resets it.
+
+Repeated bounds such as `z.minLength(1)` are reported by [`no-conflicting-checks`](./no-conflicting-checks.md).
+
 ## Examples
 
 ### ❌ Invalid
@@ -20,7 +34,13 @@ Methods that are designed to be chained multiple times, such as `.check()` (and 
 import * as z from 'zod/mini';
 
 const aSchema = z.string().brand('Foo').brand('Bar');
-//                                      ^^^^^^^^^^^ duplicate .brand()
+//                                     ^^^^^^^^^^^^^ duplicate .brand()
+
+const bSchema = z.string().check(z.toLowerCase(), z.trim(), z.toLowerCase());
+//                                                          ^^^^^^^^^^^^^^^ duplicate toLowerCase()
+
+const cSchema = z.string().check(z.normalize()).check(z.normalize('NFC'));
+//                                                    ^^^^^^^^^^^^^^^^^^ duplicate normalize()
 ```
 
 ### ✅ Valid
@@ -32,6 +52,19 @@ const aSchema = z.string().brand('MyBrand');
 
 // .check() is excluded — chaining multiple .check() calls is intentional in zod/mini
 const bSchema = z.string().check(z.minLength(1)).check(z.maxLength(10));
+
+// normalize() with different forms
+const cSchema = z.string().check(z.normalize('NFD'), z.normalize('NFC'));
+
+// accumulating checks: both patterns must match
+const dSchema = z.string().check(z.regex(/^a/), z.regex(/z$/));
+
+// overwrite() may add whitespace back, so the second trim() is needed
+const eSchema = z.string().check(
+  z.trim(),
+  z.overwrite((s) => ` ${s} `),
+  z.trim(),
+);
 ```
 
 ## When Not To Use It

@@ -43,3 +43,15 @@ export function getIdentifierValue(
   );
   return init && skipTypeAssertions(init);
 }
+
+/** The value of a call argument, an identifier followed per {@link getIdentifierValue}; `null` for a spread. */
+export function getArgumentValue(
+  sourceCode: Readonly<SourceCode>,
+  argument: TSESTree.CallExpressionArgument | undefined,
+): TSESTree.Expression | null {
+  if (!argument || argument.type === AST_NODE_TYPES.SpreadElement) {
+    return null;
+  }
+  const value = skipTypeAssertions(argument);
+  return value.type === AST_NODE_TYPES.Identifier ? getIdentifierValue(sourceCode, value) : value;
+}
