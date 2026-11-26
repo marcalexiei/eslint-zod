@@ -1,4 +1,9 @@
-import { hasCommentInRange, hasParenthesizedReceiver, zodImportScope } from '@eslint-zod/utils';
+import {
+  ZOD_NON_SCHEMA_PRODUCING_METHODS,
+  hasCommentInRange,
+  hasParenthesizedReceiver,
+  zodImportScope,
+} from '@eslint-zod/utils';
 import type { ZodMethodName } from '@eslint-zod/zod-api';
 import type { TSESTree } from '@typescript-eslint/types';
 
@@ -10,6 +15,13 @@ const LENGTH_CHECK_METHODS: ReadonlySet<string> = new Set<ZodMethodName>([
   'max',
   'length',
   'nonempty',
+]);
+
+/** Methods `.trim()` can move past: any other may read the untrimmed value. */
+const TRIM_MOVABLE_PAST: ReadonlySet<string> = new Set([
+  ...LENGTH_CHECK_METHODS,
+  'describe' satisfies ZodMethodName,
+  'meta' satisfies ZodMethodName,
 ]);
 
 export const preferTrimBeforeStringLengthChecks = createZodPluginRule({
@@ -41,7 +53,10 @@ export const preferTrimBeforeStringLengthChecks = createZodPluginRule({
           return;
         }
 
-        const methods = collectZodChainMethods(node);
+        const chain = collectZodChainMethods(node);
+        // What follows `.parse()` is a native method on its result.
+        const schemaEnd = chain.findIndex((m) => ZOD_NON_SCHEMA_PRODUCING_METHODS.includes(m.name));
+        const methods = schemaEnd === -1 ? chain : chain.slice(0, schemaEnd);
 
         const trimIndex = methods.findIndex((m) => m.name === 'trim');
         const firstLengthCheckIndex = methods.findIndex((m) => LENGTH_CHECK_METHODS.has(m.name));
@@ -59,7 +74,8 @@ export const preferTrimBeforeStringLengthChecks = createZodPluginRule({
             if (
               zodSchemaMeta.schemaDecl === 'named' ||
               !trimCallee ||
-              hasParenthesizedReceiver(trimCallee)
+              hasParenthesizedReceiver(trimCallee) ||
+              methods.slice(1, trimIndex).some((it) => !TRIM_MOVABLE_PAST.has(it.name))
             ) {
               return null;
             }
