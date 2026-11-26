@@ -1,5 +1,16 @@
 # eslint-plugin-zod-core
 
+## 2.2.0
+
+### Minor Changes
+
+- [#618](https://github.com/marcalexiei/eslint-zod/pull/618) [`e153c5f`](https://github.com/marcalexiei/eslint-zod/commit/e153c5fe7041723dd0ccc1ce96be6fcfc37b98d5) - feat: add `no-duplicate-union-members` to `eslint-plugin-zod-core`, reporting a member repeated in `_union()`, `_discriminatedUnion()`, `_enum()` or `_literal([...])`.
+
+### Patch Changes
+
+- Updated dependencies [[`e153c5f`](https://github.com/marcalexiei/eslint-zod/commit/e153c5fe7041723dd0ccc1ce96be6fcfc37b98d5), [`3217cbe`](https://github.com/marcalexiei/eslint-zod/commit/3217cbe29e8527380e430827bf294e7b97021649), [`91e9251`](https://github.com/marcalexiei/eslint-zod/commit/91e925144e0b56c25f3d5e713ecae16e2dee8e42), [`91e9251`](https://github.com/marcalexiei/eslint-zod/commit/91e925144e0b56c25f3d5e713ecae16e2dee8e42), [`55b3332`](https://github.com/marcalexiei/eslint-zod/commit/55b333256666efa5b549fb9661bec95cd588cf4f), [`55b3332`](https://github.com/marcalexiei/eslint-zod/commit/55b333256666efa5b549fb9661bec95cd588cf4f), [`5f5b0d2`](https://github.com/marcalexiei/eslint-zod/commit/5f5b0d22cefb295a8d031b04b46b6ead12bc2661), [`91e9251`](https://github.com/marcalexiei/eslint-zod/commit/91e925144e0b56c25f3d5e713ecae16e2dee8e42), [`3217cbe`](https://github.com/marcalexiei/eslint-zod/commit/3217cbe29e8527380e430827bf294e7b97021649), [`ce7e0d0`](https://github.com/marcalexiei/eslint-zod/commit/ce7e0d0a45406f9e7e82bdf9b714e5af260a9055), [`ad06b6a`](https://github.com/marcalexiei/eslint-zod/commit/ad06b6ae22ff271ecc009336f813cdc860b26c0e), [`91e9251`](https://github.com/marcalexiei/eslint-zod/commit/91e925144e0b56c25f3d5e713ecae16e2dee8e42)]:
+  - @eslint-zod/utils@7.1.0
+
 ## 2.1.4
 
 ### Patch Changes
