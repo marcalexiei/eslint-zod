@@ -7,12 +7,13 @@ export const noUnnecessaryReadonly = createZodPluginRule({
   name: 'no-unnecessary-readonly',
   meta: {
     type: 'suggestion',
-    fixable: 'code',
+    hasSuggestions: true,
     docs: {
       description: 'Disallow `.readonly()` on schemas whose output is already immutable',
     },
     messages: {
-      unnecessaryReadonly: '`readonly` has no effect on an already-immutable schema; remove it.',
+      unnecessaryReadonly: '`readonly` does not change the output of an already-immutable schema.',
+      removeReadonly: 'Remove `readonly` (generated JSON Schema may lose `readOnly`).',
     },
     schema: [],
   },
