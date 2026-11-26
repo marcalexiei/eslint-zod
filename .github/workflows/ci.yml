@@ -47,7 +47,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@7d232a08434641e4df36f5921d4308a2bba23f9c # v3.0.0
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@2c28f768b03ce332a96804ae076f15c84f239684 # v4.0.2
         with:
           node-version: ${{ matrix.node }}
           # Both ESLint legs of a Node.js version share a cache key.
@@ -79,7 +79,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@7d232a08434641e4df36f5921d4308a2bba23f9c # v3.0.0
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@2c28f768b03ce332a96804ae076f15c84f239684 # v4.0.2
         with:
           save-cache: false # shares its cache key with Code checks
 
@@ -104,7 +104,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@7d232a08434641e4df36f5921d4308a2bba23f9c # v3.0.0
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@2c28f768b03ce332a96804ae076f15c84f239684 # v4.0.2
 
       # Before Typecheck: without `tsc -b` output a leaked `zod-api` type builds as `any`, which `lint:dts` catches.
       - name: Build
@@ -132,7 +132,7 @@ jobs:
       contents: read # required to check out the repository
     steps:
       - name: Audit GitHub Actions
-        uses: marcalexiei/github-actions/audit-github-actions@7d232a08434641e4df36f5921d4308a2bba23f9c # v3.0.0
+        uses: marcalexiei/github-actions/audit-github-actions@2c28f768b03ce332a96804ae076f15c84f239684 # v4.0.2
 
   ci-ok:
     name: CI OK
@@ -149,6 +149,6 @@ jobs:
       contents: read # required to read the workflow file
     steps:
       - name: Check needed jobs
-        uses: marcalexiei/github-actions/check-needs@7d232a08434641e4df36f5921d4308a2bba23f9c # v3.0.0
+        uses: marcalexiei/github-actions/check-needs@2c28f768b03ce332a96804ae076f15c84f239684 # v4.0.2
         with:
           needs: ${{ toJSON(needs) }}

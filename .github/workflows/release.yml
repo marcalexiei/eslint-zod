@@ -53,7 +53,7 @@ jobs:
           persist-credentials: false
 
       - name: Install Dependencies
-        uses: marcalexiei/github-actions/setup-node-and-pnpm@7d232a08434641e4df36f5921d4308a2bba23f9c # v3.0.0
+        uses: marcalexiei/github-actions/setup-node-and-pnpm@2c28f768b03ce332a96804ae076f15c84f239684 # v4.0.2
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
