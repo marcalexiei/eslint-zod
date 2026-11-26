@@ -152,6 +152,24 @@ ruleTester.run(preferTopLevelStringFormats.name, preferTopLevelStringFormats, {
   invalid: [
     ...invalid,
     {
+      name: 'unwrap() before the format — reported without a fix',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().optional().unwrap().email();
+      `,
+      errors: [{ messageId: 'preferTopLevelStringFormat' }],
+      output: null,
+    },
+    {
+      name: 'apply() before the format — reported without a fix',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().apply((schema) => schema).email();
+      `,
+      errors: [{ messageId: 'preferTopLevelStringFormat' }],
+      output: null,
+    },
+    {
       name: 'computed factory — reported but not fixed, the chain walker cannot name it',
       code: dedent`
         import * as z from 'zod';

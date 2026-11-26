@@ -2,6 +2,7 @@ import type { ZodExportName, ZodMethodName } from '@eslint-zod/zod-api';
 import type { TSESTree } from '@typescript-eslint/types';
 
 import type { ZodSchemaConstraint } from './collect-zod-schema-constraints.js';
+import { isZodCheckMethodName } from './collect-zod-schema-constraints.js';
 import { ZOD_MUTATING_CHECK_NAMES } from './zod-mutating-check-names.js';
 
 /** Checks whose callback may rewrite the value. */
@@ -21,7 +22,7 @@ export function getOpaqueCheckChainIndexes(
   constraints: ReadonlyArray<ZodSchemaConstraint>,
 ): Array<number> {
   return methods.flatMap((method, chainIndex) =>
-    (method.name === 'check' || method.name === 'with') &&
+    isZodCheckMethodName(method.name) &&
     method.node.arguments.length !== constraints.filter((it) => it.chainIndex === chainIndex).length
       ? [chainIndex]
       : [],

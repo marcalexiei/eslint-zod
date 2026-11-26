@@ -10,7 +10,7 @@
 
 Zod happily builds schemas whose checks contradict each other. Depending on the combination the schema silently matches nothing (`z.number().gt(10).lt(5)`), a check is silently dead (`z.number().gt(0).positive()`), or construction throws at runtime (`z.string().min(4).max(2)`). None of these are caught at compile time.
 
-Only literal arguments are analyzed — constraints whose bound is an identifier or expression are skipped, as are chains containing type-changing methods (`transform`, `pipe`, `array`, `or`, `and`).
+Only literal arguments are analyzed — constraints whose bound is an identifier or expression are skipped, as are those after a type-changing method (`transform`, `pipe`, `array`, `or`, `and`, `apply`, `keyof`, `unwrap`, `removeDefault`, `removeCatch`) or a method that does not return a schema, such as `parse`.
 
 Complements [`no-duplicate-schema-methods`](./no-duplicate-schema-methods.md): that rule catches _repeats_ of the same method, this one catches _conflicts and redundancies_ between different checks.
 
@@ -18,11 +18,11 @@ Complements [`no-duplicate-schema-methods`](./no-duplicate-schema-methods.md): t
 
 <!-- begin auto-generated rule options list -->
 
-| Name                      | Description                                                             | Type    |
-| :------------------------ | :---------------------------------------------------------------------- | :------ |
-| `checkConfusingCases`     | Report technically valid but almost certainly mistaken combinations     | Boolean |
-| `checkImpossibleCases`    | Report provably unsatisfiable combinations — the schema can never match | Boolean |
-| `checkInapplicableChecks` | Report checks that don't apply to the schema's base type                | Boolean |
+| Name                      | Description                                                                | Type    |
+| :------------------------ | :------------------------------------------------------------------------- | :------ |
+| `checkConfusingCases`     | Report technically valid but almost certainly mistaken combinations        | Boolean |
+| `checkImpossibleCases`    | Report provably unsatisfiable combinations — the checks can never all pass | Boolean |
+| `checkInapplicableChecks` | Report checks that don't apply to the schema's base type                   | Boolean |
 
 <!-- end auto-generated rule options list -->
 

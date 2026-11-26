@@ -8,6 +8,13 @@ const ruleTester = new RuleTester();
 ruleTester.run(noConflictingChecks.name, noConflictingChecks, {
   valid: [
     {
+      name: 'checks on either side of apply() are not compared',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.minLength(5)).apply((schema) => schema).check(z.maxLength(2));
+      `,
+    },
+    {
       name: 'checks on either side of a mutating check see different values',
       code: dedent`
         import * as z from 'zod/mini';
@@ -245,8 +252,31 @@ ruleTester.run(noConflictingChecks.name, noConflictingChecks, {
         z.literal('ABC').check(z.toLowerCase(), z.lowercase());
       `,
     },
+    {
+      name: 'string methods called on a parsed value',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.startsWith('a')).parse('ab').startsWith('b');
+      `,
+    },
   ],
   invalid: [
+    {
+      name: 'checks before apply() are still compared',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.minLength(5), z.maxLength(2)).apply((schema) => schema);
+      `,
+      errors: [{ messageId: 'impossibleCase' }],
+    },
+    {
+      name: 'checks before parse() are still compared',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.minLength(5), z.maxLength(2)).parse('abc');
+      `,
+      errors: [{ messageId: 'impossibleCase' }],
+    },
     {
       name: 'empty string length range across a mutating check — zod throws on it',
       code: dedent`

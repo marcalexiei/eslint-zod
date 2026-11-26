@@ -152,6 +152,24 @@ ruleTester.run(noNumberSchemaWithInt.name, noNumberSchemaWithInt, {
       `,
     },
     {
+      name: 'unwrap() before int() — reported without a fix',
+      code: dedent`
+        import * as z from 'zod';
+        z.number().optional().unwrap().int();
+      `,
+      errors: [{ messageId: 'removeNumber' }],
+      output: null,
+    },
+    {
+      name: 'apply() before int() — reported without a fix',
+      code: dedent`
+        import * as z from 'zod';
+        z.number().apply((schema) => schema).int();
+      `,
+      errors: [{ messageId: 'removeNumber' }],
+      output: null,
+    },
+    {
       name: 'computed factory — reported but not fixed, the chain walker cannot name it',
       code: dedent`
         import * as z from 'zod';

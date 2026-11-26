@@ -10,7 +10,7 @@
 
 Zod happily builds schemas whose checks contradict each other or don't even apply to the base type. The `.check()` API is the sharp edge: it accepts any check regardless of the schema's type, so TypeScript can't help — `z.number().check(z.minLength(1))` compiles fine and silently accepts everything, while `z.string().check(z.positive())` silently rejects everything. Other combinations silently match nothing (`z.number().check(z.gt(10), z.lt(5))`).
 
-It covers multi-argument `.check(...)`, repeated `.check()` calls, and format factories used as the base schema (`z.uuid().check(z.maxLength(1))`). Only literal arguments are analyzed — constraints whose bound is an identifier or expression are skipped.
+It covers multi-argument `.check(...)`, repeated `.check()` calls, and format factories used as the base schema (`z.uuid().check(z.maxLength(1))`). Only literal arguments are analyzed — constraints whose bound is an identifier or expression are skipped, as are those after `.apply()` or a method that does not return a schema, such as `.parse()`.
 
 Complements [`no-duplicate-schema-methods`](./no-duplicate-schema-methods.md): that rule catches _repeats_ of the same method and excludes `.check()`, this one catches _conflicts and redundancies_ between the checks themselves.
 
@@ -18,11 +18,11 @@ Complements [`no-duplicate-schema-methods`](./no-duplicate-schema-methods.md): t
 
 <!-- begin auto-generated rule options list -->
 
-| Name                      | Description                                                             | Type    |
-| :------------------------ | :---------------------------------------------------------------------- | :------ |
-| `checkConfusingCases`     | Report technically valid but almost certainly mistaken combinations     | Boolean |
-| `checkImpossibleCases`    | Report provably unsatisfiable combinations — the schema can never match | Boolean |
-| `checkInapplicableChecks` | Report checks that don't apply to the schema's base type                | Boolean |
+| Name                      | Description                                                                | Type    |
+| :------------------------ | :------------------------------------------------------------------------- | :------ |
+| `checkConfusingCases`     | Report technically valid but almost certainly mistaken combinations        | Boolean |
+| `checkImpossibleCases`    | Report provably unsatisfiable combinations — the checks can never all pass | Boolean |
+| `checkInapplicableChecks` | Report checks that don't apply to the schema's base type                   | Boolean |
 
 <!-- end auto-generated rule options list -->
 

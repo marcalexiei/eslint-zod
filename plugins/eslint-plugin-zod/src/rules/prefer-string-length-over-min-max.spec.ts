@@ -8,6 +8,20 @@ const ruleTester = new RuleTester();
 ruleTester.run(preferStringLengthOverMinMax.name, preferStringLengthOverMinMax, {
   valid: [
     {
+      name: 'bounds on either side of unwrap()',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().min(3).optional().unwrap().max(3);
+      `,
+    },
+    {
+      name: 'bounds on either side of apply()',
+      code: dedent`
+        import * as z from 'zod';
+        z.string().min(3).apply((schema) => schema).max(3);
+      `,
+    },
+    {
       name: 'type-changing method between the bounds — the second one bounds the array',
       code: dedent`
         import * as z from 'zod';

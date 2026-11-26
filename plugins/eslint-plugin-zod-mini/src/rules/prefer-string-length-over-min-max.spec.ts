@@ -8,6 +8,13 @@ const ruleTester = new RuleTester();
 ruleTester.run(preferStringLengthOverMinMax.name, preferStringLengthOverMinMax, {
   valid: [
     {
+      name: 'bounds on either side of apply()',
+      code: dedent`
+        import * as z from 'zod/mini';
+        z.string().check(z.minLength(3)).apply((schema) => schema).check(z.maxLength(3));
+      `,
+    },
+    {
       name: 'opaque check between the bounds — it may mutate the value',
       code: dedent`
         import * as z from 'zod/mini';

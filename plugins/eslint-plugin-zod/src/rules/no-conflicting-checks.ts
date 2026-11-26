@@ -12,7 +12,7 @@ export const noConflictingChecks = createZodPluginRule({
         'Disallow check combinations that can never match, are redundant, or do not apply to the schema type',
     },
     messages: {
-      impossibleCase: 'This schema can never match: `{{first}}` conflicts with `{{second}}`.',
+      impossibleCase: 'These checks can never all pass: `{{first}}` conflicts with `{{second}}`.',
       redundantCheck: '`{{redundant}}` is redundant: `{{by}}` already implies it.',
       confusingCombination: 'Combining `{{first}}` and `{{second}}` is almost certainly a mistake.',
       pointlessCheck: '`{{check}}` is pointless here: {{reason}}.',
@@ -24,7 +24,8 @@ export const noConflictingChecks = createZodPluginRule({
         type: 'object',
         properties: {
           checkImpossibleCases: {
-            description: 'Report provably unsatisfiable combinations — the schema can never match',
+            description:
+              'Report provably unsatisfiable combinations — the checks can never all pass',
             type: 'boolean',
           },
           checkConfusingCases: {
